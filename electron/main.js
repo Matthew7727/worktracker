@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
@@ -190,6 +190,7 @@ app.whenReady().then(() => {
     ipcMain.handle('fs:listAllFiles', handleListAllFiles);
     ipcMain.handle('fs:searchEntries', handleSearchEntries);
     ipcMain.handle('fs:watchWorkspace', handleWatchWorkspace);
+    ipcMain.handle('shell:openExternal', (event, url) => shell.openExternal(url));
 
     createWindow();
 

@@ -217,7 +217,7 @@ const DailyEditor = () => {
     }, [currentDate]);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <DateNavigation
                 currentDate={currentDate}
                 onPrevDay={handlePrevDay}
@@ -226,11 +226,11 @@ const DailyEditor = () => {
                 onAddEntry={handleAddBlankEntry}
             />
 
-            <Typography variant="h2" sx={{ my: 4, fontWeight: 950 }}>
+            <Typography variant="h2" sx={{ my: 2, fontWeight: 950 }}>
                 {formatDate(currentDate)}
             </Typography>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6, pb: 8 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, pb: 8 }}>
                 {isLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
                         <CircularProgress />

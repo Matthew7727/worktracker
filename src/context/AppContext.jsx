@@ -38,12 +38,12 @@ export const AppProvider = ({ children }) => {
 
     // Theme state
     const [theme, setTheme] = useState(() => {
-        return localStorage.getItem('workTracker_theme') || 'white';
+        return localStorage.getItem('workTracker_theme') || 'light';
     });
 
     const toggleTheme = () => {
         setTheme(prev => {
-            const newTheme = prev === 'white' ? 'g10' : 'white';
+            const newTheme = prev === 'light' ? 'dark' : 'light';
             localStorage.setItem('workTracker_theme', newTheme);
             return newTheme;
         });

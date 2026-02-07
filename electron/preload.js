@@ -10,5 +10,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     listAllFiles: (path) => ipcRenderer.invoke('fs:listAllFiles', path),
     searchEntries: (options) => ipcRenderer.invoke('fs:searchEntries', options),
     watchWorkspace: (path) => ipcRenderer.invoke('fs:watchWorkspace', path),
-    onWorkspaceChanged: (callback) => ipcRenderer.on('workspace:changed', (event, data) => callback(data))
+    onWorkspaceChanged: (callback) => ipcRenderer.on('workspace:changed', (event, data) => callback(data)),
+    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
 });

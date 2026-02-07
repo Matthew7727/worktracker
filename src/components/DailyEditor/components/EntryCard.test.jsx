@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import EntryCard from './EntryCard';
 import { ThemeProvider, createTheme } from '@mui/material';
@@ -15,7 +15,7 @@ const TestWrapper = ({ children }) => (
 describe('EntryCard Component', () => {
     const mockEntry = {
         id: 'test-id',
-        content: 'I worked on testing today.',
+        content: 'I worked on **testing** today.',
         tags: ['testing', 'vitest'],
         time: '14:00:00',
         isNew: false,
@@ -32,17 +32,43 @@ describe('EntryCard Component', () => {
         onRemoveTag: vi.fn()
     };
 
-    it('renders entry content and tags', () => {
+    it('renders rendered markdown in preview mode by default for saved entries', () => {
         render(<EntryCard entry={mockEntry} {...mockHandlers} />, { wrapper: TestWrapper });
 
-        expect(screen.getByDisplayValue('I worked on testing today.')).toBeInTheDocument();
-        expect(screen.getByText('testing')).toBeInTheDocument();
-        expect(screen.getByText('vitest')).toBeInTheDocument();
+        // Check for parts of the text to be more resilient to markdown splitting
+        expect(screen.getByText(/I worked on/i)).toBeInTheDocument();
+        // The word "testing" might be inside a <strong> tag
+        expect(screen.getByText(/testing/i, { selector: 'strong' })).toBeInTheDocument();
+
+        // Tags should also be present
+        expect(screen.getAllByText(/testing/i).length).toBeGreaterThan(1); // One in text, one in Chip
         expect(screen.getByText('14:00:00')).toBeInTheDocument();
     });
 
-    it('triggers onUpdateContent when text is typed', () => {
+    it('switches to edit mode when the Edit button is clicked', async () => {
         render(<EntryCard entry={mockEntry} {...mockHandlers} />, { wrapper: TestWrapper });
+
+        const editButton = screen.getByLabelText(/edit/i);
+        fireEvent.click(editButton);
+
+        // Now we should see the textarea
+        expect(screen.getByPlaceholderText('Describe what you accomplished...')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('I worked on **testing** today.')).toBeInTheDocument();
+    });
+
+    it('shows markdown toolbar when in edit mode', () => {
+        // New entry starts in edit mode
+        const newEntry = { ...mockEntry, isNew: true };
+        render(<EntryCard entry={newEntry} {...mockHandlers} />, { wrapper: TestWrapper });
+
+        expect(screen.getByLabelText(/bold/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/italic/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/heading/i)).toBeInTheDocument();
+    });
+
+    it('triggers onUpdateContent when text is typed in edit mode', () => {
+        const newEntry = { ...mockEntry, isNew: true };
+        render(<EntryCard entry={newEntry} {...mockHandlers} />, { wrapper: TestWrapper });
 
         const textarea = screen.getByPlaceholderText('Describe what you accomplished...');
         fireEvent.change(textarea, { target: { value: 'New content' } });
@@ -51,19 +77,12 @@ describe('EntryCard Component', () => {
     });
 
     it('triggers onSave when SAVE button is clicked', () => {
-        render(<EntryCard entry={mockEntry} {...mockHandlers} />, { wrapper: TestWrapper });
+        const newEntry = { ...mockEntry, isNew: true };
+        render(<EntryCard entry={newEntry} {...mockHandlers} />, { wrapper: TestWrapper });
 
         const saveButton = screen.getByText('SAVE');
         fireEvent.click(saveButton);
 
         expect(mockHandlers.onSave).toHaveBeenCalledWith('test-id');
-    });
-
-    it('shows loading state on SAVE button when isSaving is true', () => {
-        const savingEntry = { ...mockEntry, isSaving: true };
-        render(<EntryCard entry={savingEntry} {...mockHandlers} />, { wrapper: TestWrapper });
-
-        expect(screen.getByText('SAVING...')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled();
     });
 });

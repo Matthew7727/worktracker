@@ -11,10 +11,10 @@
   --border-light: 1px solid rgba(0, 0, 0, 0.15);
 
   /* Vibrant Accents */
-  --accent-primary: #8a3ffc;
-  --accent-secondary: #0072c3;
-  --accent-gradient: linear-gradient(135deg, #8a3ffc 0%, #0072c3 100%);
-  --accent-gradient-subtle: linear-gradient(135deg, rgba(138, 63, 252, 0.05) 0%, rgba(0, 114, 195, 0.05) 100%);
+  --accent-primary: #80b621;
+  --accent-secondary: #4a6b13;
+  --accent-gradient: linear-gradient(135deg, #80b621 0%, #4a6b13 100%);
+  --accent-gradient-subtle: linear-gradient(135deg, rgba(128, 182, 33, 0.05) 0%, rgba(74, 107, 19, 0.05) 100%);
 
   /* Effects */
   --shadow-premium: 0 8px 24px rgba(0, 0, 0, 0.08);

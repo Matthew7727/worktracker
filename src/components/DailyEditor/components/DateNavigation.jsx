@@ -35,7 +35,7 @@ const DateNavigation = ({ currentDate, onPrevDay, onNextDay, onDateChange, onAdd
                 sx={{
                     fontWeight: 900,
                     px: 4,
-                    boxShadow: '0 4px 14px rgba(138, 63, 252, 0.3)'
+                    boxShadow: '0 4px 14px rgba(128, 182, 33, 0.3)'
                 }}
             >
                 Add Contribution

@@ -25,7 +25,7 @@ const WeeklyChart = ({ entries }) => {
                                 minHeight: count > 0 ? '4px' : '0px',
                                 background: index === 0 || index === 6
                                     ? 'rgba(0,0,0,0.1)'
-                                    : 'linear-gradient(to top, #8a3ffc, #0072c3)',
+                                    : 'linear-gradient(to top, #80b621, #4a6b13)',
                                 borderRadius: '8px 8px 0 0',
                                 border: count > 0 ? '3px solid black' : 'none',
                                 borderBottom: 'none',

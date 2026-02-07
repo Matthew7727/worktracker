@@ -43,8 +43,6 @@ A bar chart showing your activity levels over the current week. It helps you ide
 ### 3. The Matrix (Tag Distribution)
 This widget shows your most frequently used tags. It's a "reality check" on where your time is actually going.
 
-### 4. System Persona
-Our AI analyzer treats your logs as a "persona." It identifies patterns like **"The Consistency King"** or **"The Deep Work Specialist"** based on your frequency and entry length.
 `
     },
     {

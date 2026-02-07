@@ -59,16 +59,16 @@ const Settings = () => {
                                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                                     <Typography variant="h6" sx={{ fontWeight: 800 }}>Interface Theme (Light / Dark)</Typography>
                                     <Stack direction="row" spacing={2} alignItems="center">
-                                        <Typography variant="body2" sx={{ fontWeight: 900, opacity: theme === 'white' ? 1 : 0.5 }}>LIGHT</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 900, opacity: theme === 'light' ? 1 : 0.5 }}>LIGHT</Typography>
                                         <Switch
-                                            checked={theme !== 'white'}
+                                            checked={theme === 'dark'}
                                             onChange={toggleTheme}
                                             sx={{
                                                 '& .MuiSwitch-switchBase.Mui-checked': { color: 'primary.main' },
                                                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: 'primary.main' }
                                             }}
                                         />
-                                        <Typography variant="body2" sx={{ fontWeight: 900, opacity: theme !== 'white' ? 1 : 0.5 }}>DARK</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 900, opacity: theme === 'dark' ? 1 : 0.5 }}>DARK</Typography>
                                     </Stack>
                                 </Stack>
                             </Paper>

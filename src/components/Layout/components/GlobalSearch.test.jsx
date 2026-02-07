@@ -16,14 +16,15 @@ describe('GlobalSearch Component', () => {
     const mockOnResultClick = vi.fn();
     const rootDir = '/mock/logs';
 
-    it('opens search dialog when typing 3 or more characters', async () => {
+    it('opens search dialog when clicking the search icon', async () => {
         render(<GlobalSearch rootDir={rootDir} onResultClick={mockOnResultClick} />, { wrapper: TestWrapper });
 
-        const input = screen.getByPlaceholderText('Search archive...');
-        fireEvent.change(input, { target: { value: 'test' } });
+        const searchBtn = screen.getByLabelText(/open search/i);
+        fireEvent.click(searchBtn);
 
         await waitFor(() => {
             expect(screen.getByText('GLOBAL SEARCH')).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/type keywords to find logs/i)).toBeInTheDocument();
         });
     });
 
@@ -35,7 +36,11 @@ describe('GlobalSearch Component', () => {
 
         render(<GlobalSearch rootDir={rootDir} onResultClick={mockOnResultClick} />, { wrapper: TestWrapper });
 
-        const input = screen.getByPlaceholderText('Search archive...');
+        // Open Dialog
+        fireEvent.click(screen.getByLabelText(/open search/i));
+
+        // Find input in dialog
+        const input = screen.getByPlaceholderText(/type keywords to find logs/i);
         fireEvent.change(input, { target: { value: 'search' } });
 
         await waitFor(() => {
@@ -52,7 +57,11 @@ describe('GlobalSearch Component', () => {
 
         render(<GlobalSearch rootDir={rootDir} onResultClick={mockOnResultClick} />, { wrapper: TestWrapper });
 
-        fireEvent.change(screen.getByPlaceholderText('Search archive...'), { target: { value: 'select' } });
+        // Open Dialog
+        fireEvent.click(screen.getByLabelText(/open search/i));
+
+        const input = screen.getByPlaceholderText(/type keywords to find logs/i);
+        fireEvent.change(input, { target: { value: 'select' } });
 
         const resultItem = await screen.findByTestId('search-result-2024-05-20');
         fireEvent.click(resultItem);

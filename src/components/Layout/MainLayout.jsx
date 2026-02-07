@@ -56,8 +56,8 @@ const MainLayout = ({ children }) => {
     const location = useLocation();
 
     const navItems = [
-        { label: 'Editor', path: '/', icon: <Notes /> },
         { label: 'Dashboard', path: '/dashboard', icon: <Home /> },
+        { label: 'Editor', path: '/', icon: <Notes /> },
         { label: 'Reports', path: '/reports', icon: <Assessment /> },
         { label: 'Settings', path: '/settings', icon: <Settings /> },
     ];
