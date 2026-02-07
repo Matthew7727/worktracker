@@ -2,54 +2,47 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
-    Button,
-    TextField,
     Paper,
-    IconButton,
-    Chip,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
+    Button,
     CircularProgress,
-    Stack,
     Fade
 } from '@mui/material';
-import {
-    ChevronLeft,
-    ChevronRight,
-    Save,
-    Add,
-    Delete,
-    AccessTime,
-    LocalOffer
-} from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useAppContext } from '../../context/AppContext';
 import { getDailyFilePath } from '../../utils/fileHelpers';
-import { parseMarkdown, stringifyMarkdown } from '../../utils/markdownParser';
+import { stringifyMarkdown } from '../../utils/markdownParser';
 import { loadAllEntries } from '../../utils/DataManager';
 import { useLocation } from 'react-router-dom';
+
+// Sub-components
+import DateNavigation from './components/DateNavigation';
+import EntryCard from './components/EntryCard';
 
 const DailyEditor = () => {
     const { selectedDirectory, refreshTrigger, showNotification } = useAppContext();
     const location = useLocation();
+
+    // State
     const [currentDate, setCurrentDate] = useState(() => {
         if (location.state && location.state.initialDate) {
             return new Date(location.state.initialDate);
         }
         return new Date();
     });
-
     const [entries, setEntries] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState(null);
 
+    // Helpers
     const formatDate = (date) => {
         return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     };
 
+    // Data Loading
     useEffect(() => {
         const loadEntries = async () => {
             if (!selectedDirectory) return;
@@ -85,6 +78,7 @@ const DailyEditor = () => {
         loadEntries();
     }, [currentDate, selectedDirectory, refreshTrigger]);
 
+    // Handlers
     const handleSaveEntry = async (entryId) => {
         if (!selectedDirectory) return;
         setEntries(prev => prev.map(e => e.id === entryId ? { ...e, isSaving: true } : e));
@@ -120,14 +114,14 @@ const DailyEditor = () => {
                     } : e));
                     showNotification('Contribution archived successfully', 'success');
                 } else {
-                    setEntries(prev => prev.map(e => e.id === entryId ? { ...e, isSaving: false } : e));
                     showNotification(`Save Error: ${result.error}`, 'error');
                 }
             }
         } catch (error) {
             console.error("Failed to save entry:", error);
-            setEntries(prev => prev.map(e => e.id === entryId ? { ...e, isSaving: false } : e));
             showNotification('Failed to save to system', 'error');
+        } finally {
+            setEntries(prev => prev.map(e => e.id === entryId ? { ...e, isSaving: false } : e));
         }
     };
 
@@ -140,14 +134,7 @@ const DailyEditor = () => {
                 setEntries(prev => prev.filter(e => e.id !== entryToDelete.id));
                 showNotification('Entry purged from archive', 'info');
                 if (entries.length <= 1) {
-                    setEntries([{
-                        id: 'new-' + Date.now(),
-                        content: '',
-                        tags: [],
-                        isSaving: false,
-                        newTag: '',
-                        isNew: true
-                    }]);
+                    handleAddBlankEntry();
                 }
             }
         } catch (error) {
@@ -174,8 +161,12 @@ const DailyEditor = () => {
         showNotification('New draft created', 'info');
     };
 
-    const updateEntryContent = (id, newContent) => {
-        setEntries(prev => prev.map(e => e.id === id ? { ...e, content: newContent } : e));
+    const handleUpdateContent = (id, content) => {
+        setEntries(prev => prev.map(e => e.id === id ? { ...e, content } : e));
+    };
+
+    const handleUpdateTagsInput = (id, val) => {
+        setEntries(prev => prev.map(e => e.id === id ? { ...e, newTag: val } : e));
     };
 
     const handleAddTag = (id) => {
@@ -183,7 +174,7 @@ const DailyEditor = () => {
         if (entry.newTag.trim() && !entry.tags.includes(entry.newTag.trim())) {
             setEntries(prev => prev.map(e => e.id === id ? {
                 ...e,
-                tags: [...e.tags, e.newTag.trim()],
+                tags: [...e.tags, entry.newTag.trim()],
                 newTag: ''
             } : e));
         }
@@ -196,13 +187,7 @@ const DailyEditor = () => {
         } : e));
     };
 
-    const handleTagInputKeyDown = (id, e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAddTag(id);
-        }
-    };
-
+    // Navigation handlers
     const handlePrevDay = () => {
         const newDate = new Date(currentDate);
         newDate.setDate(currentDate.getDate() - 1);
@@ -215,6 +200,7 @@ const DailyEditor = () => {
         setCurrentDate(newDate);
     };
 
+    // Shortcuts
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -232,45 +218,13 @@ const DailyEditor = () => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '24px', border: '3px solid black' }}>
-                <Stack direction="row" spacing={2} alignItems="center">
-                    <IconButton onClick={handlePrevDay} sx={{ border: '2px solid black' }}>
-                        <ChevronLeft />
-                    </IconButton>
-
-                    <DatePicker
-                        value={currentDate}
-                        onChange={(val) => setCurrentDate(val)}
-                        slotProps={{
-                            textField: {
-                                size: 'small',
-                                sx: {
-                                    width: '200px',
-                                    '& fieldset': { border: 'none' },
-                                    '& .MuiInputBase-root': { bgcolor: 'rgba(0,0,0,0.04)', borderRadius: '12px', fontWeight: 900 }
-                                }
-                            }
-                        }}
-                    />
-
-                    <IconButton onClick={handleNextDay} sx={{ border: '2px solid black' }}>
-                        <ChevronRight />
-                    </IconButton>
-                </Stack>
-
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={handleAddBlankEntry}
-                    sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        boxShadow: '0 4px 14px rgba(138, 63, 252, 0.3)'
-                    }}
-                >
-                    Add Contribution
-                </Button>
-            </Paper>
+            <DateNavigation
+                currentDate={currentDate}
+                onPrevDay={handlePrevDay}
+                onNextDay={handleNextDay}
+                onDateChange={(val) => setCurrentDate(val)}
+                onAddEntry={handleAddBlankEntry}
+            />
 
             <Typography variant="h2" sx={{ my: 4, fontWeight: 950 }}>
                 {formatDate(currentDate)}
@@ -281,124 +235,27 @@ const DailyEditor = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
                         <CircularProgress />
                     </Box>
-                ) : entries.length === 0 ? (
-                    <Paper sx={{ p: 8, textAlign: 'center', borderStyle: 'dashed', border: '3px dashed black', opacity: 0.6, borderRadius: '24px' }}>
-                        <Typography variant="h6" gutterBottom>No contributions logged for this day yet.</Typography>
-                        <Button variant="text" onClick={handleAddBlankEntry}>Add your first entry</Button>
-                    </Paper>
                 ) : (
                     entries.map((entry, index) => (
                         <Fade in={true} timeout={500 + index * 100} key={entry.id}>
-                            <Paper
-                                sx={{
-                                    p: 4,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 3,
-                                    border: '3px solid black',
-                                    borderColor: entry.isNew ? 'primary.main' : 'black',
-                                    borderRadius: '24px',
-                                    transition: 'all 0.2s',
-                                    '&:hover': {
-                                        borderColor: 'primary.main',
-                                        bgcolor: 'rgba(0,0,0,0.01)',
-                                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
-                                    }
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Stack direction="row" spacing={2} alignItems="center">
-                                        {entry.time && (
-                                            <Chip
-                                                icon={<AccessTime sx={{ fontSize: '1.2rem !important' }} />}
-                                                label={entry.time}
-                                                sx={{
-                                                    bgcolor: 'rgba(0, 114, 195, 0.05)',
-                                                    color: 'secondary.main',
-                                                    border: '1px solid currentColor',
-                                                    fontWeight: 900,
-                                                    fontSize: '1rem'
-                                                }}
-                                            />
-                                        )}
-                                        <Stack direction="row" spacing={1} flexWrap="wrap">
-                                            {entry.tags.map(tag => (
-                                                <Chip
-                                                    key={tag}
-                                                    label={tag}
-                                                    onDelete={() => handleRemoveTag(entry.id, tag)}
-                                                    color="secondary"
-                                                    variant="outlined"
-                                                    sx={{ borderWidth: '2px', fontWeight: 900, '&:hover': { borderWidth: '2px' } }}
-                                                />
-                                            ))}
-                                        </Stack>
-                                    </Stack>
-                                    <Stack direction="row" spacing={2}>
-                                        <IconButton
-                                            onClick={() => {
-                                                if (entry.isNew) {
-                                                    setEntries(prev => prev.filter(e => e.id !== entry.id));
-                                                } else {
-                                                    setEntryToDelete(entry);
-                                                    setIsDeleteModalOpen(true);
-                                                }
-                                            }}
-                                            sx={{
-                                                border: '2px solid black',
-                                                color: 'error.main',
-                                                '&:hover': { bgcolor: 'error.main', color: 'white' }
-                                            }}
-                                        >
-                                            <Delete />
-                                        </IconButton>
-                                        <Button
-                                            variant="contained"
-                                            startIcon={entry.isSaving ? <CircularProgress size={20} color="inherit" /> : <Save />}
-                                            onClick={() => handleSaveEntry(entry.id)}
-                                            disabled={entry.isSaving}
-                                            sx={{ px: 4 }}
-                                        >
-                                            {entry.isSaving ? 'SAVING...' : 'SAVE'}
-                                        </Button>
-                                    </Stack>
-                                </Box>
-
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                    <TextField
-                                        size="small"
-                                        placeholder="Add tag..."
-                                        value={entry.newTag || ''}
-                                        onChange={(e) => setEntries(prev => prev.map(ent => ent.id === entry.id ? { ...ent, newTag: e.target.value } : ent))}
-                                        onKeyDown={(e) => handleTagInputKeyDown(entry.id, e)}
-                                        InputProps={{
-                                            startAdornment: <LocalOffer sx={{ mr: 1, fontSize: '1rem', opacity: 0.5 }} />
-                                        }}
-                                        sx={{ width: '180px' }}
-                                    />
-                                </Stack>
-
-                                <TextField
-                                    multiline
-                                    rows={6}
-                                    fullWidth
-                                    placeholder="Describe what you accomplished..."
-                                    value={entry.content}
-                                    onChange={(e) => updateEntryContent(entry.id, e.target.value)}
-                                    variant="filled"
-                                    InputProps={{
-                                        disableUnderline: true,
-                                        sx: {
-                                            fontSize: '1.2rem',
-                                            lineHeight: 1.8,
-                                            borderRadius: '16px',
-                                            bgcolor: 'rgba(0,0,0,0.02)',
-                                            p: 3,
-                                            '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                            <Box>
+                                <EntryCard
+                                    entry={entry}
+                                    onSave={handleSaveEntry}
+                                    onDelete={(e) => {
+                                        if (e.isNew) {
+                                            setEntries(prev => prev.filter(ent => ent.id !== e.id));
+                                        } else {
+                                            setEntryToDelete(e);
+                                            setIsDeleteModalOpen(true);
                                         }
                                     }}
+                                    onUpdateContent={handleUpdateContent}
+                                    onUpdateTags={handleUpdateTagsInput}
+                                    onAddTag={handleAddTag}
+                                    onRemoveTag={handleRemoveTag}
                                 />
-                            </Paper>
+                            </Box>
                         </Fade>
                     ))
                 )}

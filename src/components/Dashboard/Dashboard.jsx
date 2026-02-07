@@ -2,38 +2,25 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
-    Grid,
     Paper,
     Skeleton,
-    List,
-    ListItem,
-    Chip,
-    Button,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    IconButton,
-    Stack,
-    Fade,
-    Divider,
-    Tooltip
+    Button,
+    Fade
 } from '@mui/material';
-import {
-    Delete,
-    TrendingUp,
-    EventAvailable,
-    LocalFireDepartment as StreakIcon,
-    AutoGraph as TotalIcon,
-    PieChart as TagIcon,
-    EmojiEvents as TrophyIcon,
-    Terminal as ArchiveIcon
-} from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
 import { loadAllEntries } from '../../utils/DataManager';
 import { useNavigate } from 'react-router-dom';
 import ContributionGraph from './ContributionGraph';
-import WeeklyChart from './WeeklyChart';
+
+// Sub-components
+import SummaryTiles from './components/SummaryTiles';
+import StatsGrid from './components/StatsGrid';
+import RecentActivity from './components/RecentActivity';
+import { boldBorder } from './Dashboard.styles';
 
 const Dashboard = () => {
     const { selectedDirectory, refreshTrigger, showNotification } = useAppContext();
@@ -51,28 +38,6 @@ const Dashboard = () => {
     const [allEntries, setAllEntries] = useState([]);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState(null);
-
-    const handleDeleteClick = (e, entry) => {
-        e.stopPropagation();
-        setEntryToDelete(entry);
-        setIsDeleteModalOpen(true);
-    };
-
-    const confirmDelete = async () => {
-        if (!entryToDelete || !selectedDirectory) return;
-        try {
-            const result = await window.electronAPI.deleteFile(entryToDelete.path);
-            if (result.success) {
-                showNotification('Entry purged from history', 'info');
-            }
-        } catch (error) {
-            console.error('Failed to delete:', error);
-            showNotification('Deletion failed', 'error');
-        } finally {
-            setIsDeleteModalOpen(false);
-            setEntryToDelete(null);
-        }
-    };
 
     const calculateStreaks = (uniqueDates) => {
         if (uniqueDates.length === 0) return { current: 0, longest: 0 };
@@ -163,39 +128,24 @@ const Dashboard = () => {
         fetchData();
     }, [selectedDirectory, refreshTrigger]);
 
-    const SummaryCard = ({ title, value, icon, subtitle }) => (
-        <Paper
-            sx={{
-                p: 4,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                border: '3px solid black',
-                borderRadius: '24px',
-                transition: 'all 0.2s',
-                '&:hover': { transform: 'scale(1.02)', boxShadow: '0 8px 0 black' }
-            }}
-        >
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="subtitle2" sx={{ letterSpacing: '0.1em', fontWeight: 900, opacity: 0.5 }}>{title}</Typography>
-                {icon}
-            </Stack>
-            <Box sx={{ mt: 2 }}>
-                <Typography variant="h2" sx={{ fontWeight: 950, letterSpacing: '-0.04em' }}>
-                    {loading ? <Skeleton width="80px" /> : value}
-                </Typography>
-                {subtitle && (
-                    <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.6, textTransform: 'uppercase' }}>
-                        {subtitle}
-                    </Typography>
-                )}
-            </Box>
-        </Paper>
-    );
-
     const handleEntryClick = (dateStr) => {
         navigate('/', { state: { initialDate: dateStr } });
+    };
+
+    const confirmDelete = async () => {
+        if (!entryToDelete || !selectedDirectory) return;
+        try {
+            const result = await window.electronAPI.deleteFile(entryToDelete.path);
+            if (result.success) {
+                showNotification('Entry purged from history', 'info');
+            }
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            showNotification('Deletion failed', 'error');
+        } finally {
+            setIsDeleteModalOpen(false);
+            setEntryToDelete(null);
+        }
     };
 
     return (
@@ -203,198 +153,29 @@ const Dashboard = () => {
             <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Typography variant="h1">Dashboard</Typography>
 
-                <Grid container spacing={4}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <SummaryCard
-                            title="ACTIVE DAYS"
-                            value={stats.totalDays}
-                            icon={<EventAvailable sx={{ color: 'primary.main', fontSize: '2rem' }} />}
-                            subtitle="Total archive dates"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <SummaryCard
-                            title="TOTAL LOGS"
-                            value={stats.totalEntries}
-                            icon={<TotalIcon sx={{ color: 'secondary.main', fontSize: '2rem' }} />}
-                            subtitle="Discrete contributions"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <SummaryCard
-                            title="CURRENT STREAK"
-                            value={`${stats.currentStreak}D`}
-                            icon={<StreakIcon sx={{ color: '#ff5c00', fontSize: '2rem' }} />}
-                            subtitle="Consecutive productivity"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <SummaryCard
-                            title="LONGEST STREAK"
-                            value={`${stats.longestStreak}D`}
-                            icon={<StreakIcon sx={{ color: '#ffb800', fontSize: '2rem' }} />}
-                            subtitle="All-time high record"
-                        />
-                    </Grid>
-                </Grid>
+                <SummaryTiles stats={stats} loading={loading} />
 
-                <Grid container spacing={4}>
-                    <Grid item xs={12} lg={6}>
-                        {/* Weekly Breakdown */}
-                        <Paper sx={{ p: 4, borderRadius: '24px', border: '3px solid black', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <Typography variant="h5" sx={{ mb: 4, fontWeight: 900 }}>Weekly Distribution</Typography>
-                            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                                {loading ? <Skeleton variant="rectangular" width="100%" height={200} /> : <WeeklyChart entries={allEntries} />}
-                            </Box>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        {/* Tag distribution / Trending */}
-                        <Paper sx={{ p: 4, borderRadius: '24px', border: '3px solid black', height: '100%' }}>
-                            <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                                <TagIcon color="primary" />
-                                <Typography variant="h5" sx={{ fontWeight: 900 }}>Matrix</Typography>
-                            </Stack>
-                            <Divider sx={{ mb: 2, borderBottomWidth: '2px', borderColor: 'black' }} />
-                            <Stack spacing={1.5}>
-                                {loading ? (
-                                    <Skeleton height={200} />
-                                ) : stats.topTags.length > 0 ? (
-                                    stats.topTags.map(({ tag, count }) => (
-                                        <Box key={tag} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography sx={{ fontWeight: 800, fontSize: '0.9rem' }}>{tag}</Typography>
-                                            <Chip
-                                                label={`${count}x`}
-                                                size="small"
-                                                sx={{
-                                                    fontWeight: 900,
-                                                    bgcolor: 'primary.main',
-                                                    color: 'white',
-                                                    height: '20px'
-                                                }}
-                                            />
-                                        </Box>
-                                    ))
-                                ) : (
-                                    <Typography sx={{ opacity: 0.5, fontStyle: 'italic' }}>No tags yet.</Typography>
-                                )}
-                            </Stack>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        {/* Persona / Achievement Card */}
-                        <Paper
-                            sx={{
-                                p: 4,
-                                borderRadius: '24px',
-                                border: '3px solid black',
-                                height: '100%',
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                textAlign: 'center',
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}
-                        >
-                            <Box sx={{ position: 'absolute', top: -20, right: -20, opacity: 0.1 }}>
-                                <TrophyIcon sx={{ fontSize: '10rem' }} />
-                            </Box>
-                            <ArchiveIcon sx={{ fontSize: '3rem', mb: 2 }} />
-                            <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: '0.2em', opacity: 0.8, mb: 1 }}>SYSTEM PERSONA</Typography>
-                            <Typography variant="h4" sx={{ fontWeight: 950, lineHeight: 1.1 }}>{loading ? '...' : stats.persona}</Typography>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                <StatsGrid
+                    loading={loading}
+                    allEntries={allEntries}
+                    topTags={stats.topTags}
+                    persona={stats.persona}
+                />
 
-                {/* Contribution Graph */}
-                <Paper sx={{ p: 4, borderRadius: '24px', border: '3px solid black' }}>
+                <Paper sx={{ ...boldBorder, p: 4 }}>
                     <Typography variant="h5" sx={{ mb: 3, fontWeight: 900 }}>Annual Archive Pipeline</Typography>
                     {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
                 </Paper>
 
-                <Grid container spacing={6}>
-                    {/* Recent Activity */}
-                    <Grid item xs={12}>
-                        <Typography variant="h4" sx={{ mb: 3, fontWeight: 950 }}>Recent Activity</Typography>
-                        <Paper sx={{ p: 4, borderRadius: '24px', border: '3px solid black' }}>
-                            {loading ? (
-                                <Stack spacing={2}><Skeleton height={80} /><Skeleton height={80} /></Stack>
-                            ) : stats.recentEntries.length > 0 ? (
-                                <Grid container spacing={2}>
-                                    {stats.recentEntries.map((entry) => (
-                                        <Grid item xs={12} key={entry.id}>
-                                            <ListItem
-                                                disablePadding
-                                                sx={{
-                                                    p: 3,
-                                                    borderRadius: '16px',
-                                                    bgcolor: 'rgba(0,0,0,0.02)',
-                                                    border: '2px solid transparent',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s',
-                                                    '&:hover': { borderColor: 'black', bgcolor: 'white' },
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center'
-                                                }}
-                                                onClick={() => handleEntryClick(entry.date)}
-                                            >
-                                                <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                                                    <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                                                        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 900 }}>{entry.date}</Typography>
-                                                        {entry.time && (
-                                                            <Chip
-                                                                label={entry.time}
-                                                                size="small"
-                                                                sx={{ fontWeight: 900, bgcolor: 'secondary.light', color: 'secondary.main' }}
-                                                            />
-                                                        )}
-                                                    </Stack>
-                                                    <Typography
-                                                        variant="body2"
-                                                        noWrap
-                                                        sx={{ opacity: 0.7, fontStyle: 'italic', fontWeight: 600 }}
-                                                    >
-                                                        {entry.content || 'No content'}
-                                                    </Typography>
-                                                    <Stack direction="row" spacing={1} mt={1.5}>
-                                                        {entry.tags?.map(tag => (
-                                                            <Chip
-                                                                key={tag}
-                                                                label={tag}
-                                                                size="small"
-                                                                sx={{ fontWeight: 900, border: '2px solid black' }}
-                                                            />
-                                                        ))}
-                                                    </Stack>
-                                                </Box>
-                                                <IconButton
-                                                    onClick={(e) => handleDeleteClick(e, entry)}
-                                                    sx={{
-                                                        ml: 2,
-                                                        border: '2px solid black',
-                                                        '&:hover': { bgcolor: 'error.main', color: 'white', borderColor: 'error.main' }
-                                                    }}
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </ListItem>
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                            ) : (
-                                <Box sx={{ p: 4, textAlign: 'center', opacity: 0.5 }}>
-                                    <Typography sx={{ mb: 2, fontWeight: 700 }}>No entries found yet.</Typography>
-                                    <Button variant="outlined" onClick={() => navigate('/')}>Log something</Button>
-                                </Box>
-                            )}
-                        </Paper>
-                    </Grid>
-                </Grid>
+                <RecentActivity
+                    loading={loading}
+                    recentEntries={stats.recentEntries}
+                    onEntryClick={handleEntryClick}
+                    onDeleteClick={(entry) => {
+                        setEntryToDelete(entry);
+                        setIsDeleteModalOpen(true);
+                    }}
+                />
 
                 <Dialog
                     open={isDeleteModalOpen}
