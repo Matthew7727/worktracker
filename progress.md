@@ -49,8 +49,14 @@ Phase 3 (UI) initiated. Carbon Design System installed and Main Layout implement
 - [x] Package application (Generated `release/Work Tracker Setup 0.1.0.exe`).
 - [x] Phase 6: Polish & Release (Completed).
 
+## 🐛 Bug Fixes
+- **Runtime Error (Production)**: Fixed `Uncaught TypeError: Cannot read properties of undefined (reading 'active')` by explicitly defining `theme.palette.action` in `src/theme.js`.
+- **Runtime Error (Production - 'match')**: Fixed `TypeError: Cannot read properties of undefined (reading 'match')` by switching from `background` shorthand to `backgroundImage` for linear gradients in theme overrides.
+
+## 🔄 Reversions
+- **Dark Theme Removal**: Removed Dark Mode functionality to resolve persistent production build stability issues. The application now enforces a high-contrast Light Theme.
+
 ## 🚀 Future Enhancements
-- [ ] Theme Switching: Persist theme preference (Completed).
 - [ ] Multi-platform builds (macOS, Linux).
 - [ ] Auto-updates.
 - [ ] Cloud Sync.

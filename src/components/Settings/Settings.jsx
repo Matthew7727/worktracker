@@ -12,7 +12,7 @@ import {
 import { useAppContext } from '../../context/AppContext';
 
 const Settings = () => {
-    const { selectedDirectory, setProjectDirectory, theme, toggleTheme } = useAppContext();
+    const { selectedDirectory, setProjectDirectory } = useAppContext();
 
     return (
         <Fade in={true} timeout={600}>
@@ -54,24 +54,7 @@ const Settings = () => {
                             </Paper>
 
                             {/* Appearance Section */}
-                            <Paper sx={{ p: 6, borderRadius: '24px', border: '3px solid black' }}>
-                                <Typography variant="h4" sx={{ mb: 4 }}>Preferences</Typography>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Typography variant="h6" sx={{ fontWeight: 800 }}>Interface Theme (Light / Dark)</Typography>
-                                    <Stack direction="row" spacing={2} alignItems="center">
-                                        <Typography variant="body2" sx={{ fontWeight: 900, opacity: theme === 'light' ? 1 : 0.5 }}>LIGHT</Typography>
-                                        <Switch
-                                            checked={theme === 'dark'}
-                                            onChange={toggleTheme}
-                                            sx={{
-                                                '& .MuiSwitch-switchBase.Mui-checked': { color: 'primary.main' },
-                                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: 'primary.main' }
-                                            }}
-                                        />
-                                        <Typography variant="body2" sx={{ fontWeight: 900, opacity: theme === 'dark' ? 1 : 0.5 }}>DARK</Typography>
-                                    </Stack>
-                                </Stack>
-                            </Paper>
+                            {/* Theme settings removed - Light Mode Enforced */}
 
                             {/* About Section */}
                             <Paper sx={{ p: 6, borderRadius: '24px', border: '3px dashed black', bgcolor: 'transparent' }}>

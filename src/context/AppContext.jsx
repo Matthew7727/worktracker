@@ -36,19 +36,6 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    // Theme state
-    const [theme, setTheme] = useState(() => {
-        return localStorage.getItem('workTracker_theme') || 'light';
-    });
-
-    const toggleTheme = () => {
-        setTheme(prev => {
-            const newTheme = prev === 'light' ? 'dark' : 'light';
-            localStorage.setItem('workTracker_theme', newTheme);
-            return newTheme;
-        });
-    };
-
     // Global Notifications
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
 
@@ -63,8 +50,6 @@ export const AppProvider = ({ children }) => {
     const value = {
         selectedDirectory,
         setProjectDirectory,
-        theme,
-        toggleTheme,
         refreshTrigger,
         notification,
         showNotification,
