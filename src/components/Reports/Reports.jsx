@@ -1,26 +1,37 @@
 import React, { useState } from 'react';
-import { Grid, Column, Button, Select, SelectItem, InlineLoading, Tile } from '@carbon/react';
-import { Download } from '@carbon/icons-react';
+import {
+    Box,
+    Typography,
+    Grid,
+    Paper,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Button,
+    CircularProgress,
+    Stack,
+    Fade
+} from '@mui/material';
+import { Download } from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
 import { loadAllEntries } from '../../utils/DataManager';
 
 const Reports = () => {
-    const { selectedDirectory } = useAppContext();
+    const { selectedDirectory, showNotification } = useAppContext();
     const [range, setRange] = useState('all');
     const [isExporting, setIsExporting] = useState(false);
-    const [status, setStatus] = useState('');
+    const [exportStatus, setExportStatus] = useState('');
 
     const handleExport = async (format) => {
         if (!selectedDirectory) return;
         setIsExporting(true);
-        setStatus('Loading entries...');
+        setExportStatus('Loading entries...');
 
         try {
-            // 1. Load Data
             const entries = await loadAllEntries(selectedDirectory);
             let filteredEntries = await entries;
 
-            // 2. Filter logic (simple date math)
             const now = new Date();
             if (range === 'last30') {
                 const cutoff = new Date();
@@ -31,9 +42,8 @@ const Reports = () => {
                 filteredEntries = filteredEntries.filter(e => e.dateObj >= startOfYear);
             }
 
-            setStatus(`Processing ${filteredEntries.length} entries...`);
+            setExportStatus(`Processing ${filteredEntries.length} entries...`);
 
-            // 3. Serializing
             let content = '';
             let extension = '';
 
@@ -41,7 +51,6 @@ const Reports = () => {
                 content = JSON.stringify(filteredEntries, null, 2);
                 extension = 'json';
             } else {
-                // Markdown Export
                 content = `# Work Tracker Export\n\nGenerated: ${now.toLocaleDateString()}\nRange: ${range}\n\n`;
                 filteredEntries.forEach(e => {
                     const timeHeader = e.time ? ` [${e.time}]` : '';
@@ -55,7 +64,6 @@ const Reports = () => {
                 extension = 'md';
             }
 
-            // 4. Save Dialog
             if (window.electronAPI) {
                 const { canceled, filePath } = await window.electronAPI.saveFile({
                     title: `Export ${format.toUpperCase()}`,
@@ -65,114 +73,114 @@ const Reports = () => {
                 });
 
                 if (canceled || !filePath) {
-                    setStatus('Export canceled.');
+                    showNotification('Export canceled', 'info');
                 } else {
-                    setStatus('Saving file...');
+                    setExportStatus('Saving file...');
                     const result = await window.electronAPI.writeFile(filePath, content);
                     if (result.success) {
-                        setStatus('Export successful!');
+                        showNotification('Export successful!', 'success');
                     } else {
-                        setStatus(`Error saving: ${result.error}`);
+                        showNotification(`Export Error: ${result.error}`, 'error');
                     }
                 }
-            } else {
-                console.warn("Electron API not found");
             }
-
         } catch (error) {
             console.error("Export failed:", error);
-            setStatus('Export failed.');
+            showNotification('Export system failure', 'error');
         } finally {
             setIsExporting(false);
-            setTimeout(() => setStatus(''), 3000); // Clear status after 3s
+            setExportStatus('');
         }
     };
 
     return (
-        <Grid className="reports-page animate-slide-up" fullWidth style={{ padding: '3rem' }}>
-            <Column lg={16} md={8} sm={4}>
-                <h1 style={{ marginBottom: '1rem', fontWeight: 900, fontSize: '4rem', color: 'var(--text-primary)', letterSpacing: '-0.05em' }}>Reports & Export</h1>
-                <p style={{ marginBottom: '4rem', color: 'var(--text-secondary)', fontSize: '1.25rem', fontWeight: 700 }}>Generate and distribute your work intelligence.</p>
-            </Column>
+        <Fade in={true} timeout={600}>
+            <Box className="reports-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Box>
+                    <Typography variant="h1">Reports & Export</Typography>
+                    <Typography variant="h5" sx={{ mt: 2, fontWeight: 700, opacity: 0.7 }}>
+                        Generate and distribute your work intelligence.
+                    </Typography>
+                </Box>
 
-            <Column lg={8} md={8} sm={4}>
-                <Tile className="light-panel" style={{ padding: '3rem', border: '2px solid var(--text-primary)', background: 'white' }}>
-                    <h4 style={{ marginBottom: '2rem', fontWeight: 900, color: 'var(--text-primary)', fontSize: '1.5rem' }}>Configuration</h4>
+                <Grid container spacing={6}>
+                    <Grid item xs={12} md={7}>
+                        <Paper sx={{ p: 6, borderRadius: '24px', border: '3px solid black' }}>
+                            <Typography variant="h4" sx={{ mb: 4 }}>Configuration</Typography>
 
-                    <Select
-                        id="export-range"
-                        labelText="Date Range"
-                        value={range}
-                        onChange={(e) => setRange(e.target.value)}
-                        style={{ marginBottom: '2rem' }}
-                        size="lg"
-                    >
-                        <SelectItem value="all" text="All Time" />
-                        <SelectItem value="thisYear" text="This Year" />
-                        <SelectItem value="last30" text="Last 30 Days" />
-                    </Select>
+                            <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
+                                <InputLabel id="export-range-label" sx={{ fontWeight: 900, color: 'black' }}>DATE RANGE</InputLabel>
+                                <Select
+                                    labelId="export-range-label"
+                                    value={range}
+                                    label="DATE RANGE"
+                                    onChange={(e) => setRange(e.target.value)}
+                                    sx={{
+                                        borderRadius: '16px',
+                                        fontWeight: 900,
+                                        '& .MuiOutlinedInput-notchedOutline': { borderWidth: '3px', borderColor: 'black' }
+                                    }}
+                                >
+                                    <MenuItem value="all" sx={{ fontWeight: 800 }}>All Time</MenuItem>
+                                    <MenuItem value="thisYear" sx={{ fontWeight: 800 }}>This Year</MenuItem>
+                                    <MenuItem value="last30" sx={{ fontWeight: 800 }}>Last 30 Days</MenuItem>
+                                </Select>
+                            </FormControl>
 
-                    <div style={{ display: 'flex', gap: '2rem', marginTop: '3rem', flexWrap: 'wrap' }}>
-                        <Button
-                            renderIcon={Download}
-                            onClick={() => handleExport('md')}
-                            disabled={isExporting}
-                            size="lg"
-                            style={{
-                                borderRadius: '12px',
-                                background: 'var(--accent-gradient)',
-                                border: 'none',
-                                padding: '0 2.5rem',
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} mt={4}>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<Download />}
+                                    onClick={() => handleExport('md')}
+                                    disabled={isExporting}
+                                    sx={{ px: 4, py: 1.5 }}
+                                >
+                                    EXPORT MARKDOWN
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<Download />}
+                                    onClick={() => handleExport('json')}
+                                    disabled={isExporting}
+                                    sx={{ px: 4, py: 1.5 }}
+                                >
+                                    EXPORT JSON
+                                </Button>
+                            </Stack>
+
+                            <Box sx={{ mt: 4, height: '24px' }}>
+                                {isExporting && (
+                                    <Stack direction="row" spacing={2} alignItems="center">
+                                        <CircularProgress size={20} color="secondary" />
+                                        <Typography variant="body2" sx={{ fontWeight: 900, color: 'secondary.main' }}>{exportStatus}</Typography>
+                                    </Stack>
+                                )}
+                            </Box>
+                        </Paper>
+                    </Grid>
+
+                    <Grid item xs={12} md={5}>
+                        <Paper
+                            sx={{
+                                p: 6,
+                                height: '100%',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '12px',
-                                fontWeight: 900
+                                justifyContent: 'center',
+                                border: '3px dashed black',
+                                borderRadius: '24px',
+                                bgcolor: 'rgba(0,0,0,0.02)'
                             }}
                         >
-                            EXPORT MARKDOWN
-                        </Button>
-                        <Button
-                            kind="ghost"
-                            renderIcon={Download}
-                            onClick={() => handleExport('json')}
-                            disabled={isExporting}
-                            size="lg"
-                            style={{
-                                borderRadius: '12px',
-                                border: '3px solid var(--text-primary)',
-                                padding: '0 2.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                fontWeight: 900,
-                                color: 'var(--text-primary)'
-                            }}
-                        >
-                            EXPORT JSON
-                        </Button>
-                    </div>
-
-                    {/* Status Indicator */}
-                    <div style={{ marginTop: '2.5rem', height: '2rem' }}>
-                        {isExporting ? (
-                            <InlineLoading description={status} />
-                        ) : (
-                            status && <p style={{ color: 'var(--accent-secondary)', fontWeight: 800, fontSize: '1.1rem' }}>{status}</p>
-                        )}
-                    </div>
-                </Tile>
-            </Column>
-
-            <Column lg={8} md={0} sm={0}>
-                <div className="light-panel" style={{ padding: '3rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', opacity: 0.9, border: '2px dashed var(--text-primary)', background: 'var(--bg-sidebar)' }}>
-                    <p style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 800, fontSize: '1.25rem', lineHeight: '1.6' }}>
-                        Data is exported as a single file.<br />
-                        Markdown is optimized for <br />
-                        <span style={{ color: 'var(--accent-primary)' }}>Notion & Obsidian.</span>
-                    </p>
-                </div>
-            </Column>
-        </Grid>
+                            <Typography variant="h6" sx={{ textAlign: 'center', lineHeight: 1.8, fontWeight: 800 }}>
+                                Data is exported as a single file. Markdown is optimized for <br />
+                                <Box component="span" sx={{ color: 'primary.main', fontWeight: 950 }}>NOTION & OBSIDIAN.</Box>
+                            </Typography>
+                        </Paper>
+                    </Grid>
+                </Grid>
+            </Box>
+        </Fade>
     );
 };
 

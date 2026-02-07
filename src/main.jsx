@@ -6,17 +6,26 @@ import { Buffer } from 'buffer';
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
-import '@carbon/styles/css/styles.css';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import theme from './theme';
 import './index.css'
 import App from './App.jsx'
 import { AppProvider } from './context/AppContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AppProvider>
-      <HashRouter>
-        <App />
-      </HashRouter>
-    </AppProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <AppProvider>
+          <HashRouter>
+            <App />
+          </HashRouter>
+        </AppProvider>
+      </LocalizationProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

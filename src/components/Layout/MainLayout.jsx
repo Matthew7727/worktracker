@@ -1,28 +1,72 @@
 import React from 'react';
 import {
-    Header,
-    HeaderName,
-    HeaderGlobalBar,
-    Content,
-    Theme,
-    Search,
-    Modal,
-    TextInput,
-    Button
-} from '@carbon/react';
+    AppBar,
+    Toolbar,
+    Typography,
+    Box,
+    Container,
+    Button,
+    TextField,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    InputAdornment,
+    IconButton,
+    Paper,
+    Snackbar,
+    Alert,
+    Zoom,
+    useScrollTrigger,
+    Fab
+} from '@mui/material';
 import {
     Home,
-    Catalog,
+    Notes,
     Settings,
     FolderOpen,
-    Analytics
-} from '@carbon/icons-react';
+    Assessment,
+    Search as SearchIcon,
+    Close as CloseIcon,
+    KeyboardArrowUp as KeyboardArrowUpIcon
+} from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
-
 import { useNavigate, useLocation } from 'react-router-dom';
 
+function ScrollTop(props) {
+    const { children } = props;
+    const trigger = useScrollTrigger({
+        disableHysteresis: true,
+        threshold: 100,
+    });
+
+    const handleClick = (event) => {
+        const anchor = (event.target.ownerDocument || document).querySelector(
+            '#back-to-top-anchor',
+        );
+
+        if (anchor) {
+            anchor.scrollIntoView({
+                block: 'center',
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    return (
+        <Zoom in={trigger}>
+            <Box
+                onClick={handleClick}
+                role="presentation"
+                sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 1000 }}
+            >
+                {children}
+            </Box>
+        </Zoom>
+    );
+}
+
 const MainLayout = ({ children }) => {
-    const { selectedDirectory, setProjectDirectory, theme } = useAppContext();
+    const { selectedDirectory, setProjectDirectory, notification, hideNotification } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     const [isSearchOpen, setIsSearchOpen] = React.useState(false);
@@ -69,11 +113,6 @@ const MainLayout = ({ children }) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
                 setIsSearchOpen(true);
-                // Focus the search input in the modal after it opens
-                setTimeout(() => {
-                    const modalInput = document.getElementById('modal-search-input');
-                    if (modalInput) modalInput.focus();
-                }, 100);
             }
         };
 
@@ -81,156 +120,235 @@ const MainLayout = ({ children }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    const navItems = [
+        { label: 'Editor', path: '/', icon: <Notes /> },
+        { label: 'Dashboard', path: '/dashboard', icon: <Home /> },
+        { label: 'Reports', path: '/reports', icon: <Assessment /> },
+        { label: 'Settings', path: '/settings', icon: <Settings /> },
+    ];
+
     return (
-        <Theme theme={theme}>
-            <div className="container">
-                <Header aria-label="Work Tracker" className="premium-header" style={{ height: '5.5rem', padding: '0 4rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <HeaderName href="#" prefix="Work" onClick={() => navigate('/')} className="premium-header-name">
-                            Tracker
-                        </HeaderName>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+            <div id="back-to-top-anchor" style={{ position: 'absolute', top: 0 }} />
+            <AppBar position="fixed" elevation={0} sx={{ zIndex: 1100, borderBottom: '3px solid black' }}>
+                <Toolbar sx={{ height: '5.5rem', px: '4rem !important', display: 'flex', gap: 4, bgcolor: 'white', color: 'black' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                        <Typography
+                            variant="h5"
+                            onClick={() => navigate('/')}
+                            sx={{
+                                cursor: 'pointer',
+                                fontWeight: 950,
+                                mr: 4,
+                                letterSpacing: '-0.05em',
+                                '& span': { color: 'primary.main' },
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            WORK<span>TRACKER</span>
+                        </Typography>
+                    </Box>
 
-                        <nav className="nav-container">
-                            <div
-                                className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
-                                onClick={() => navigate('/')}
+                    <Box component="nav" sx={{ display: 'flex', gap: 2, height: '5.5rem', flexGrow: 1, overflow: 'hidden' }}>
+                        {navItems.map((item) => (
+                            <Box
+                                key={item.label}
+                                onClick={() => navigate(item.path)}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    px: 2,
+                                    height: '100%',
+                                    cursor: 'pointer',
+                                    fontWeight: 900,
+                                    fontSize: '1rem',
+                                    color: location.pathname === item.path ? 'primary.main' : 'text.primary',
+                                    borderBottom: '4px solid',
+                                    borderColor: location.pathname === item.path ? 'primary.main' : 'transparent',
+                                    transition: 'all 0.2s',
+                                    whiteSpace: 'nowrap',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(0,0,0,0.04)'
+                                    }
+                                }}
                             >
-                                <Catalog size={20} />
-                                Editor
-                            </div>
-                            <div
-                                className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
-                                onClick={() => navigate('/dashboard')}
-                            >
-                                <Home size={20} />
-                                Dashboard
-                            </div>
-                            <div
-                                className={`nav-item ${location.pathname === '/reports' ? 'active' : ''}`}
-                                onClick={() => navigate('/reports')}
-                            >
-                                <Analytics size={20} />
-                                Reports
-                            </div>
-                            <div
-                                className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
-                                onClick={() => navigate('/settings')}
-                            >
-                                <Settings size={20} />
-                                Settings
-                            </div>
-                        </nav>
-                    </div>
+                                {React.cloneElement(item.icon, { sx: { fontSize: '1.2rem' } })}
+                                {item.label}
+                            </Box>
+                        ))}
+                    </Box>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                        <div style={{ width: '350px' }}>
-                            <Search
-                                size="lg"
-                                labelText="Search entries"
-                                placeholder="Find achievements..."
-                                id="global-search"
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    if (e.target.value.length > 2) setIsSearchOpen(true);
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && searchQuery.length > 0) setIsSearchOpen(true);
-                                }}
-                                style={{
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 2, justifyContent: 'flex-end', minWidth: 0 }}>
+                        <TextField
+                            size="small"
+                            placeholder="Search archive..."
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                if (e.target.value.length > 2) setIsSearchOpen(true);
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ color: 'text.primary' }} />
+                                    </InputAdornment>
+                                ),
+                                sx: {
                                     borderRadius: '12px',
-                                    border: '2px solid var(--text-primary)',
-                                    background: 'white'
-                                }}
-                            />
-                        </div>
+                                    bgcolor: 'white',
+                                    '& fieldset': { borderWidth: '2px', borderColor: 'black !important' },
+                                    maxWidth: '400px',
+                                    minWidth: '150px'
+                                }
+                            }}
+                            sx={{ flexGrow: 1 }}
+                        />
                         <Button
-                            kind="ghost"
-                            renderIcon={FolderOpen}
+                            variant="text"
+                            startIcon={<FolderOpen />}
                             onClick={() => setProjectDirectory(null)}
-                            style={{ fontWeight: 800, color: 'var(--text-primary)' }}
+                            sx={{
+                                fontWeight: 800,
+                                color: 'text.primary',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
+                                display: { xs: 'none', md: 'flex' },
+                                '&:hover': { bgcolor: 'transparent', opacity: 0.7 }
+                            }}
                         >
                             Switch Workspace
                         </Button>
-                    </div>
-                </Header>
+                    </Box>
+                </Toolbar>
+            </AppBar>
 
-                <Modal
-                    open={isSearchOpen}
-                    onRequestClose={() => setIsSearchOpen(false)}
-                    modalHeading="GLOBAL SEARCH"
-                    primaryButtonText="Close"
-                    secondaryButtonText=""
-                    passiveModal
-                    size="lg"
-                    className="search-results-modal"
-                >
-                    <div style={{ padding: '1rem 0' }}>
-                        <TextInput
-                            id="modal-search-input"
-                            labelText="Search query"
-                            hideLabel
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Type keywords to find logs..."
-                            className="search-input-large"
-                            style={{
+            <Dialog
+                open={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+                fullWidth
+                maxWidth="md"
+                PaperProps={{
+                    sx: { p: 2, borderRadius: '24px', border: '4px solid black' }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 900, fontSize: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid black', mb: 2 }}>
+                    GLOBAL SEARCH
+                    <IconButton onClick={() => setIsSearchOpen(false)}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    <TextField
+                        fullWidth
+                        autoFocus
+                        placeholder="Type keywords to find logs..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        variant="outlined"
+                        sx={{
+                            mt: 2,
+                            '& .MuiOutlinedInput-root': {
                                 fontSize: '1.5rem',
                                 height: '4rem',
-                                border: '3px solid var(--text-primary)',
-                                borderRadius: '16px'
-                            }}
-                        />
-                        <div style={{ marginTop: '2.5rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '1rem' }}>
-                            {isSearching ? (
-                                <p style={{ textAlign: 'center', padding: '2rem', fontWeight: 800 }}>SEARCHING THE ARCHIVE...</p>
-                            ) : searchResults.length > 0 ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                    {searchResults.map((result, index) => (
-                                        <div
-                                            key={index}
-                                            onClick={() => handleResultClick(result.date)}
-                                            style={{
-                                                padding: '1.5rem',
-                                                borderRadius: '16px',
-                                                background: 'white',
-                                                cursor: 'pointer',
-                                                border: '3px solid var(--text-primary)',
-                                                transition: 'all 0.2s',
-                                                boxShadow: '0 4px 0 var(--text-primary)'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = '0 6px 0 var(--text-primary)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = '0 4px 0 var(--text-primary)';
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                                                <span style={{ fontWeight: 900, color: 'var(--accent-primary)', fontSize: '1.25rem' }}>{result.date}</span>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.5 }}>{result.fileName}</span>
-                                            </div>
-                                            <p style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 600, fontStyle: 'italic', lineHeight: '1.5' }}>
-                                                "{result.snippet}"
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p style={{ opacity: 0.6, textAlign: 'center', padding: '2rem', fontWeight: 800 }}>
-                                    {searchQuery.length >= 3 ? `NO RESULTS FOR "${searchQuery.toUpperCase()}"` : 'TYPE AT LEAST 3 CHARACTERS...'}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </Modal>
-                <Content className="content-wrapper">
+                                borderRadius: '16px',
+                                '& fieldset': { borderWidth: '3px', borderColor: 'black !important' }
+                            }
+                        }}
+                    />
+                    <Box sx={{ mt: 5, maxHeight: '500px', overflowY: 'auto', pr: 2 }}>
+                        {isSearching ? (
+                            <Typography sx={{ textAlign: 'center', p: 4, fontWeight: 800 }}>SEARCHING THE ARCHIVE...</Typography>
+                        ) : searchResults.length > 0 ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                {searchResults.map((result, index) => (
+                                    <Paper
+                                        key={index}
+                                        onClick={() => handleResultClick(result.date)}
+                                        sx={{
+                                            p: 3,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            border: '3px solid black',
+                                            borderRadius: '16px',
+                                            '&:hover': {
+                                                transform: 'translateY(-2px)',
+                                                boxShadow: '0 8px 0 black'
+                                            },
+                                            boxShadow: '0 4px 0 black'
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                                            <Typography sx={{ fontWeight: 900, color: 'primary.main', fontSize: '1.25rem' }}>{result.date}</Typography>
+                                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.5 }}>{result.fileName}</Typography>
+                                        </Box>
+                                        <Typography sx={{ fontSize: '1.1rem', fontWeight: 600, fontStyle: 'italic', lineHeight: '1.5' }}>
+                                            "{result.snippet}"
+                                        </Typography>
+                                    </Paper>
+                                ))}
+                            </Box>
+                        ) : (
+                            <Typography sx={{ opacity: 0.6, textAlign: 'center', p: 4, fontWeight: 800 }}>
+                                {searchQuery.length >= 3 ? `NO RESULTS FOR "${searchQuery.toUpperCase()}"` : 'TYPE AT LEAST 3 CHARACTERS...'}
+                            </Typography>
+                        )}
+                    </Box>
+                </DialogContent>
+            </Dialog>
+
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    pt: '5.5rem',
+                    overflowY: 'auto',
+                    bgcolor: 'background.default'
+                }}
+            >
+                <Container maxWidth={false} sx={{ py: 6, px: '4rem !important' }}>
                     {children}
-                </Content>
-            </div>
-        </Theme>
+                </Container>
+            </Box>
+
+            <ScrollTop>
+                <Fab
+                    color="primary"
+                    size="large"
+                    aria-label="scroll back to top"
+                    sx={{
+                        border: '3px solid black',
+                        boxShadow: '0 6px 0 black',
+                        '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 0 black' }
+                    }}
+                >
+                    <KeyboardArrowUpIcon sx={{ fontSize: '2rem', color: 'white' }} />
+                </Fab>
+            </ScrollTop>
+
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={4000}
+                onClose={hideNotification}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={hideNotification}
+                    severity={notification.severity}
+                    variant="filled"
+                    sx={{
+                        width: '100%',
+                        fontWeight: 900,
+                        border: '3px solid black',
+                        borderRadius: '16px',
+                        boxShadow: '0 8px 0 black',
+                        '& .MuiAlert-icon': { fontSize: '1.5rem' }
+                    }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+        </Box>
     );
 };
 

@@ -49,12 +49,26 @@ export const AppProvider = ({ children }) => {
         });
     };
 
+    // Global Notifications
+    const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
+
+    const showNotification = (message, severity = 'info') => {
+        setNotification({ open: true, message, severity });
+    };
+
+    const hideNotification = () => {
+        setNotification(prev => ({ ...prev, open: false }));
+    };
+
     const value = {
         selectedDirectory,
         setProjectDirectory,
         theme,
         toggleTheme,
-        refreshTrigger
+        refreshTrigger,
+        notification,
+        showNotification,
+        hideNotification
     };
 
     return (
