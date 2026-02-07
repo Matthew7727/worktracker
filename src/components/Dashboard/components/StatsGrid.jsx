@@ -1,4 +1,4 @@
-import React from 'react';
+limport React from 'react';
 import { Grid, Paper, Typography, Box, Stack, Divider, Chip, Skeleton } from '@mui/material';
 import { PieChart as TagIcon, Terminal as ArchiveIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import WeeklyChart from '../WeeklyChart';

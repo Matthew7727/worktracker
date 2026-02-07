@@ -4,10 +4,12 @@ import {
     Toolbar,
     Box,
     Container,
-    Button,
     Zoom,
     useScrollTrigger,
-    Fab
+    Fab,
+    IconButton,
+    Tooltip,
+    Stack
 } from '@mui/material';
 import {
     Home,
@@ -15,6 +17,7 @@ import {
     Settings,
     FolderOpen,
     Assessment,
+    MenuBook as DocsIcon,
     KeyboardArrowUp as KeyboardArrowUpIcon
 } from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
@@ -25,7 +28,7 @@ import Brand from './components/Brand';
 import Navigation from './components/Navigation';
 import GlobalSearch from './components/GlobalSearch';
 import FeedbackSystem from './components/FeedbackSystem';
-import { appBarStyles, toolbarStyles, fabStyles } from './MainLayout.styles';
+import { appBarStyles, toolbarStyles, fabStyles, toolbarIconStyles } from './MainLayout.styles';
 
 function ScrollTop({ children }) {
     const trigger = useScrollTrigger({
@@ -77,26 +80,36 @@ const MainLayout = ({ children }) => {
                         onNavigate={navigate}
                     />
 
-                    <GlobalSearch
-                        rootDir={selectedDirectory}
-                        onResultClick={handleSearchResultClick}
-                    />
+                    <Box sx={{ flexGrow: 1 }} />
 
-                    <Button
-                        variant="text"
-                        startIcon={<FolderOpen />}
-                        onClick={() => setProjectDirectory(null)}
-                        sx={{
-                            fontWeight: 800,
-                            color: 'text.primary',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                            display: { xs: 'none', md: 'flex' },
-                            '&:hover': { bgcolor: 'transparent', opacity: 0.7 }
-                        }}
-                    >
-                        Switch Workspace
-                    </Button>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        <GlobalSearch
+                            rootDir={selectedDirectory}
+                            onResultClick={handleSearchResultClick}
+                        />
+
+                        <Tooltip title="Application Docs" arrow>
+                            <IconButton
+                                onClick={() => navigate('/docs')}
+                                sx={{
+                                    ...toolbarIconStyles,
+                                    color: location.pathname === '/docs' ? 'primary.main' : 'inherit',
+                                    borderColor: location.pathname === '/docs' ? 'primary.main' : 'black'
+                                }}
+                            >
+                                <DocsIcon />
+                            </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Switch Workspace" arrow>
+                            <IconButton
+                                onClick={() => setProjectDirectory(null)}
+                                sx={toolbarIconStyles}
+                            >
+                                <FolderOpen />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
                 </Toolbar>
             </AppBar>
 

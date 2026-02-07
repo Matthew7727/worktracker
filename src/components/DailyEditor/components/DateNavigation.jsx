@@ -8,7 +8,7 @@ const DateNavigation = ({ currentDate, onPrevDay, onNextDay, onDateChange, onAdd
     return (
         <Paper sx={toolbarStyles}>
             <Stack direction="row" spacing={2} alignItems="center">
-                <IconButton onClick={onPrevDay} sx={{ border: '2px solid black' }}>
+                <IconButton onClick={onPrevDay} sx={{ border: '2px solid black' }} aria-label="Previous Day">
                     <ChevronLeft />
                 </IconButton>
 
@@ -23,7 +23,7 @@ const DateNavigation = ({ currentDate, onPrevDay, onNextDay, onDateChange, onAdd
                     }}
                 />
 
-                <IconButton onClick={onNextDay} sx={{ border: '2px solid black' }}>
+                <IconButton onClick={onNextDay} sx={{ border: '2px solid black' }} aria-label="Next Day">
                     <ChevronRight />
                 </IconButton>
             </Stack>

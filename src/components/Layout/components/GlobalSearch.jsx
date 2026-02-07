@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Box, TextField, InputAdornment, Dialog, DialogTitle,
-    DialogContent, IconButton, Typography, Paper
+    Dialog, DialogTitle, DialogContent, IconButton, Typography,
+    Paper, Box, TextField, Tooltip
 } from '@mui/material';
 import { Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material';
-import { searchFieldStyles, searchDialogStyles } from '../MainLayout.styles';
+import { searchDialogStyles, toolbarIconStyles } from '../MainLayout.styles';
 
 const GlobalSearch = ({ rootDir, onResultClick }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -54,36 +54,30 @@ const GlobalSearch = ({ rootDir, onResultClick }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 2, justifyContent: 'flex-end', minWidth: 0 }}>
-            <TextField
-                size="small"
-                placeholder="Search archive..."
-                value={query}
-                onChange={(e) => {
-                    setQuery(e.target.value);
-                    if (e.target.value.length > 2) setIsOpen(true);
-                }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <SearchIcon sx={{ color: 'text.primary' }} />
-                        </InputAdornment>
-                    ),
-                    sx: searchFieldStyles
-                }}
-                sx={{ flexGrow: 1 }}
-            />
+        <>
+            <Tooltip title="Search Archive (Ctrl+F)" arrow>
+                <IconButton
+                    onClick={() => setIsOpen(true)}
+                    sx={toolbarIconStyles}
+                    aria-label="Open search"
+                >
+                    <SearchIcon />
+                </IconButton>
+            </Tooltip>
 
             <Dialog
                 open={isOpen}
                 onClose={() => setIsOpen(false)}
                 fullWidth
                 maxWidth="md"
-                PaperProps={{ sx: searchDialogStyles }}
+                PaperProps={{
+                    sx: searchDialogStyles,
+                    'data-testid': 'search-dialog'
+                }}
             >
                 <DialogTitle sx={{ fontWeight: 900, fontSize: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid black', mb: 2 }}>
                     GLOBAL SEARCH
-                    <IconButton onClick={() => setIsOpen(false)}><CloseIcon /></IconButton>
+                    <IconButton onClick={() => setIsOpen(false)} aria-label="Close search"><CloseIcon /></IconButton>
                 </DialogTitle>
                 <DialogContent>
                     <TextField
@@ -103,6 +97,7 @@ const GlobalSearch = ({ rootDir, onResultClick }) => {
                                     <Paper
                                         key={i}
                                         onClick={() => handleSelect(res.date)}
+                                        data-testid={`search-result-${res.date}`}
                                         sx={{
                                             p: 3, cursor: 'pointer', transition: 'all 0.2s', border: '3px solid black', borderRadius: '16px',
                                             '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 0 black' }, boxShadow: '0 4px 0 black'
@@ -124,7 +119,7 @@ const GlobalSearch = ({ rootDir, onResultClick }) => {
                     </Box>
                 </DialogContent>
             </Dialog>
-        </Box>
+        </>
     );
 };
 
