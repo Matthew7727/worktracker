@@ -1,0 +1,65 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+
+const AppContext = createContext();
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAppContext = () => {
+    return useContext(AppContext);
+};
+
+export const AppProvider = ({ children }) => {
+    // Initialize state from local storage explicitly
+    const [selectedDirectory, setSelectedDirectory] = useState(() => {
+        return localStorage.getItem('workTracker_projectDir') || null;
+    });
+
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    // Watch for external file changes
+    useEffect(() => {
+        if (selectedDirectory) {
+            window.electronAPI.watchWorkspace(selectedDirectory);
+            window.electronAPI.onWorkspaceChanged((data) => {
+                console.log('Workspace changed externally:', data);
+                setRefreshTrigger(prev => prev + 1);
+            });
+        }
+    }, [selectedDirectory]);
+
+    // Helper to update state and persist
+    const setProjectDirectory = (path) => {
+        setSelectedDirectory(path);
+        if (path) {
+            localStorage.setItem('workTracker_projectDir', path);
+        } else {
+            localStorage.removeItem('workTracker_projectDir');
+        }
+    };
+
+    // Theme state
+    const [theme, setTheme] = useState(() => {
+        return localStorage.getItem('workTracker_theme') || 'white';
+    });
+
+    const toggleTheme = () => {
+        setTheme(prev => {
+            const newTheme = prev === 'white' ? 'g10' : 'white';
+            localStorage.setItem('workTracker_theme', newTheme);
+            return newTheme;
+        });
+    };
+
+    const value = {
+        selectedDirectory,
+        setProjectDirectory,
+        theme,
+        toggleTheme,
+        refreshTrigger
+    };
+
+    return (
+        <AppContext.Provider value={value}>
+            {children}
+        </AppContext.Provider>
+    );
+};
