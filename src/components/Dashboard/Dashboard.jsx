@@ -20,6 +20,7 @@ import ContributionGraph from './ContributionGraph';
 import SummaryTiles from './components/SummaryTiles';
 import StatsGrid from './components/StatsGrid';
 import RecentActivity from './components/RecentActivity';
+import TodoSummary from './components/TodoSummary';
 import { boldBorder } from './Dashboard.styles';
 
 const Dashboard = () => {
@@ -153,7 +154,10 @@ const Dashboard = () => {
             <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Typography variant="h1">Dashboard</Typography>
 
-                <SummaryTiles stats={stats} loading={loading} />
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 4 }}>
+                    <SummaryTiles stats={stats} loading={loading} />
+                    <TodoSummary />
+                </Box>
 
                 <StatsGrid
                     loading={loading}

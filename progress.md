@@ -48,10 +48,19 @@ Phase 3 (UI) initiated. Carbon Design System installed and Main Layout implement
 - [x] Final QA / manual verification (Build passed).
 - [x] Package application (Generated `release/Work Tracker Setup 0.1.0.exe`).
 - [x] Phase 6: Polish & Release (Completed).
+- [x] Phase 7: To-Do Feature (Completed).
+    - [x] Plan and Architecture.
+    - [x] Core Board Implementation (UI, Swimlanes, Navigation).
+    - [x] Data Layer (Markdown storage `YYYY-MM-DD-todos.md`).
+    - [x] Rollover Logic (Auto-migration of incomplete tasks).
+    - [x] Dynamic Categories (Add/Rename/Delete Lanes).
+    - [x] Dashboard Integration (Added TodoSummary widget).
 
 ## 🐛 Bug Fixes
 - **Runtime Error (Production)**: Fixed `Uncaught TypeError: Cannot read properties of undefined (reading 'active')` by explicitly defining `theme.palette.action` in `src/theme.js`.
 - **Runtime Error (Production - 'match')**: Fixed `TypeError: Cannot read properties of undefined (reading 'match')` by switching from `background` shorthand to `backgroundImage` for linear gradients in theme overrides.
+- **Dialog Interactivity**: Fixed issue where "Add Category" dialog was non-interactive by adjusting z-index overlapping and disabling strict focus enforcement (`disableEnforceFocus`).
+- **Swimlane Input Interactivity**: Fixed issue where "Add Task" input in swimlanes was not focusable by applying `nodrag` class, `pointerEvents: 'auto'`, and stopping event propagation.
 
 ## 🔄 Reversions
 - **Dark Theme Removal**: Removed Dark Mode functionality to resolve persistent production build stability issues. The application now enforces a high-contrast Light Theme.

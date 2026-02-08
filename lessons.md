@@ -9,7 +9,13 @@ This file accumulates knowledge to prevent regression.
 
 ## 🧠 Solved Problems
 - None yet.
-- **Node Compatibility**: The environment runs Node 25.6. Use latest versions of packages (e.g., Vite 6+). If compatibility issues arise, prompt the user to update their environment rather than downgrading packages.
+- **MUI Theme in Production**: When using `createTheme`, explicitly define nested objects like `palette.action` even if using defaults. In production builds (especially with Vite/Electron), tree-shaking or minification might cause issues if internal components try to access these properties on an undefined object (e.g., `reading 'active'`).
+- **Gradients in MUI Themes**: Use `backgroundImage: 'linear-gradient(...)'` instead of `background` shorthand within `styleOverrides`. Emotion or MUI's color manipulator might try to parse the string as a color if strictly assigned to `background`, leading to parsing errors like `reading 'match'` on undefined values during build optimization.
+- **Theme Stability**: Dark mode implementation with dynamic request/context can introduce subtle runtime errors in production builds. For this iteration, we reverted to a static Light Theme to ensure stability and eliminate `undefined` property access errors.
+- **MUI Dialogs in Electron**: If inputs in a Dialog are non-interactive or "unclickable", it may be due to z-index layering or focus trapping conflicts. Fix by increasing `zIndex` (e.g., 9999) and adding `disableEnforceFocus` and `disableRestoreFocus` props to the Dialog component.
+- **Inputs in Scrollable Areas**: In Electron, inputs within scrollable or complex flex containers may lose interactivity. Explicitly adding `className="nodrag"`, `pointerEvents: 'auto'`, and `onMouseDown={(e) => e.stopPropagation()}` to the input container usually resolves this.
+- **Date Navigation Constraints**: When implementing date navigation, implementing strict future-date blocking reinforces rollover logic by ensuring users can only move forward as real time progresses.
+
 - **Windows Shell**: When running `npm` commands via `run_command` on Windows, prepend `cmd /c` to bypass PowerShell execution policy restrictions (e.g., `cmd /c npm run lint`).
 - **Carbon Design System**:
   - Requires `@carbon/styles/css/styles.css` import in `main.jsx`.

@@ -18,7 +18,8 @@ import {
     FolderOpen,
     Assessment,
     MenuBook as DocsIcon,
-    KeyboardArrowUp as KeyboardArrowUpIcon
+    KeyboardArrowUp as KeyboardArrowUpIcon,
+    Checklist
 } from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -58,6 +59,7 @@ const MainLayout = ({ children }) => {
     const navItems = [
         { label: 'Dashboard', path: '/dashboard', icon: <Home /> },
         { label: 'Editor', path: '/', icon: <Notes /> },
+        { label: 'To-Dos', path: '/todos', icon: <Checklist /> },
         { label: 'Reports', path: '/reports', icon: <Assessment /> },
         { label: 'Settings', path: '/settings', icon: <Settings /> },
     ];

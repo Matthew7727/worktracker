@@ -4,6 +4,7 @@ import { useAppContext } from './context/AppContext';
 import WelcomeScreen from './components/Onboarding/WelcomeScreen';
 import MainLayout from './components/Layout/MainLayout';
 import DailyEditor from './components/DailyEditor/DailyEditor';
+import TodoBoard from './components/TodoBoard/TodoBoard';
 import Dashboard from './components/Dashboard/Dashboard';
 import Reports from './components/Reports/Reports';
 import Settings from './components/Settings/Settings';
@@ -21,6 +22,7 @@ function App() {
     <MainLayout>
       <Routes>
         <Route path="/" element={<DailyEditor />} />
+        <Route path="/todos" element={<TodoBoard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
