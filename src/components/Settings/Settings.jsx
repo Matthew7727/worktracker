@@ -16,10 +16,10 @@ const Settings = () => {
 
     return (
         <Fade in={true} timeout={600}>
-            <Box className="settings-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <Typography variant="h1">Settings</Typography>
+            <Box className="settings-page" sx={{ maxWidth: '1000px', mx: 'auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Typography variant="h1" sx={{ textAlign: 'center' }}>Settings</Typography>
 
-                <Grid container spacing={6}>
+                <Grid container spacing={6} justifyContent="center">
                     <Grid item xs={12} md={8}>
                         <Stack spacing={4}>
                             {/* Workspace Section */}

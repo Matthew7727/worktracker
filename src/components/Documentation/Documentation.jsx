@@ -11,9 +11,7 @@ const Documentation = () => {
     const scrollToSection = (id) => {
         const element = document.getElementById(id);
         if (element) {
-            const yOffset = -120; // Account for fixed header
-            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
+            element.scrollIntoView({ behavior: 'smooth' });
         }
     };
 
@@ -63,7 +61,7 @@ const Documentation = () => {
                 {/* Main Content */}
                 <Box sx={docsContentStyles}>
                     {docsContent.map((section) => (
-                        <Box key={section.id} id={section.id} sx={{ mb: 10 }}>
+                        <Box key={section.id} id={section.id} sx={{ mb: 10, scrollMarginTop: '120px' }}>
                             <ReactMarkdown>{section.content}</ReactMarkdown>
                         </Box>
                     ))}

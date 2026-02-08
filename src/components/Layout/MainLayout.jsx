@@ -19,9 +19,12 @@ import {
     Assessment,
     MenuBook as DocsIcon,
     KeyboardArrowUp as KeyboardArrowUpIcon,
-    Checklist
+    Checklist,
+    Brightness4,
+    Brightness7
 } from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
+import { useThemeContext } from '../../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // Sub-components
@@ -53,12 +56,13 @@ function ScrollTop({ children }) {
 
 const MainLayout = ({ children }) => {
     const { selectedDirectory, setProjectDirectory, notification, hideNotification } = useAppContext();
+    const { mode, toggleTheme } = useThemeContext();
     const navigate = useNavigate();
     const location = useLocation();
 
     const navItems = [
         { label: 'Dashboard', path: '/', icon: <Home /> },
-        { label: 'Editor', path: '/editor', icon: <Notes /> },
+        { label: 'Entries', path: '/editor', icon: <Notes /> },
         { label: 'To-Dos', path: '/todos', icon: <Checklist /> },
         { label: 'Reports', path: '/reports', icon: <Assessment /> },
         { label: 'Settings', path: '/settings', icon: <Settings /> },
@@ -109,6 +113,12 @@ const MainLayout = ({ children }) => {
                                 sx={toolbarIconStyles}
                             >
                                 <FolderOpen />
+                            </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`} arrow>
+                            <IconButton onClick={toggleTheme} sx={toolbarIconStyles}>
+                                {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
                             </IconButton>
                         </Tooltip>
                     </Stack>

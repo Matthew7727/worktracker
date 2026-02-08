@@ -7,8 +7,8 @@ const DashboardWidget = ({ title, icon, children, xs = 12, sm, md, lg, xl, sx = 
         <Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
             <Paper
                 {...props}
-                sx={{
-                    ...boldBorder,
+                sx={(theme) => ({
+                    ...boldBorder(theme),
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -16,10 +16,10 @@ const DashboardWidget = ({ title, icon, children, xs = 12, sm, md, lg, xl, sx = 
                     transition: 'all 0.2s',
                     '&:hover': {
                         transform: 'translate(-4px, -4px)',
-                        boxShadow: '10px 10px 0px #000000',
+                        boxShadow: theme.palette.mode === 'light' ? '10px 10px 0px #000000' : '10px 10px 0px rgba(255,255,255,0.1)',
                     },
                     ...sx
-                }}
+                })}
             >
                 {title && (
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 900, display: 'flex', alignItems: 'center', gap: .5 }}>

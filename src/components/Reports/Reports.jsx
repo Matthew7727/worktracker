@@ -95,15 +95,15 @@ const Reports = () => {
 
     return (
         <Fade in={true} timeout={600}>
-            <Box className="reports-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <Box>
+            <Box className="reports-page" sx={{ maxWidth: '1200px', mx: 'auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h1">Reports & Export</Typography>
                     <Typography variant="h5" sx={{ mt: 2, fontWeight: 700, opacity: 0.7 }}>
                         Generate and distribute your work intelligence.
                     </Typography>
                 </Box>
 
-                <Grid container spacing={6}>
+                <Grid container spacing={6} justifyContent="center">
                     <Grid item xs={12} md={7}>
                         <Paper sx={{ p: 6, borderRadius: '24px', border: '3px solid black' }}>
                             <Typography variant="h4" sx={{ mb: 4 }}>Configuration</Typography>

@@ -112,6 +112,7 @@ export const docsSidebarStyles = {
 export const docsContentStyles = {
     flexGrow: 1,
     minWidth: 0,
+    textAlign: 'left',
     '& h1': { fontWeight: 950, fontSize: '3rem', mb: 4, letterSpacing: '-0.02em', color: 'text.primary' },
     '& h2': { fontWeight: 900, fontSize: '2rem', mt: 6, mb: 3, borderBottom: '3px solid', borderColor: 'divider', pb: 1, color: 'text.primary' },
     '& h3': { fontWeight: 900, fontSize: '1.5rem', mt: 4, mb: 2, color: 'text.primary' },

@@ -6,11 +6,11 @@ import { Buffer } from 'buffer';
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeContextProvider } from './context/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { theme } from './theme';
+// import { theme } from './theme'; // Theme is now handled in ThemeContext
 import './index.css'
 import App from './App.jsx'
 import { AppProvider } from './context/AppContext.jsx'
@@ -22,14 +22,14 @@ setupElectronMock();
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AppProvider>
-      <ThemeProvider theme={theme}>
+      <ThemeContextProvider>
         <CssBaseline />
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <HashRouter>
             <App />
           </HashRouter>
         </LocalizationProvider>
-      </ThemeProvider>
+      </ThemeContextProvider>
     </AppProvider>
   </StrictMode>,
 )
