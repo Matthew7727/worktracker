@@ -161,6 +161,8 @@ function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1300,
         height: 900,
+        title: "Work-Tracker",
+        icon: path.join(__dirname, '../build/icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,

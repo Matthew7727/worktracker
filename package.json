@@ -18,14 +18,16 @@
   },
   "build": {
     "appId": "com.matth.worktracker",
-    "productName": "Work Tracker",
+    "productName": "Work-Tracker",
     "directories": {
       "output": "release"
     },
+    "icon": "build/icon.png",
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "build/icon.png"
     ],
     "win": {
       "target": "nsis"
