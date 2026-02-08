@@ -83,6 +83,7 @@ const Lane = ({
                 {isRenaming ? (
                     <TextField
                         size="small"
+                        inputProps={{ "data-testid": "rename-input" }}
                         value={renameText}
                         onChange={(e) => setRenameText(e.target.value)}
                         onBlur={saveRename}
