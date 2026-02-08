@@ -4,7 +4,7 @@ import {
     Paper, Box, TextField, Tooltip
 } from '@mui/material';
 import { Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material';
-import { searchDialogStyles, toolbarIconStyles } from '../MainLayout.styles';
+import { searchDialogStyles, toolbarIconStyles } from '@/components/Layout/MainLayout.styles';
 
 const GlobalSearch = ({ rootDir, onResultClick }) => {
     const [isOpen, setIsOpen] = useState(false);

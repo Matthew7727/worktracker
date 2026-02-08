@@ -1,8 +1,8 @@
 import React from 'react';
 import { Grid, Paper, Typography, Box, Stack, Divider, Chip, Skeleton } from '@mui/material';
 import { PieChart as TagIcon, Terminal as ArchiveIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
-import WeeklyChart from '../WeeklyChart';
-import { boldBorder } from '../Dashboard.styles';
+import WeeklyChart from '@/components/Dashboard/WeeklyChart';
+import { boldBorder } from '@/components/Dashboard/Dashboard.styles';
 
 const MatrixCard = ({ loading, topTags }) => (
     <Paper sx={(theme) => ({ ...boldBorder(theme), p: 3, height: '100%' })}>

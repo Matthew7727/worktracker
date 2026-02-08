@@ -11,10 +11,10 @@ import {
     CircularProgress,
     Fade
 } from '@mui/material';
-import { useAppContext } from '../../context/AppContext';
-import { getDailyFilePath } from '../../utils/fileHelpers';
-import { stringifyMarkdown } from '../../utils/markdownParser';
-import { loadAllEntries } from '../../utils/DataManager';
+import { useAppContext } from '@/context/AppContext';
+import { getDailyFilePath } from '@/utils/fileHelpers';
+import { stringifyMarkdown } from '@/utils/markdownParser';
+import { loadAllEntries } from '@/utils/DataManager';
 import { useLocation } from 'react-router-dom';
 
 // Sub-components
