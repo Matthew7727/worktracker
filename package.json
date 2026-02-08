@@ -16,9 +16,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:unit": "vitest run src/utils src/services src/hooks src/context",
+    "test:integration": "vitest run src/components",
     "electron": "electron .",
-    "electron:build": "vite build && electron-builder"
+    "electron:build": "vite build && electron-builder",
+    "prepare": "husky"
   },
   "build": {
     "appId": "com.matth.worktracker",
@@ -83,12 +86,14 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "jsdom": "^28.0.0",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
