@@ -161,94 +161,92 @@ const Dashboard = () => {
         <Fade in={true} timeout={600}>
             <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <Typography variant="h1" sx={{ fontSize: '2.5rem', mb: 1 }}>Dashboard</Typography>
-                <Box sx={{ mx: 'auto', width: '100%' }}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <Grid container spacing={3} justifyContent="center">
-                                <DashboardWidget
-                                    title="ACTIVE DAYS"
-                                    icon={<EventAvailable sx={{ color: 'primary.main', fontSize: '2rem' }} />}
-                                    xs={4}
-                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <StatContent
-                                        value={stats.totalDays}
-                                        subtitle="Total archive dates"
-                                        loading={loading}
-                                    />
-                                </DashboardWidget>
-                                <DashboardWidget
-                                    title="TOTAL LOGS"
-                                    icon={<TotalIcon sx={{ color: 'secondary.main', fontSize: '2rem' }} />}
-                                    xs={4}
-                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%' }}>
-                                    <StatContent
-                                        value={stats.totalEntries}
-                                        subtitle="Discrete contributions"
-                                        loading={loading}
-                                    />
-                                </DashboardWidget>
-                                <DashboardWidget
-                                    title="STREAK"
-                                    icon={<StreakIcon sx={{ color: '#eb8449ff', fontSize: '2rem' }} />}
-                                    xs={4}
-                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <StatContent
-                                        value={`${stats.currentStreak}D`}
-                                        subtitle="Consecutive productivity"
-                                        loading={loading}
-                                    />
-                                    <Divider sx={{ my: 1 }} />
-                                </DashboardWidget>
-                                <DashboardWidget
-                                    title=" ALL-TIME HIGH"
-                                    icon={<StreakIcon sx={{ color: '#f50000ff', fontSize: '2rem' }} />}
-                                    xs={4}
-                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <StatContent
-                                        value={`${stats.longestStreak}D`}
-                                        subtitle="All-time high record"
-                                        loading={loading}
-                                    />
-                                    <Divider sx={{ my: 1 }} />
-                                </DashboardWidget>
-                                <DashboardWidget title="Weekly Distribution" xs={6}>
-                                    <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                                        {loading ? <Skeleton variant="rectangular" width="100%" /> : <WeeklyChart entries={allEntries} />}
-                                    </Box>
-                                </DashboardWidget>
-                                <DashboardWidget title="Tag Matrix" xs={12}>
-                                    <MatrixContent loading={loading} topTags={stats.topTags} />
-                                </DashboardWidget>
-                                <Grid item size={4} spacing={8}>
-                                    <DashboardWidget xs={12} sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                        <PersonaContent loading={loading} persona={stats.persona} />
-                                    </DashboardWidget>
-                                </Grid>
-                                <Grid item size={12} spacing={8}>
-                                    <DashboardWidget title="Annual Archive Pipeline" xs={12}>
-                                        {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
-                                    </DashboardWidget>
-                                </Grid>
+                <Box sx={{ mx: 'auto', width: '100%', maxWidth: '1600px' }}>
+                    <Grid container spacing={3} justifyContent="center">
+                        <DashboardWidget
+                            title="ACTIVE DAYS"
+                            icon={<EventAvailable sx={{ color: 'primary.main', fontSize: '2rem' }} />}
+                            xs={3}
+                            contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <StatContent
+                                value={stats.totalDays}
+                                subtitle="Total archive dates"
+                                loading={loading}
+                            />
+                        </DashboardWidget>
+                        <DashboardWidget
+                            title="TOTAL LOGS"
+                            icon={<TotalIcon sx={{ color: 'secondary.main', fontSize: '2rem' }} />}
+                            xs={3}
+                            contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%' }}>
+                            <StatContent
+                                value={stats.totalEntries}
+                                subtitle="Discrete contributions"
+                                loading={loading}
+                            />
+                        </DashboardWidget>
+                        <DashboardWidget
+                            title="STREAK"
+                            icon={<StreakIcon sx={{ color: '#eb8449ff', fontSize: '2rem' }} />}
+                            xs={3}
+                            contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <StatContent
+                                value={`${stats.currentStreak}D`}
+                                subtitle="Consecutive productivity"
+                                loading={loading}
+                            />
+                            <Divider sx={{ my: 1 }} />
+                        </DashboardWidget>
+                        <DashboardWidget
+                            title=" ALL-TIME HIGH"
+                            icon={<StreakIcon sx={{ color: '#f50000ff', fontSize: '2rem' }} />}
+                            xs={3}
+                            contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <StatContent
+                                value={`${stats.longestStreak}D`}
+                                subtitle="All-time high record"
+                                loading={loading}
+                            />
+                            <Divider sx={{ my: 1 }} />
+                        </DashboardWidget>
 
-                            </Grid>
+                        <DashboardWidget title="Weekly Distribution" xs={6}>
+                            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+                                {loading ? <Skeleton variant="rectangular" width="100%" /> : <WeeklyChart entries={allEntries} />}
+                            </Box>
+                        </DashboardWidget>
+                        <DashboardWidget xs={6}>
+                            <TodoSummaryContent />
+                        </DashboardWidget>
 
+                        <DashboardWidget title="Tag Matrix" xs={12}>
+                            <MatrixContent loading={loading} topTags={stats.topTags} />
+                        </DashboardWidget>
 
-                        </Grid>
-                        <Grid container spacing={3}>
-
-                            <DashboardWidget title="Recent Activity" xs={12}>
-                                <RecentActivityContent
-                                    loading={loading}
-                                    recentEntries={stats.recentEntries}
-                                    onEntryClick={handleEntryClick}
-                                    onDeleteClick={(entry) => {
-                                        setEntryToDelete(entry);
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                />
+                        <Grid item size={10}>
+                            <DashboardWidget xs={12} sx={{ bgcolor: 'primary.main', color: 'white' }}>
+                                <PersonaContent loading={loading} persona={stats.persona} />
                             </DashboardWidget>
+
                         </Grid>
 
+
+
+                        <DashboardWidget title="Annual Archive Pipeline" xs={12}>
+                            {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
+                        </DashboardWidget>
+
+                        <DashboardWidget title="Recent Activity" xs={12}>
+                            <RecentActivityContent
+                                loading={loading}
+                                recentEntries={stats.recentEntries}
+                                onEntryClick={handleEntryClick}
+                                onDeleteClick={(entry) => {
+                                    setEntryToDelete(entry);
+                                    setIsDeleteModalOpen(true);
+                                }}
+                            />
+                        </DashboardWidget>
                     </Grid>
                 </Box>
 
