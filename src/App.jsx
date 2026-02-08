@@ -21,9 +21,10 @@ function App() {
   return (
     <MainLayout>
       <Routes>
-        <Route path="/" element={<DailyEditor />} />
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/editor" element={<DailyEditor />} />
         <Route path="/todos" element={<TodoBoard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/docs" element={<Documentation />} />

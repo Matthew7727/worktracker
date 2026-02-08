@@ -14,6 +14,10 @@ import { theme } from './theme';
 import './index.css'
 import App from './App.jsx'
 import { AppProvider } from './context/AppContext.jsx'
+import { setupElectronMock } from './mocks/electronMock';
+
+// Setup mock for browser development
+setupElectronMock();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

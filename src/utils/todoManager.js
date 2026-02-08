@@ -175,6 +175,83 @@ const parseTodoMarkdown = (content) => {
     return lanes.length > 0 ? lanes : getDefaultLanes();
 };
 
+/**
+ * Aggregates todo statistics
+ * @returns {Promise<{ today: { total: number, completed: number, byCategory: Object }, month: { completed: number }, year: { completed: number } }>}
+ */
+export const getTodoStats = async (rootDir) => {
+    if (!window.electronAPI) return { today: {}, month: {}, year: {} };
+
+    // 1. List all todo files
+    const result = await window.electronAPI.listAllFiles(rootDir);
+    if (!result.success) return { today: {}, month: {}, year: {} };
+
+    const todoFiles = result.files.filter(f => f.endsWith('-todos.md'));
+
+    const stats = {
+        today: { total: 0, completed: 0, byCategory: [] },
+        month: { completed: 0 },
+        year: { completed: 0 }
+    };
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Helper to parse filename YYYY-MM-DD
+    const getDateFromPath = (path) => {
+        const basename = path.split(/[\\/]/).pop();
+        const datePart = basename.replace('-todos.md', '');
+        return new Date(datePart);
+    };
+
+    // Parallel-ish loading (limited by electron bridge, but we can try Promise.all)
+    // For performance, we might want to limit this or only read recent files.
+    // For now, let's read all. If it gets slow, we optimize.
+    const filePromises = todoFiles.map(async (filePath) => {
+        const fileRes = await window.electronAPI.readFile(filePath);
+        if (!fileRes.success) return null;
+
+        const date = getDateFromPath(filePath);
+        const lanes = parseTodoMarkdown(fileRes.data);
+
+        let fileCompleted = 0;
+        lanes.forEach(lane => {
+            lane.items.forEach(item => {
+                if (item.completed) fileCompleted++;
+            });
+        });
+
+        const isToday = filePath.includes(todayStr);
+
+        if (isToday) {
+            lanes.forEach(lane => {
+                const laneTotal = lane.items.length;
+                const laneCompleted = lane.items.filter(i => i.completed).length;
+                stats.today.total += laneTotal;
+                stats.today.completed += laneCompleted;
+                stats.today.byCategory.push({
+                    title: lane.title,
+                    total: laneTotal,
+                    completed: laneCompleted
+                });
+            });
+        }
+
+        if (date.getFullYear() === currentYear) {
+            stats.year.completed += fileCompleted;
+            if (date.getMonth() === currentMonth) {
+                stats.month.completed += fileCompleted;
+            }
+        }
+    });
+
+    await Promise.all(filePromises);
+
+    return stats;
+};
+
 const serializeTodoMarkdown = (lanes) => {
     return lanes.map(lane => {
         const header = `# ${lane.title}`;

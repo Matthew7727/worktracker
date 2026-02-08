@@ -9,7 +9,9 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    Fade
+    Fade,
+    Grid,
+    Divider
 } from '@mui/material';
 import { useAppContext } from '../../context/AppContext';
 import { loadAllEntries } from '../../utils/DataManager';
@@ -17,11 +19,17 @@ import { useNavigate } from 'react-router-dom';
 import ContributionGraph from './ContributionGraph';
 
 // Sub-components
-import SummaryTiles from './components/SummaryTiles';
-import StatsGrid from './components/StatsGrid';
-import RecentActivity from './components/RecentActivity';
-import TodoSummary from './components/TodoSummary';
-import { boldBorder } from './Dashboard.styles';
+import { StatContent } from './components/SummaryTiles';
+import DashboardWidget from './components/DashboardWidget';
+import WeeklyChart from './WeeklyChart';
+import { MatrixContent, PersonaContent } from './components/StatsCards';
+import RecentActivityContent from './components/RecentActivity';
+import TodoSummaryContent from './components/TodoSummary';
+import {
+    EventAvailable,
+    AutoGraph as TotalIcon,
+    LocalFireDepartment as StreakIcon
+} from '@mui/icons-material';
 
 const Dashboard = () => {
     const { selectedDirectory, refreshTrigger, showNotification } = useAppContext();
@@ -151,41 +159,104 @@ const Dashboard = () => {
 
     return (
         <Fade in={true} timeout={600}>
-            <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <Typography variant="h1">Dashboard</Typography>
+            <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Typography variant="h1" sx={{ fontSize: '2.5rem', mb: 1 }}>Dashboard</Typography>
+                <Box sx={{ mx: 'auto', width: '100%' }}>
+                    <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                            <Grid container spacing={3} justifyContent="center">
+                                <DashboardWidget
+                                    title="ACTIVE DAYS"
+                                    icon={<EventAvailable sx={{ color: 'primary.main', fontSize: '2rem' }} />}
+                                    xs={4}
+                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <StatContent
+                                        value={stats.totalDays}
+                                        subtitle="Total archive dates"
+                                        loading={loading}
+                                    />
+                                </DashboardWidget>
+                                <DashboardWidget
+                                    title="TOTAL LOGS"
+                                    icon={<TotalIcon sx={{ color: 'secondary.main', fontSize: '2rem' }} />}
+                                    xs={4}
+                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '100%' }}>
+                                    <StatContent
+                                        value={stats.totalEntries}
+                                        subtitle="Discrete contributions"
+                                        loading={loading}
+                                    />
+                                </DashboardWidget>
+                                <DashboardWidget
+                                    title="STREAK"
+                                    icon={<StreakIcon sx={{ color: '#eb8449ff', fontSize: '2rem' }} />}
+                                    xs={4}
+                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <StatContent
+                                        value={`${stats.currentStreak}D`}
+                                        subtitle="Consecutive productivity"
+                                        loading={loading}
+                                    />
+                                    <Divider sx={{ my: 1 }} />
+                                </DashboardWidget>
+                                <DashboardWidget
+                                    title=" ALL-TIME HIGH"
+                                    icon={<StreakIcon sx={{ color: '#f50000ff', fontSize: '2rem' }} />}
+                                    xs={4}
+                                    contentSx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <StatContent
+                                        value={`${stats.longestStreak}D`}
+                                        subtitle="All-time high record"
+                                        loading={loading}
+                                    />
+                                    <Divider sx={{ my: 1 }} />
+                                </DashboardWidget>
+                                <DashboardWidget title="Weekly Distribution" xs={6}>
+                                    <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+                                        {loading ? <Skeleton variant="rectangular" width="100%" /> : <WeeklyChart entries={allEntries} />}
+                                    </Box>
+                                </DashboardWidget>
+                                <DashboardWidget title="Tag Matrix" xs={12}>
+                                    <MatrixContent loading={loading} topTags={stats.topTags} />
+                                </DashboardWidget>
+                                <Grid item size={4} spacing={8}>
+                                    <DashboardWidget xs={12} sx={{ bgcolor: 'primary.main', color: 'white' }}>
+                                        <PersonaContent loading={loading} persona={stats.persona} />
+                                    </DashboardWidget>
+                                </Grid>
+                                <Grid item size={12} spacing={8}>
+                                    <DashboardWidget title="Annual Archive Pipeline" xs={12}>
+                                        {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
+                                    </DashboardWidget>
+                                </Grid>
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 4 }}>
-                    <SummaryTiles stats={stats} loading={loading} />
-                    <TodoSummary />
+                            </Grid>
+
+
+                        </Grid>
+                        <Grid container spacing={3}>
+
+                            <DashboardWidget title="Recent Activity" xs={12}>
+                                <RecentActivityContent
+                                    loading={loading}
+                                    recentEntries={stats.recentEntries}
+                                    onEntryClick={handleEntryClick}
+                                    onDeleteClick={(entry) => {
+                                        setEntryToDelete(entry);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                />
+                            </DashboardWidget>
+                        </Grid>
+
+                    </Grid>
                 </Box>
-
-                <StatsGrid
-                    loading={loading}
-                    allEntries={allEntries}
-                    topTags={stats.topTags}
-                    persona={stats.persona}
-                />
-
-                <Paper sx={{ ...boldBorder, p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 900 }}>Annual Archive Pipeline</Typography>
-                    {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
-                </Paper>
-
-                <RecentActivity
-                    loading={loading}
-                    recentEntries={stats.recentEntries}
-                    onEntryClick={handleEntryClick}
-                    onDeleteClick={(entry) => {
-                        setEntryToDelete(entry);
-                        setIsDeleteModalOpen(true);
-                    }}
-                />
 
                 <Dialog
                     open={isDeleteModalOpen}
                     onClose={() => setIsDeleteModalOpen(false)}
                     PaperProps={{
-                        sx: { borderRadius: '24px', border: '4px solid black', p: 3 }
+                        sx: { borderRadius: '24px', border: '4px solid black', p: 3, boxShadow: '8px 8px 0px #000' }
                     }}
                 >
                     <DialogTitle sx={{ fontWeight: 950, fontSize: '2rem', textAlign: 'center', borderBottom: '3px solid black', mb: 3 }}>
@@ -199,16 +270,16 @@ const Dashboard = () => {
                         </Typography>
                     </DialogContent>
                     <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 2 }}>
-                        <Button variant="outlined" onClick={() => setIsDeleteModalOpen(false)} sx={{ px: 4 }}>
+                        <Button variant="outlined" onClick={() => setIsDeleteModalOpen(false)} sx={{ px: 4, borderWidth: 2, fontWeight: 700, borderColor: 'black', color: 'black', '&:hover': { borderWidth: 2, bgcolor: 'action.hover' } }}>
                             KEEP CONTRIBUTION
                         </Button>
-                        <Button variant="contained" color="error" onClick={confirmDelete} sx={{ px: 4, bgcolor: 'error.main', border: 'none' }}>
+                        <Button variant="contained" color="error" onClick={confirmDelete} sx={{ px: 4, bgcolor: 'error.main', border: '2px solid black', boxShadow: '4px 4px 0px black', fontWeight: 700, '&:hover': { transform: 'translate(-2px,-2px)', boxShadow: '6px 6px 0px black' } }}>
                             PERMANENTLY DELETE
                         </Button>
                     </DialogActions>
                 </Dialog>
             </Box>
-        </Fade>
+        </Fade >
     );
 };
 

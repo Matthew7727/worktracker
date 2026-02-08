@@ -44,7 +44,7 @@ const ContributionGraph = ({ entries }) => {
     const getColor = (date) => {
         if (!date) return 'transparent';
         const dateStr = date.toISOString().split('T')[0];
-        return entryMap.has(dateStr) ? theme.palette.primary.main : 'rgba(0,0,0,0.08)';
+        return entryMap.has(dateStr) ? theme.palette.primary.main : '#bdbdbd';
     };
 
     const getTitle = (date) => {
@@ -54,7 +54,7 @@ const ContributionGraph = ({ entries }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', overflowX: 'auto', py: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', overflowX: 'auto', py: 2, alignItems: 'center' }}>
             <Box sx={{ display: 'flex', gap: `${blockGap}px` }}>
                 {weeks.map((week, wIndex) => (
                     <Box key={wIndex} sx={{ display: 'flex', flexDirection: 'column', gap: `${blockGap}px` }}>

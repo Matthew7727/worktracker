@@ -189,15 +189,15 @@ const TodoBoard = () => {
     const [isAddLaneOpen, setIsAddLaneOpen] = useState(false);
     const [newLaneTitle, setNewLaneTitle] = useState('');
 
-    useEffect(() => {
-        loadData();
-    }, [selectedDirectory, currentDate]);
-
     const loadData = async () => {
         if (!selectedDirectory) return;
         const data = await loadDailyTodos(selectedDirectory, currentDate);
         setLanes(data || []);
     };
+
+    useEffect(() => {
+        loadData();
+    }, [selectedDirectory, currentDate]);
 
     const saveData = (newLanes) => {
         setLanes(newLanes);

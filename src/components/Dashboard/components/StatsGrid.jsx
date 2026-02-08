@@ -5,7 +5,7 @@ import WeeklyChart from '../WeeklyChart';
 import { boldBorder } from '../Dashboard.styles';
 
 const MatrixCard = ({ loading, topTags }) => (
-    <Paper sx={{ ...boldBorder, p: 4, height: '100%' }}>
+    <Paper sx={{ ...boldBorder, p: 3, height: '100%' }}>
         <Stack direction="row" spacing={2} alignItems="center" mb={3}>
             <TagIcon color="primary" />
             <Typography variant="h5" sx={{ fontWeight: 900 }}>Matrix</Typography>
@@ -41,7 +41,7 @@ const PersonaCard = ({ loading, persona }) => (
     <Paper
         sx={{
             ...boldBorder,
-            p: 4,
+            p: 3,
             height: '100%',
             bgcolor: 'primary.main',
             color: 'white',
@@ -65,9 +65,9 @@ const PersonaCard = ({ loading, persona }) => (
 
 const StatsGrid = ({ loading, allEntries, topTags, persona }) => {
     return (
-        <Grid container spacing={4}>
+        <Grid container spacing={3}>
             <Grid item xs={12} lg={6}>
-                <Paper sx={{ ...boldBorder, p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Paper sx={{ ...boldBorder, p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="h5" sx={{ mb: 4, fontWeight: 900 }}>Weekly Distribution</Typography>
                     <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
                         {loading ? <Skeleton variant="rectangular" width="100%" height={200} /> : <WeeklyChart entries={allEntries} />}

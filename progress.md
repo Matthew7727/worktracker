@@ -71,4 +71,11 @@ Phase 3 (UI) initiated. Carbon Design System installed and Main Layout implement
 - [ ] Cloud Sync.
 
 ## 🛑 Known Issues / Blockers
+- [x] Phase 14: Dashboard Visual Rework (Completed).
+    - [x] 2-Column Symmetrical Layout.
+    - [x] Balanced Component Heights.
+    - [x] Standardized Widget Containers (Fixed double-wrapping).
+    - [x] Fixed TodoBoard regression (loadData initialization).
+
+## 🛑 Known Issues / Blockers
 - None currently.
