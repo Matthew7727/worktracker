@@ -1,4 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { autoUpdater } from 'electron-updater';
+import log from 'electron-log';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
@@ -6,6 +8,37 @@ import chokidar from 'chokidar';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Configure logging
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
+
+// Auto-updater events
+autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for update...');
+});
+autoUpdater.on('update-available', (info) => {
+    log.info('Update available:', info);
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) mainWindow.webContents.send('update:available', info);
+});
+autoUpdater.on('update-not-available', (info) => {
+    log.info('Update not available:', info);
+});
+autoUpdater.on('error', (err) => {
+    log.error('Error in auto-updater:', err);
+});
+autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    log.info(log_message);
+});
+autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded:', info);
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) mainWindow.webContents.send('update:downloaded', info);
+});
 
 async function handleFileOpen() {
     const { canceled, filePaths } = await dialog.showOpenDialog({
@@ -194,7 +227,23 @@ app.whenReady().then(() => {
     ipcMain.handle('fs:watchWorkspace', handleWatchWorkspace);
     ipcMain.handle('shell:openExternal', (event, url) => shell.openExternal(url));
 
+    // Auto-update IPC
+    ipcMain.handle('update:check', () => {
+        if (!app.isPackaged) return { status: 'dev' };
+        autoUpdater.checkForUpdatesAndNotify();
+        return { status: 'checking' };
+    });
+
+    ipcMain.handle('update:quitAndInstall', () => {
+        autoUpdater.quitAndInstall();
+    });
+
     createWindow();
+
+    // Check for updates after window creation (only in production)
+    if (app.isPackaged) {
+        autoUpdater.checkForUpdatesAndNotify();
+    }
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();

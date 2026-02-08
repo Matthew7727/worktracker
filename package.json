@@ -2,9 +2,13 @@
   "name": "work-tracker",
   "productName": "Work Tracker",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A minimalist daily work tracking application.",
   "author": "Matt H",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Matthew7727/worktracker.git"
+  },
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -28,6 +32,13 @@
       "electron/**/*",
       "package.json",
       "build/icon.png"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Matthew7727",
+        "repo": "worktracker"
+      }
     ],
     "win": {
       "target": "nsis"
@@ -53,6 +64,8 @@
     "buffer": "^6.0.3",
     "chokidar": "^5.0.0",
     "date-fns": "^4.1.0",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.7.3",
     "gray-matter": "^4.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
