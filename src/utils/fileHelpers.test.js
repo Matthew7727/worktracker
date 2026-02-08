@@ -26,5 +26,21 @@ describe('fileHelpers', () => {
             // Implementation adds / between root and year
             expect(path.replace(/\\/g, '/')).toBe('C:/logs/2024/01/2024-01-01.md');
         });
+
+        it('should return empty string and log error if rootDir is missing', () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+            const path = getDailyFilePath(null, new Date());
+            expect(path).toBe('');
+            expect(consoleSpy).toHaveBeenCalledWith('getDailyFilePath: rootDir is required');
+            consoleSpy.mockRestore();
+        });
+
+        it('should return empty string and log error if date is invalid', () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+            const path = getDailyFilePath('C:/logs', new Date('invalid'));
+            expect(path).toBe('');
+            expect(consoleSpy).toHaveBeenCalledWith('getDailyFilePath: Invalid date provided');
+            consoleSpy.mockRestore();
+        });
     });
 });

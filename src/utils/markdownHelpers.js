@@ -17,7 +17,7 @@ export const injectMarkdown = (text, start, end, type) => {
 
     // Helper to determine if we are at the start of a line
     const lastNewLine = before.lastIndexOf('\n');
-    const isStartOfLine = lastNewLine === -1 || lastNewLine === before.length - 1;
+    const isStartOfLine = (lastNewLine === -1 && before.length === 0) || lastNewLine === before.length - 1;
 
     switch (type) {
         case 'bold':
