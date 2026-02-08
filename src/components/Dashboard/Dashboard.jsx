@@ -13,8 +13,8 @@ import {
     Grid,
     Divider
 } from '@mui/material';
-import { useAppContext } from '../../context/AppContext';
-import { loadAllEntries } from '../../utils/DataManager';
+import { useAppContext } from '@/context/AppContext';
+import { loadAllEntries } from '@/utils/DataManager';
 import { useNavigate } from 'react-router-dom';
 import ContributionGraph from './ContributionGraph';
 

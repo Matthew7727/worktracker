@@ -22,8 +22,8 @@ import {
     MoreVert,
     Edit
 } from '@mui/icons-material';
-import { loadDailyTodos, saveDailyTodos } from '../../utils/todoManager';
-import { useAppContext } from '../../context/AppContext';
+import { loadDailyTodos, saveDailyTodos } from '@/utils/todoManager';
+import { useAppContext } from '@/context/AppContext';
 import DateNavigator from './components/DateNavigator';
 
 const Lane = ({

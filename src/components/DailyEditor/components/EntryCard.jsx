@@ -15,7 +15,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import { cardStyles, entryBodyStyles, markdownToolbarStyles, toolbarBtnStyles } from '../DailyEditor.styles';
-import { injectMarkdown } from '../../../utils/markdownHelpers';
+import { injectMarkdown } from '@/utils/markdownHelpers';
 
 const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onAddTag, onRemoveTag }) => {
     const [isEditing, setIsEditing] = useState(entry.isNew || false);

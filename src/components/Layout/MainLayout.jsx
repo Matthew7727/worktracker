@@ -23,8 +23,8 @@ import {
     Brightness4,
     Brightness7
 } from '@mui/icons-material';
-import { useAppContext } from '../../context/AppContext';
-import { useThemeContext } from '../../context/ThemeContext';
+import { useAppContext } from '@/context/AppContext';
+import { useThemeContext } from '@/context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // Sub-components

@@ -14,8 +14,8 @@ import {
     Fade
 } from '@mui/material';
 import { Download } from '@mui/icons-material';
-import { useAppContext } from '../../context/AppContext';
-import { loadAllEntries } from '../../utils/DataManager';
+import { useAppContext } from '@/context/AppContext';
+import { loadAllEntries } from '@/utils/DataManager';
 
 const Reports = () => {
     const { selectedDirectory, showNotification } = useAppContext();

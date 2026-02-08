@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Paper, Typography, Box, Stack, CircularProgress } from '@mui/material';
 import { Checklist, RadioButtonUnchecked, HourglassEmpty, CheckCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { getTodoStats } from '../../../utils/todoManager';
-import { useAppContext } from '../../../context/AppContext';
+import { getTodoStats } from '@/utils/todoManager';
+import { useAppContext } from '@/context/AppContext';
 
 const TodoSummary = () => {
     const { selectedDirectory, refreshTrigger } = useAppContext();

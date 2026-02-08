@@ -9,7 +9,7 @@ import {
     Stack,
     Fade
 } from '@mui/material';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '@/context/AppContext';
 
 const Settings = () => {
     const { selectedDirectory, setProjectDirectory } = useAppContext();
