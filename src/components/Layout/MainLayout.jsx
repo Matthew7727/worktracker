@@ -3,7 +3,6 @@ import {
     AppBar,
     Toolbar,
     Box,
-    Container,
     Zoom,
     useScrollTrigger,
     Fab,
@@ -126,9 +125,9 @@ const MainLayout = ({ children }) => {
             </AppBar>
 
             <Box component="main" sx={{ flexGrow: 1, pt: '5.5rem', overflowY: 'auto', bgcolor: 'background.default' }}>
-                <Container maxWidth={false} sx={{ py: 6, px: '4rem !important' }}>
+                <Box sx={{ py: 6, px: '4rem' }}>
                     {children}
-                </Container>
+                </Box>
             </Box>
 
             <ScrollTop>

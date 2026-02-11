@@ -161,7 +161,7 @@ const Dashboard = () => {
         <Fade in={true} timeout={600}>
             <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <Typography variant="h1" sx={{ fontSize: '2.5rem', mb: 1 }}>Dashboard</Typography>
-                <Box sx={{ mx: 'auto', width: '100%', maxWidth: '1600px' }}>
+                <Box sx={{ width: '100%' }}>
                     <Grid container spacing={3} justifyContent="center">
                         <DashboardWidget
                             title="ACTIVE DAYS"
@@ -223,16 +223,11 @@ const Dashboard = () => {
                             <MatrixContent loading={loading} topTags={stats.topTags} />
                         </DashboardWidget>
 
-                        <Grid item size={10}>
-                            <DashboardWidget xs={12} sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <PersonaContent loading={loading} persona={stats.persona} />
-                            </DashboardWidget>
+                        <DashboardWidget xs={6} sx={{ bgcolor: 'primary.main', color: 'white' }}>
+                            <PersonaContent loading={loading} persona={stats.persona} />
+                        </DashboardWidget>
 
-                        </Grid>
-
-
-
-                        <DashboardWidget title="Annual Archive Pipeline" xs={12}>
+                        <DashboardWidget title="Annual Archive Pipeline" xs={6}>
                             {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
                         </DashboardWidget>
 
