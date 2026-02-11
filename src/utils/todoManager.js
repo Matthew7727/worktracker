@@ -27,6 +27,99 @@ export const getTodoFilePath = (rootDir, date) => {
 };
 
 /**
+ * Generates the path for the persistent lane structure file
+ */
+export const getLaneStructureFilePath = (rootDir) => {
+    if (!rootDir) return '';
+    return `${rootDir}/todo-lanes.md`;
+};
+
+/**
+ * Loads persistent lane structure (categories only, no tasks)
+ * @returns {Promise<string[]>} Array of lane titles
+ */
+export const loadLaneStructure = async (rootDir) => {
+    if (!window.electronAPI) return getDefaultLanes().map(l => l.title);
+
+    const filePath = getLaneStructureFilePath(rootDir);
+    const result = await window.electronAPI.readFile(filePath);
+
+    if (result.success) {
+        // Parse lane titles from markdown headers
+        const lines = result.data.split('\n');
+        const titles = lines
+            .filter(line => line.trim().startsWith('# '))
+            .map(line => line.substring(2).trim());
+        return titles.length > 0 ? titles : getDefaultLanes().map(l => l.title);
+    }
+
+    // If file doesn't exist, return defaults
+    return getDefaultLanes().map(l => l.title);
+};
+
+/**
+ * Saves lane structure (categories only)
+ * @param {string[]} lanesTitles - Array of lane titles
+ */
+export const saveLaneStructure = async (rootDir, laneTitles) => {
+    if (!window.electronAPI) return;
+
+    const filePath = getLaneStructureFilePath(rootDir);
+    const content = laneTitles.map(title => `# ${title}\n`).join('\n');
+
+    await window.electronAPI.writeFile(filePath, content);
+};
+
+/**
+ * Loads todos with persistent lane structure but day-specific tasks
+ * @returns {Promise<TodoLane[]>}
+ */
+export const loadDailyTodosWithPersistentLanes = async (rootDir, date) => {
+    if (!window.electronAPI) return getDefaultLanes();
+
+    // 1. Load persistent lane structure
+    const laneTitles = await loadLaneStructure(rootDir);
+
+    // 2. Load day-specific tasks
+    const filePath = getTodoFilePath(rootDir, date);
+    const result = await window.electronAPI.readFile(filePath);
+
+    if (result.success) {
+        const dayLanes = parseTodoMarkdown(result.data);
+        // Merge: ensure all persistent lanes exist, populate with day's tasks
+        return laneTitles.map(title => {
+            const existingLane = dayLanes.find(l => l.title === title);
+            return existingLane || { title, items: [] };
+        });
+    }
+
+    // If no file for this day, check for rollover
+    const rolledOver = await checkForRollover(rootDir, date);
+    // Merge rollover with persistent lanes
+    const merged = laneTitles.map(title => {
+        const existingLane = rolledOver.find(l => l.title === title);
+        return existingLane || { title, items: [] };
+    });
+    return merged;
+};
+
+/**
+ * Saves todos and updates lane structure
+ */
+export const saveDailyTodosWithPersistentLanes = async (rootDir, date, lanes) => {
+    if (!window.electronAPI) return;
+
+    // 1. Save lane structure
+    const laneTitles = lanes.map(l => l.title);
+    await saveLaneStructure(rootDir, laneTitles);
+
+    // 2. Save day-specific tasks
+    const filePath = getTodoFilePath(rootDir, date);
+    const content = serializeTodoMarkdown(lanes);
+    await window.electronAPI.writeFile(filePath, content);
+};
+
+/**
  * Loads todos for a specific date
  * @returns {Promise<TodoLane[]>}
  */
@@ -73,7 +166,6 @@ const checkForRollover = async (rootDir, date) => {
     if (!prevResult.success) return getDefaultLanes();
 
     const prevLanes = parseTodoMarkdown(prevResult.data);
-    const newLanes = getDefaultLanes();
 
     // 5. Migrate incomplete tasks
     // We want to preserve the lane titles.

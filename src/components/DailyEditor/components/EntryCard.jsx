@@ -71,10 +71,10 @@ const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onA
                     {entry.time && (
                         <Chip
                             icon={<AccessTime sx={{ fontSize: '1.2rem !important' }} />}
-                            label={entry.time}
+                            label={entry.time === 'PAST' ? 'PAST' : entry.time}
                             sx={{
-                                bgcolor: 'rgba(128, 182, 33, 0.15)',
-                                color: 'primary.main',
+                                bgcolor: entry.time === 'PAST' ? 'rgba(211, 47, 47, 0.15)' : 'rgba(128, 182, 33, 0.15)',
+                                color: entry.time === 'PAST' ? '#d32f2f' : 'primary.main',
                                 border: '1px solid currentColor',
                                 fontWeight: 900,
                                 fontSize: '1rem'
@@ -231,7 +231,7 @@ const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onA
                             remarkPlugins={[remarkGfm, remarkBreaks]}
                             rehypePlugins={[rehypeRaw]}
                             components={{
-                                a: ({ node, ...props }) => (
+                                a: ({ ...props }) => (
                                     <a
                                         {...props}
                                         onClick={(e) => handleLinkClick(e, props.href)}

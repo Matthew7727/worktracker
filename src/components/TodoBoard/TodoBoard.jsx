@@ -22,7 +22,7 @@ import {
     MoreVert,
     Edit
 } from '@mui/icons-material';
-import { loadDailyTodos, saveDailyTodos } from '../../utils/todoManager';
+import { loadDailyTodosWithPersistentLanes, saveDailyTodosWithPersistentLanes } from '../../utils/todoManager';
 import { useAppContext } from '../../context/AppContext';
 import DateNavigator from './components/DateNavigator';
 
@@ -189,19 +189,18 @@ const TodoBoard = () => {
     const [isAddLaneOpen, setIsAddLaneOpen] = useState(false);
     const [newLaneTitle, setNewLaneTitle] = useState('');
 
-    const loadData = async () => {
-        if (!selectedDirectory) return;
-        const data = await loadDailyTodos(selectedDirectory, currentDate);
-        setLanes(data || []);
-    };
-
     useEffect(() => {
+        const loadData = async () => {
+            if (!selectedDirectory) return;
+            const data = await loadDailyTodosWithPersistentLanes(selectedDirectory, currentDate);
+            setLanes(data || []);
+        };
         loadData();
     }, [selectedDirectory, currentDate]);
 
     const saveData = (newLanes) => {
         setLanes(newLanes);
-        saveDailyTodos(selectedDirectory, currentDate, newLanes);
+        saveDailyTodosWithPersistentLanes(selectedDirectory, currentDate, newLanes);
     };
 
     const handlePrevDay = () => {

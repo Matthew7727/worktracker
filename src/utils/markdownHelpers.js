@@ -32,21 +32,24 @@ export const injectMarkdown = (text, start, end, type) => {
             newText = `${before}~~${selectedText || 'strikethrough text'}~~${after}`;
             newCursor = start + (selectedText ? selectedText.length + 4 : 20);
             break;
-        case 'heading':
+        case 'heading': {
             const hPrefix = isStartOfLine ? '## ' : '\n## ';
             newText = `${before}${hPrefix}${selectedText || 'Heading'}${after}`;
             newCursor = start + hPrefix.length + (selectedText ? selectedText.length : 7);
             break;
-        case 'list':
+        }
+        case 'list': {
             const lPrefix = isStartOfLine ? '- ' : '\n- ';
             newText = `${before}${lPrefix}${selectedText || 'list item'}${after}`;
             newCursor = start + lPrefix.length + (selectedText ? selectedText.length : 9);
             break;
-        case 'blockquote':
+        }
+        case 'blockquote': {
             const qPrefix = isStartOfLine ? '> ' : '\n> ';
             newText = `${before}${qPrefix}${selectedText || 'quote'}${after}`;
             newCursor = start + qPrefix.length + (selectedText ? selectedText.length : 5);
             break;
+        }
         case 'code':
             if (selectedText.includes('\n') || !selectedText) {
                 // Block code

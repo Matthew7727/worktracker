@@ -17,24 +17,33 @@ export const loadAllEntries = async (rootDir) => {
         }
 
         const files = result.files;
-        const entries = [];
 
         // 2. Process each file
         const filePromises = files.map(async (filePath) => {
-            // Check if filename matches YYYY-MM-DD.md or YYYY-MM-DD_HHMMSS.md pattern
+            // Check if filename matches YYYY-MM-DD.md or YYYY-MM-DD_HHMMSS.md or YYYY-MM-DD_PAST.md pattern
             const fileName = filePath.split(/[\\/]/).pop();
-            const match = fileName.match(/^(\d{4}-\d{2}-\d{2})(_(\d{6}))?\.md$/);
+            const match = fileName.match(/^(\d{4}-\d{2}-\d{2})(_(\d{6}|PAST))?\.md$/);
 
             if (!match) return null; // Skip non-daily files
 
             const dateStr = match[1];
             const timeStr = match[3] || '000000'; // Default to start of day for old files
 
-            // Construct a sortable key or full date object
-            const hours = timeStr.substring(0, 2);
-            const mins = timeStr.substring(2, 4);
-            const secs = timeStr.substring(4, 6);
-            const fullDateObj = new Date(`${dateStr}T${hours}:${mins}:${secs}`);
+            let time = null;
+            let fullDateObj;
+
+            if (timeStr === 'PAST') {
+                // For PAST entries, use the date at midnight for sorting
+                fullDateObj = new Date(`${dateStr}T00:00:00`);
+                time = 'PAST';
+            } else {
+                // Construct a sortable key or full date object
+                const hours = timeStr.substring(0, 2);
+                const mins = timeStr.substring(2, 4);
+                const secs = timeStr.substring(4, 6);
+                fullDateObj = new Date(`${dateStr}T${hours}:${mins}:${secs}`);
+                time = timeStr !== '000000' ? `${hours}:${mins}` : null;
+            }
 
             // Read file content
             const fileResult = await window.electronAPI.readFile(filePath);
@@ -46,7 +55,7 @@ export const loadAllEntries = async (rootDir) => {
             return {
                 id: fileName.replace('.md', ''), // Use filename as unique ID
                 date: dateStr,
-                time: timeStr !== '000000' ? `${hours}:${mins}` : null,
+                time: time,
                 dateObj: fullDateObj,
                 tags: frontmatter.tags || [],
                 content: body,

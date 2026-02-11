@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box,
     Typography,
@@ -86,12 +86,24 @@ const DailyEditor = () => {
         try {
             const entry = entries.find(e => e.id === entryId);
             let filePath = entry.path;
+            let hhmmss = null;
 
             if (!filePath || entry.isNew) {
-                const now = new Date();
-                const hhmmss = now.getHours().toString().padStart(2, '0') +
-                    now.getMinutes().toString().padStart(2, '0') +
-                    now.getSeconds().toString().padStart(2, '0');
+                // Check if current date is in the past
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const entryDate = new Date(currentDate);
+                entryDate.setHours(0, 0, 0, 0);
+                const isPast = entryDate < today;
+
+                if (isPast) {
+                    hhmmss = 'PAST';
+                } else {
+                    const now = new Date();
+                    hhmmss = now.getHours().toString().padStart(2, '0') +
+                        now.getMinutes().toString().padStart(2, '0') +
+                        now.getSeconds().toString().padStart(2, '0');
+                }
                 filePath = getDailyFilePath(selectedDirectory, currentDate, hhmmss);
             }
 
@@ -105,11 +117,25 @@ const DailyEditor = () => {
                 const result = await window.electronAPI.writeFile(filePath, fileContent);
 
                 if (result.success) {
+                    // Extract time from the saved filename for display
+                    let displayTime = entry.time; // Keep existing time if present
+                    if (hhmmss) {
+                        // New entry - set time based on hhmmss
+                        if (hhmmss === 'PAST') {
+                            displayTime = 'PAST';
+                        } else if (hhmmss !== '000000') {
+                            const hours = hhmmss.substring(0, 2);
+                            const mins = hhmmss.substring(2, 4);
+                            displayTime = `${hours}:${mins}`;
+                        }
+                    }
+
                     setEntries(prev => prev.map(e => e.id === entryId ? {
                         ...e,
                         isSaving: false,
                         isNew: false,
                         path: filePath,
+                        time: displayTime,
                         id: filePath.split(/[\\/]/).pop().replace('.md', '')
                     } : e));
                     showNotification('Contribution archived successfully', 'success');
@@ -147,7 +173,7 @@ const DailyEditor = () => {
         }
     };
 
-    const handleAddBlankEntry = () => {
+    const handleAddBlankEntry = useCallback(() => {
         const newEntry = {
             id: 'new-' + Date.now(),
             content: '',
@@ -159,7 +185,7 @@ const DailyEditor = () => {
         };
         setEntries([newEntry, ...entries]);
         showNotification('New draft created', 'info');
-    };
+    }, [currentDate, entries, showNotification]);
 
     const handleUpdateContent = (id, content) => {
         setEntries(prev => prev.map(e => e.id === id ? { ...e, content } : e));
@@ -188,17 +214,17 @@ const DailyEditor = () => {
     };
 
     // Navigation handlers
-    const handlePrevDay = () => {
+    const handlePrevDay = useCallback(() => {
         const newDate = new Date(currentDate);
         newDate.setDate(currentDate.getDate() - 1);
         setCurrentDate(newDate);
-    };
+    }, [currentDate]);
 
-    const handleNextDay = () => {
+    const handleNextDay = useCallback(() => {
         const newDate = new Date(currentDate);
         newDate.setDate(currentDate.getDate() + 1);
         setCurrentDate(newDate);
-    };
+    }, [currentDate]);
 
     // Shortcuts
     useEffect(() => {
@@ -209,12 +235,13 @@ const DailyEditor = () => {
                     case 'arrowright': handleNextDay(); break;
                     case 't': setCurrentDate(new Date()); break;
                     case 'n': handleAddBlankEntry(); break;
+                    default: break;
                 }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentDate]);
+    }, [currentDate, handlePrevDay, handleNextDay, handleAddBlankEntry]);
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

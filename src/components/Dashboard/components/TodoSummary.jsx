@@ -8,7 +8,7 @@ import { useAppContext } from '../../../context/AppContext';
 
 const TodoSummary = () => {
     const { selectedDirectory, refreshTrigger } = useAppContext();
-    const navigate = useNavigate();
+    const _navigate = useNavigate(); // Reserved for future use
     const [stats, setStats] = useState({
         today: { total: 0, completed: 0, byCategory: [] },
         month: { completed: 0 },

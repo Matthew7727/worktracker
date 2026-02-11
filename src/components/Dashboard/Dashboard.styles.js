@@ -26,7 +26,7 @@ export const summaryCardStyles = (theme) => ({
     bgcolor: 'background.paper'
 });
 
-export const ghostPaper = (theme) => ({
+export const ghostPaper = () => ({
     p: 3,
     borderRadius: '24px',
     border: '3px dashed',

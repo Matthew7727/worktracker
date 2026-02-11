@@ -113,7 +113,7 @@ Had a sync with the team.
             return { success: true };
         },
 
-        onWorkspaceChanged: (callback) => {
+        onWorkspaceChanged: () => {
             console.log(`[Mock] onWorkspaceChanged listener registered`);
             // We could simulate changes here if needed, e.g. with setTimeout
         },

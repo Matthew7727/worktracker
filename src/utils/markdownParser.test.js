@@ -28,7 +28,7 @@ describe('markdownParser', () => {
 
         it('should handle malformed frontmatter gracefully', () => {
             const content = '---\ntags: [unclosed\n---\nBody text.';
-            const { frontmatter, body } = parseMarkdown(content);
+            const { frontmatter } = parseMarkdown(content);
             expect(typeof frontmatter).toBe('object');
         });
     });

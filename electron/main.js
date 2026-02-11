@@ -120,9 +120,9 @@ async function getMarkdownFiles(dir) {
                 results.push(res);
             }
         }
-    } catch (err) {
+    } catch {
         // Ignore errors for now or log them
-        // console.error("Error reading dir:", dir, err);
+        // console.error("Error reading dir:", dir);
     }
     return results;
 }
@@ -146,7 +146,7 @@ async function handleWatchWorkspace(event, rootDir) {
     if (!rootDir) return;
 
     watcher = chokidar.watch(rootDir, {
-        ignored: /(^|[\/\\])\../, // ignore dotfiles
+        ignored: /(^|[/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true
     });
