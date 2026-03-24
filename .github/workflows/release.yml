@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create and push release tag
+      - name: Bump package.json version and push tag
         id: create_tag
         shell: bash
         run: |
@@ -27,6 +27,10 @@ jobs:
           TAG="v${VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version "$VERSION" --no-git-tag-version
+          git add package.json
+          git commit -m "chore: bump version to ${VERSION}"
+          git push origin HEAD:main
           git tag "$TAG"
           git push origin "$TAG"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
