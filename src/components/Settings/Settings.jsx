@@ -106,10 +106,6 @@ const Settings = () => {
         // We don't auto-save time to avoid too many writes, or we can use a debouncer
     };
 
-    const handleTestNotif = async () => {
-        await window.electronAPI.testNotification();
-    };
-
     return (
         <Fade in={true} timeout={600}>
             <Box className="settings-page" sx={{ maxWidth: '1000px', mx: 'auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 6, pb: 10 }}>
@@ -173,27 +169,22 @@ const Settings = () => {
                                                 variant="contained" 
                                                 onClick={() => handleSaveSettings(notifEnabled, notifTime)}
                                                 disabled={!notifEnabled || isSaving}
-                                                sx={{ fontWeight: 900, px: 3 }}
+                                                sx={{ 
+                                                    fontWeight: 900, 
+                                                    px: 3,
+                                                    backgroundImage: 'none',
+                                                    bgcolor: 'white',
+                                                    color: 'black',
+                                                    border: '2px solid black',
+                                                    boxShadow: '4px 4px 0px black',
+                                                    '&:hover': { bgcolor: '#f0f0f0', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' },
+                                                    '&.Mui-disabled': { opacity: 0.5, boxShadow: 'none', transform: 'none', border: '2px solid #999', bgcolor: '#f0f0f0' }
+                                                }}
                                             >
                                                 UPDATE
                                             </Button>
                                         </Stack>
                                     </Box>
-
-                                    <Button 
-                                        variant="outlined" 
-                                        startIcon={<BugReport />}
-                                        onClick={handleTestNotif}
-                                        sx={{ 
-                                            alignSelf: 'flex-start', 
-                                            border: '3px solid black', 
-                                            color: 'black', 
-                                            fontWeight: 900,
-                                            '&:hover': { borderWidth: '3px' }
-                                        }}
-                                    >
-                                        TEST NOTIFICATION
-                                    </Button>
                                 </Stack>
                             </Paper>
 
@@ -213,21 +204,25 @@ const Settings = () => {
                                 }}>
                                     {selectedDirectory}
                                 </Box>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    onClick={() => setProjectDirectory(null)}
-                                    sx={{
-                                        px: 4,
-                                        fontWeight: 900,
-                                        borderWidth: '3px',
-                                        borderColor: 'black',
-                                        color: 'black',
-                                        '&:hover': { borderWidth: '3px', bgcolor: 'error.main', color: 'white', borderColor: 'black' }
-                                    }}
-                                >
-                                    Switch Workspace
-                                </Button>
+                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => setProjectDirectory(null)}
+                                        sx={{
+                                            px: 4,
+                                            py: 1.5,
+                                            fontWeight: 900,
+                                            backgroundImage: 'none',
+                                            bgcolor: '#f44336',
+                                            color: 'white',
+                                            border: '2px solid black',
+                                            boxShadow: '4px 4px 0px black',
+                                            '&:hover': { bgcolor: '#d32f2f', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' }
+                                        }}
+                                    >
+                                        SWITCH WORKSPACE
+                                    </Button>
+                                </Box>
                             </Paper>
 
                             {/* App Updates Section */}
@@ -241,7 +236,7 @@ const Settings = () => {
                                     Current Version: {appVersion ? `v${appVersion}` : 'Unknown'}
                                 </Typography>
 
-                                <Box sx={{ p: 3, bgcolor: 'action.hover', borderRadius: '20px', border: '3px solid black' }}>
+                                <Box sx={{ p: 4, bgcolor: 'action.hover', borderRadius: '20px', border: '3px solid black', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                     {updateStatus === 'idle' || updateStatus === 'not-available' ? (
                                         <Button
                                             variant="contained"
@@ -254,27 +249,49 @@ const Settings = () => {
                                                     });
                                                 }
                                             }}
-                                            sx={{ fontWeight: 900, px: 4, py: 1.5, fontSize: '1.1rem' }}
+                                            sx={{ 
+                                                fontWeight: 900, 
+                                                px: 4, 
+                                                py: 1.5, 
+                                                fontSize: '1.1rem',
+                                                backgroundImage: 'none',
+                                                bgcolor: 'white',
+                                                color: 'black',
+                                                border: '2px solid black',
+                                                boxShadow: '4px 4px 0px black',
+                                                '&:hover': { bgcolor: '#f0f0f0', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' }
+                                            }}
                                         >
                                             CHECK FOR UPDATES
                                         </Button>
                                     ) : null}
 
                                     {updateStatus === 'checking' ? (
-                                        <Button disabled variant="contained" sx={{ fontWeight: 900, px: 4, py: 1.5, fontSize: '1.1rem' }}>
+                                        <Button disabled variant="contained" sx={{ 
+                                            fontWeight: 900, 
+                                            px: 4, 
+                                            py: 1.5, 
+                                            fontSize: '1.1rem',
+                                            backgroundImage: 'none',
+                                            bgcolor: '#e0e0e0',
+                                            color: 'black',
+                                            border: '2px solid black',
+                                            boxShadow: 'none',
+                                            opacity: 0.7
+                                        }}>
                                             CHECKING...
                                         </Button>
                                     ) : null}
 
                                     {updateStatus === 'available' || updateStatus === 'downloading' ? (
-                                        <Box>
-                                            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+                                        <Box sx={{ width: '100%', maxWidth: '500px' }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, textAlign: 'center' }}>
                                                 Downloading Update... {updateProgress}%
                                             </Typography>
                                             <LinearProgress
                                                 variant="determinate"
                                                 value={updateProgress}
-                                                sx={{ height: 12, borderRadius: 6, border: '2px solid black' }}
+                                                sx={{ height: 16, borderRadius: 8, border: '3px solid black', bgcolor: 'white', '& .MuiLinearProgress-bar': { bgcolor: '#4caf50' } }}
                                             />
                                         </Box>
                                     ) : null}
@@ -284,21 +301,42 @@ const Settings = () => {
                                             variant="contained"
                                             color="success"
                                             onClick={() => window.electronAPI.quitAndInstall()}
-                                            sx={{ fontWeight: 900, px: 4, py: 1.5, fontSize: '1.1rem', bgcolor: '#4caf50', color: '#fff', '&:hover': { bgcolor: '#388e3c' } }}
+                                            sx={{ 
+                                                fontWeight: 900, 
+                                                px: 4, 
+                                                py: 1.5, 
+                                                fontSize: '1.1rem', 
+                                                backgroundImage: 'none',
+                                                bgcolor: '#4caf50', 
+                                                color: '#fff', 
+                                                border: '2px solid black',
+                                                boxShadow: '4px 4px 0px black',
+                                                '&:hover': { bgcolor: '#388e3c', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' }
+                                            }}
                                         >
                                             RESTART & INSTALL
                                         </Button>
                                     ) : null}
 
                                     {updateStatus === 'error' ? (
-                                        <Box>
-                                            <Typography variant="body1" color="error" sx={{ fontWeight: 800, mb: 2 }}>
+                                        <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="body1" color="error" sx={{ fontWeight: 800, mb: 3 }}>
                                                 Error: {updateError}
                                             </Typography>
                                             <Button
-                                                variant="outlined"
+                                                variant="contained"
                                                 onClick={() => setUpdateStatus('idle')}
-                                                sx={{ fontWeight: 900, borderWidth: '3px', borderColor: 'black', color: 'black' }}
+                                                sx={{ 
+                                                    fontWeight: 900, 
+                                                    px: 4,
+                                                    py: 1.5,
+                                                    backgroundImage: 'none',
+                                                    bgcolor: 'white',
+                                                    color: 'black',
+                                                    border: '2px solid black',
+                                                    boxShadow: '4px 4px 0px black',
+                                                    '&:hover': { bgcolor: '#f0f0f0', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' }
+                                                }}
                                             >
                                                 TRY AGAIN
                                             </Button>
@@ -315,6 +353,65 @@ const Settings = () => {
                                     Built with Electron, React & High-Contrast Stream-Based Design
                                 </Typography>
                             </Paper>
+
+                            {/* Developer Tools Section (Browser Mock Only) */}
+                            {window.electronAPI && window.electronAPI.isMock && (
+                                <Paper sx={{ p: 6, borderRadius: '40px', border: '4px solid black', boxShadow: '10px 10px 0px rgba(0,0,0,0.1)' }}>
+                                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
+                                        <BugReport sx={{ fontSize: '2.5rem' }} />
+                                        <Typography variant="h3" sx={{ fontWeight: 950 }}>Developer Tools</Typography>
+                                    </Stack>
+
+                                    <Typography variant="body1" sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}>
+                                        Browser dev mode testing tools. These are only visible when running locally over the browser web down view.
+                                    </Typography>
+
+                                    <Stack direction="row" spacing={3} justifyContent="center" flexWrap="wrap" useFlexGap sx={{ gap: 3 }}>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => {
+                                                if (window.electronAPI && window.electronAPI.testNotification) {
+                                                    window.electronAPI.testNotification();
+                                                }
+                                            }}
+                                            sx={{ 
+                                                fontWeight: 900, 
+                                                px: 4, 
+                                                py: 1.5, 
+                                                backgroundImage: 'none',
+                                                bgcolor: 'white', 
+                                                color: 'black',
+                                                border: '2px solid black',
+                                                boxShadow: '4px 4px 0px black',
+                                                '&:hover': { bgcolor: '#f0f0f0', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' }
+                                            }}
+                                        >
+                                            TEST NOTIFICATION
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => {
+                                                if (window.electronAPI && window.electronAPI.devSimulateUpdate) {
+                                                    window.electronAPI.devSimulateUpdate();
+                                                }
+                                            }}
+                                            sx={{ 
+                                                fontWeight: 900, 
+                                                px: 4, 
+                                                py: 1.5, 
+                                                backgroundImage: 'none',
+                                                bgcolor: 'white', 
+                                                color: 'black',
+                                                border: '2px solid black',
+                                                boxShadow: '4px 4px 0px black',
+                                                '&:hover': { bgcolor: '#f0f0f0', boxShadow: '2px 2px 0px black', transform: 'translate(2px, 2px)' }
+                                            }}
+                                        >
+                                            SIMULATE UPDATE
+                                        </Button>
+                                    </Stack>
+                                </Paper>
+                            )}
                         </Stack>
                     </Grid>
                 </Grid>

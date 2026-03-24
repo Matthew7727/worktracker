@@ -68,6 +68,65 @@ Had a sync with the team.
     };
 
     window.electronAPI = {
+        isMock: true,
+
+        // Mock Event Emitter for Updates
+        _listeners: {},
+        _on: (event, callback) => {
+            if (!window.electronAPI._listeners[event]) window.electronAPI._listeners[event] = [];
+            window.electronAPI._listeners[event].push(callback);
+        },
+        _emit: (event, ...args) => {
+            if (window.electronAPI._listeners[event]) {
+                window.electronAPI._listeners[event].forEach(cb => cb(...args));
+            }
+        },
+
+        // Update Pub/Sub Mocks
+        onUpdateChecking: (cb) => window.electronAPI._on('checking', cb),
+        onUpdateAvailable: (cb) => window.electronAPI._on('available', cb),
+        onUpdateNotAvailable: (cb) => window.electronAPI._on('not-available', cb),
+        onUpdateProgress: (cb) => window.electronAPI._on('progress', cb),
+        onUpdateDownloaded: (cb) => window.electronAPI._on('downloaded', cb),
+        onUpdateError: (cb) => window.electronAPI._on('error', cb),
+        removeAllUpdateListeners: () => { window.electronAPI._listeners = {}; },
+        checkForUpdates: async () => ({ status: 'dev' }),
+        quitAndInstall: () => console.log('[Mock] quitAndInstall called'),
+        getVersion: async () => '1.0.0-mock',
+
+        // Dev Tools Helpers
+        testNotification: async () => {
+            console.log("[Mock] testNotification called");
+            if (Notification.permission === 'granted') {
+                new Notification('Work Tracker (Mock)', { body: 'This is a test notification from dev mode!' });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('Work Tracker (Mock)', { body: 'This is a test notification from dev mode!' });
+                    }
+                });
+            } else {
+                alert('Test Notification: Permissions denied. Check console.');
+            }
+        },
+
+        devSimulateUpdate: () => {
+            console.log("[Mock] Simulating App Update...");
+            window.electronAPI._emit('checking');
+            setTimeout(() => {
+                window.electronAPI._emit('available');
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    window.electronAPI._emit('progress', progress);
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => window.electronAPI._emit('downloaded'), 500);
+                    }
+                }, 300);
+            }, 1000);
+        },
+
         selectDirectory: async () => {
             console.log("[Mock] selectDirectory called");
             return MOCK_ROOT;
