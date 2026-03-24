@@ -58,4 +58,4 @@ jobs:
       - name: Build and Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run electron:build
+        run: npx vite build && npx electron-builder --publish always
