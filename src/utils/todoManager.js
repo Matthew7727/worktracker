@@ -1,5 +1,4 @@
-
-import { getDailyFilePath } from './fileHelpers';
+import { getDailyFilePath } from './fileHelpers'
 
 /**
  * Parsed Todo Item structure
@@ -21,119 +20,118 @@ import { getDailyFilePath } from './fileHelpers';
  * Generates the specific path for todo files: YYYY-MM-DD-todos.md
  */
 export const getTodoFilePath = (rootDir, date) => {
-    const dailyPath = getDailyFilePath(rootDir, date);
-    if (!dailyPath) return '';
-    return dailyPath.replace('.md', '-todos.md');
-};
+  const dailyPath = getDailyFilePath(rootDir, date)
+  if (!dailyPath) return ''
+  return dailyPath.replace('.md', '-todos.md')
+}
 
 /**
  * Loads todos for a specific date
  * @returns {Promise<TodoLane[]>}
  */
 export const loadDailyTodos = async (rootDir, date) => {
-    if (!window.electronAPI) return getDefaultLanes();
+  if (!window.electronAPI) return getDefaultLanes()
 
-    const filePath = getTodoFilePath(rootDir, date);
-    const result = await window.electronAPI.readFile(filePath);
+  const filePath = getTodoFilePath(rootDir, date)
+  const result = await window.electronAPI.readFile(filePath)
 
-    if (result.success) {
-        return parseTodoMarkdown(result.data);
-    }
+  if (result.success) {
+    return parseTodoMarkdown(result.data)
+  }
 
-    // If file doesn't exist, check for rollover from previous days
-    return await checkForRollover(rootDir, date);
-};
+  // If file doesn't exist, check for rollover from previous days
+  return await checkForRollover(rootDir, date)
+}
 
 const checkForRollover = async (rootDir, date) => {
-    // 1. List all todo files
-    const result = await window.electronAPI.listAllFiles(rootDir);
-    if (!result.success) return getDefaultLanes();
+  // 1. List all todo files
+  const result = await window.electronAPI.listAllFiles(rootDir)
+  if (!result.success) return getDefaultLanes()
 
-    // 2. Filter for *-todos.md files
-    const todoFiles = result.files.filter(f => f.endsWith('-todos.md'));
+  // 2. Filter for *-todos.md files
+  const todoFiles = result.files.filter((f) => f.endsWith('-todos.md'))
 
-    if (todoFiles.length === 0) return getDefaultLanes();
+  if (todoFiles.length === 0) return getDefaultLanes()
 
-    // 3. Find the most recent file before today
-    const todayPath = getTodoFilePath(rootDir, date);
-    // Sort descending
-    todoFiles.sort().reverse();
+  // 3. Find the most recent file before today
+  const todayPath = getTodoFilePath(rootDir, date)
+  // Sort descending
+  todoFiles.sort().reverse()
 
-    // Find the first file that is "less than" today's path (lexicographical sort works for YYYY-MM-DD)
-    // Note: We need to be careful with paths. Let's simplify and just look for the first file that isn't today.
-    // Since we filtered for *-todos.md and sorted desc, the first one that isn't today is likely the most recent previous.
-    // Ideally we parse dates, but string comparison is robust for ISO dates.
+  // Find the first file that is "less than" today's path (lexicographical sort works for YYYY-MM-DD)
+  // Note: We need to be careful with paths. Let's simplify and just look for the first file that isn't today.
+  // Since we filtered for *-todos.md and sorted desc, the first one that isn't today is likely the most recent previous.
+  // Ideally we parse dates, but string comparison is robust for ISO dates.
 
-    const previousFile = todoFiles.find(f => f < todayPath);
+  const previousFile = todoFiles.find((f) => f < todayPath)
 
-    if (!previousFile) return getDefaultLanes();
+  if (!previousFile) return getDefaultLanes()
 
-    // 4. Load that file
-    const prevResult = await window.electronAPI.readFile(previousFile);
-    if (!prevResult.success) return getDefaultLanes();
+  // 4. Load that file
+  const prevResult = await window.electronAPI.readFile(previousFile)
+  if (!prevResult.success) return getDefaultLanes()
 
-    const prevLanes = parseTodoMarkdown(prevResult.data);
-    const newLanes = getDefaultLanes();
+  const prevLanes = parseTodoMarkdown(prevResult.data)
 
-    // 5. Migrate incomplete tasks
-    // We want to preserve the lane titles.
-    // If a lane exists in the previous file and has incomplete tasks, we create it in the new file.
+  // 5. Migrate incomplete tasks
+  // We want to preserve the lane titles.
+  // If a lane exists in the previous file and has incomplete tasks, we create it in the new file.
 
-    // Start with default "General" or empty?
-    // Let's start empty to only carry over relevant lanes, but if nothing carries over we want at least "General".
-    let newLanesMap = new Map(); // title -> items array
+  // Start with default "General" or empty?
+  // Let's start empty to only carry over relevant lanes, but if nothing carries over we want at least "General".
+  let newLanesMap = new Map() // title -> items array
 
-    // Initialize with default lanes if we want to ensure "General" always exists?
-    // Let's just use the default lanes as a base, then merge.
-    const defaults = getDefaultLanes();
-    defaults.forEach(l => newLanesMap.set(l.title, [...l.items]));
+  // Initialize with default lanes if we want to ensure "General" always exists?
+  // Let's just use the default lanes as a base, then merge.
+  const defaults = getDefaultLanes()
+  defaults.forEach((l) => newLanesMap.set(l.title, [...l.items]))
 
-    let rolloverCount = 0;
-    prevLanes.forEach(lane => {
-        const incompleteItems = lane.items.filter(i => !i.completed);
-        if (incompleteItems.length > 0) {
-            // Get or create lane in new map
-            if (!newLanesMap.has(lane.title)) {
-                newLanesMap.set(lane.title, []);
-            }
-            const existingItems = newLanesMap.get(lane.title);
+  let rolloverCount = 0
+  prevLanes.forEach((lane) => {
+    const incompleteItems = lane.items.filter((i) => !i.completed)
+    if (incompleteItems.length > 0) {
+      // Get or create lane in new map
+      if (!newLanesMap.has(lane.title)) {
+        newLanesMap.set(lane.title, [])
+      }
+      const existingItems = newLanesMap.get(lane.title)
 
-            incompleteItems.forEach(item => {
-                existingItems.push({
-                    ...item,
-                    text: `(Rollover) ${item.text}`
-                });
-                rolloverCount++;
-            });
-        }
-    });
-
-    // Convert map back to array
-    const finalListLanes = Array.from(newLanesMap.entries()).map(([title, items]) => ({ title, items }));
-
-    if (rolloverCount > 0) {
-        saveDailyTodos(rootDir, date, finalListLanes);
+      incompleteItems.forEach((item) => {
+        existingItems.push({
+          ...item,
+          text: `(Rollover) ${item.text}`,
+        })
+        rolloverCount++
+      })
     }
+  })
 
-    return finalListLanes;
-};
+  // Convert map back to array
+  const finalListLanes = Array.from(newLanesMap.entries()).map(
+    ([title, items]) => ({ title, items })
+  )
+
+  if (rolloverCount > 0) {
+    saveDailyTodos(rootDir, date, finalListLanes)
+  }
+
+  return finalListLanes
+}
 
 /**
  * Saves todos to markdown
  * @param {TodoLane[]} lanes
  */
 export const saveDailyTodos = async (rootDir, date, lanes) => {
-    if (!window.electronAPI) return;
+  if (!window.electronAPI) return
 
-    const filePath = getTodoFilePath(rootDir, date);
-    const content = serializeTodoMarkdown(lanes);
+  const filePath = getTodoFilePath(rootDir, date)
+  const content = serializeTodoMarkdown(lanes)
 
-    await window.electronAPI.writeFile(filePath, content);
-};
+  await window.electronAPI.writeFile(filePath, content)
+}
 
-const getDefaultLanes = () => [
-    { title: 'General', items: [] }
-];
+const getDefaultLanes = () => [{ title: 'General', items: [] }]
 
 /**
  * Parses markdown into lanes.
@@ -143,121 +141,125 @@ const getDefaultLanes = () => [
  * - [x] Completed Task
  */
 const parseTodoMarkdown = (content) => {
-    const lines = content.split('\n');
-    const lanes = [];
-    let currentLane = null;
+  const lines = content.split('\n')
+  const lanes = []
+  let currentLane = null
 
-    lines.forEach(line => {
-        const trimmed = line.trim();
+  lines.forEach((line) => {
+    const trimmed = line.trim()
 
-        if (trimmed.startsWith('# ')) {
-            // New Lane
-            if (currentLane) lanes.push(currentLane);
-            currentLane = {
-                title: trimmed.substring(2).trim(),
-                items: []
-            };
-        } else if (trimmed.startsWith('- [') && currentLane) {
-            // Task Item
-            const isCompleted = trimmed.startsWith('- [x]');
-            const text = trimmed.substring(5).trim();
-            currentLane.items.push({
-                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-                text,
-                completed: isCompleted
-            });
-        }
-    });
+    if (trimmed.startsWith('# ')) {
+      // New Lane
+      if (currentLane) lanes.push(currentLane)
+      currentLane = {
+        title: trimmed.substring(2).trim(),
+        items: [],
+      }
+    } else if (trimmed.startsWith('- [') && currentLane) {
+      // Task Item
+      const isCompleted = trimmed.startsWith('- [x]')
+      const text = trimmed.substring(5).trim()
+      currentLane.items.push({
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+        text,
+        completed: isCompleted,
+      })
+    }
+  })
 
-    if (currentLane) lanes.push(currentLane);
+  if (currentLane) lanes.push(currentLane)
 
-    // If empty or malformed, return defaults
-    return lanes.length > 0 ? lanes : getDefaultLanes();
-};
+  // If empty or malformed, return defaults
+  return lanes.length > 0 ? lanes : getDefaultLanes()
+}
 
 /**
  * Aggregates todo statistics
  * @returns {Promise<{ today: { total: number, completed: number, byCategory: Object }, month: { completed: number }, year: { completed: number } }>}
  */
 export const getTodoStats = async (rootDir) => {
-    if (!window.electronAPI) return { today: {}, month: {}, year: {} };
+  if (!window.electronAPI) return { today: {}, month: {}, year: {} }
 
-    // 1. List all todo files
-    const result = await window.electronAPI.listAllFiles(rootDir);
-    if (!result.success) return { today: {}, month: {}, year: {} };
+  // 1. List all todo files
+  const result = await window.electronAPI.listAllFiles(rootDir)
+  if (!result.success) return { today: {}, month: {}, year: {} }
 
-    const todoFiles = result.files.filter(f => f.endsWith('-todos.md'));
+  const todoFiles = result.files.filter((f) => f.endsWith('-todos.md'))
 
-    const stats = {
-        today: { total: 0, completed: 0, byCategory: [] },
-        month: { completed: 0 },
-        year: { completed: 0 }
-    };
+  const stats = {
+    today: { total: 0, completed: 0, byCategory: [] },
+    month: { completed: 0 },
+    year: { completed: 0 },
+  }
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); // 0-indexed
-    const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() // 0-indexed
+  const todayStr = new Date().toISOString().split('T')[0]
 
-    // Helper to parse filename YYYY-MM-DD
-    const getDateFromPath = (path) => {
-        const basename = path.split(/[\\/]/).pop();
-        const datePart = basename.replace('-todos.md', '');
-        return new Date(datePart);
-    };
+  // Helper to parse filename YYYY-MM-DD
+  const getDateFromPath = (path) => {
+    const basename = path.split(/[\\/]/).pop()
+    const datePart = basename.replace('-todos.md', '')
+    return new Date(datePart)
+  }
 
-    // Parallel-ish loading (limited by electron bridge, but we can try Promise.all)
-    // For performance, we might want to limit this or only read recent files.
-    // For now, let's read all. If it gets slow, we optimize.
-    const filePromises = todoFiles.map(async (filePath) => {
-        const fileRes = await window.electronAPI.readFile(filePath);
-        if (!fileRes.success) return null;
+  // Parallel-ish loading (limited by electron bridge, but we can try Promise.all)
+  // For performance, we might want to limit this or only read recent files.
+  // For now, let's read all. If it gets slow, we optimize.
+  const filePromises = todoFiles.map(async (filePath) => {
+    const fileRes = await window.electronAPI.readFile(filePath)
+    if (!fileRes.success) return null
 
-        const date = getDateFromPath(filePath);
-        const lanes = parseTodoMarkdown(fileRes.data);
+    const date = getDateFromPath(filePath)
+    const lanes = parseTodoMarkdown(fileRes.data)
 
-        let fileCompleted = 0;
-        lanes.forEach(lane => {
-            lane.items.forEach(item => {
-                if (item.completed) fileCompleted++;
-            });
-        });
+    let fileCompleted = 0
+    lanes.forEach((lane) => {
+      lane.items.forEach((item) => {
+        if (item.completed) fileCompleted++
+      })
+    })
 
-        const isToday = filePath.includes(todayStr);
+    const isToday = filePath.includes(todayStr)
 
-        if (isToday) {
-            lanes.forEach(lane => {
-                const laneTotal = lane.items.length;
-                const laneCompleted = lane.items.filter(i => i.completed).length;
-                stats.today.total += laneTotal;
-                stats.today.completed += laneCompleted;
-                stats.today.byCategory.push({
-                    title: lane.title,
-                    total: laneTotal,
-                    completed: laneCompleted
-                });
-            });
-        }
+    if (isToday) {
+      lanes.forEach((lane) => {
+        const laneTotal = lane.items.length
+        const laneCompleted = lane.items.filter((i) => i.completed).length
+        stats.today.total += laneTotal
+        stats.today.completed += laneCompleted
+        stats.today.byCategory.push({
+          title: lane.title,
+          total: laneTotal,
+          completed: laneCompleted,
+        })
+      })
+    }
 
-        if (date.getFullYear() === currentYear) {
-            stats.year.completed += fileCompleted;
-            if (date.getMonth() === currentMonth) {
-                stats.month.completed += fileCompleted;
-            }
-        }
-    });
+    if (date.getFullYear() === currentYear) {
+      stats.year.completed += fileCompleted
+      if (date.getMonth() === currentMonth) {
+        stats.month.completed += fileCompleted
+      }
+    }
+  })
 
-    await Promise.all(filePromises);
+  await Promise.all(filePromises)
 
-    return stats;
-};
+  return stats
+}
 
 const serializeTodoMarkdown = (lanes) => {
-    return lanes.map(lane => {
-        const header = `# ${lane.title}`;
-        const items = lane.items.map(item => {
-            return `- [${item.completed ? 'x' : ' '}] ${item.text}`;
-        }).join('\n');
-        return `${header}\n${items}`;
-    }).join('\n\n');
-};
+  return lanes
+    .map((lane) => {
+      const header = `# ${lane.title}`
+      const items = lane.items
+        .map((item) => {
+          return `- [${item.completed ? 'x' : ' '}] ${item.text}`
+        })
+        .join('\n')
+      return `${header}\n${items}`
+    })
+    .join('\n\n')
+}

@@ -6,13 +6,13 @@
 
 ## ✨ Features
 
--   **📝 Free-Text Daily Logging**: Log your work your way. No start/stop timers, just pure Markdown text.
--   **✅ Task Management**: Integrated Todo list with automatic rollover of uncompleted tasks.
--   **📊 Productivity Dashboard**: Visualizing your streak, active days, and daily objectives.
--   **🏷️ Tagging System**: Organize your entries with tags to track projects or skills.
--   **🌓 Dark Mode**: Sleek, eye-friendly dark theme for late-night coding sessions.
--   **📂 Data Ownership**: All data is stored as local Markdown files on your machine. Compatible with Obsidian, Notion, and other Markdown editors.
--   **🔄 Auto-Updates**: Stay up-to-date with automatic background updates.
+- **📝 Free-Text Daily Logging**: Log your work your way. No start/stop timers, just pure Markdown text.
+- **✅ Task Management**: Integrated Todo list with automatic rollover of uncompleted tasks.
+- **📊 Productivity Dashboard**: Visualizing your streak, active days, and daily objectives.
+- **🏷️ Tagging System**: Organize your entries with tags to track projects or skills.
+- **🌓 Dark Mode**: Sleek, eye-friendly dark theme for late-night coding sessions.
+- **📂 Data Ownership**: All data is stored as local Markdown files on your machine. Compatible with Obsidian, Notion, and other Markdown editors.
+- **🔄 Auto-Updates**: Stay up-to-date with automatic background updates.
 
 ## 🚀 Getting Started
 
@@ -20,8 +20,8 @@
 
 Download the latest release for your platform from the [Releases Page](https://github.com/Matthew7727/worktracker/releases).
 
--   **Windows**: Download access run `Work-Tracker Setup 1.0.0.exe`.
--   **macOS / Linux**: Coming soon.
+- **Windows**: Download access run `Work-Tracker Setup 1.0.0.exe`.
+- **macOS / Linux**: Coming soon.
 
 ### First Run
 
@@ -35,8 +35,8 @@ If you want to contribute or build from source:
 
 ### Prerequisites
 
--   Node.js (v18 or higher)
--   npm
+- Node.js (v18 or higher)
+- npm
 
 ### Setup
 
@@ -65,10 +65,10 @@ npm run electron:build
 
 ## 🏗️ Architecture
 
--   **Frontend**: React + Vite
--   **Backend**: Electron (Main Process)
--   **UI Library**: Carbon Design System (@carbon/react)
--   **Data Storage**: Local File System (Markdown + Frontmatter)
+- **Frontend**: React + Vite
+- **Backend**: Electron (Main Process)
+- **UI Library**: Carbon Design System (@carbon/react)
+- **Data Storage**: Local File System (Markdown + Frontmatter)
 
 ## 📄 License
 

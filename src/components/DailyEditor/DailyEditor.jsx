@@ -1,294 +1,454 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
-    Box,
-    Typography,
-    Paper,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    CircularProgress,
-    Fade
-} from '@mui/material';
-import { useAppContext } from '../../context/AppContext';
-import { getDailyFilePath } from '../../utils/fileHelpers';
-import { stringifyMarkdown } from '../../utils/markdownParser';
-import { loadAllEntries } from '../../utils/DataManager';
-import { useLocation } from 'react-router-dom';
+  Box,
+  Typography,
+  CircularProgress,
+  Fade,
+  Button,
+  Stack,
+  IconButton,
+  LinearProgress,
+  Paper,
+} from '@mui/material'
+import {
+  Save,
+  ArrowForward,
+  ArrowBack,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Edit as EditIcon,
+} from '@mui/icons-material'
+import { useAppContext } from '../../context/AppContext'
+import { getDailyFilePath } from '../../utils/fileHelpers'
+import {
+  stringifyMarkdown,
+  parseMarkdown,
+  parseStreams,
+  stringifyStreams,
+} from '../../utils/markdownParser'
+import { useLocation } from 'react-router-dom'
+import { flowStyles } from './DailyEditor.styles'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
+import rehypeRaw from 'rehype-raw'
 
 // Sub-components
-import DateNavigation from './components/DateNavigation';
-import EntryCard from './components/EntryCard';
+import EntryCard from './components/EntryCard'
+
+const STEPS = [
+  {
+    id: 'clientWork',
+    label: 'CLIENT WORK',
+    question: 'What Client Work have you done today?',
+    color: 'primary.main',
+  },
+  {
+    id: 'practiceDevelopment',
+    label: 'PRACTICE DEVELOPMENT',
+    question: 'What PD have you done today?',
+    color: 'secondary.main',
+  },
+  {
+    id: 'businessDevelopment',
+    label: 'BUSINESS DEVELOPMENT',
+    question: 'What BD have you done today?',
+    color: '#eb8449',
+  },
+]
 
 const DailyEditor = () => {
-    const { selectedDirectory, refreshTrigger, showNotification } = useAppContext();
-    const location = useLocation();
+  const { selectedDirectory, showNotification } = useAppContext()
+  const location = useLocation()
 
-    // State
-    const [currentDate, setCurrentDate] = useState(() => {
-        if (location.state && location.state.initialDate) {
-            return new Date(location.state.initialDate);
+  // State
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (location.state && location.state.initialDate) {
+      return new Date(location.state.initialDate)
+    }
+    return new Date()
+  })
+
+  const [streams, setStreams] = useState({
+    clientWork: '',
+    practiceDevelopment: '',
+    businessDevelopment: '',
+  })
+
+  const [viewMode, setViewMode] = useState(() =>
+    location.state?.autoStartFlow ? 'flow' : 'start'
+  ) // 'start', 'flow', 'summary'
+  const [currentStep, setCurrentStep] = useState(0)
+
+  // Watch for location state changes if already mounted
+  useEffect(() => {
+    if (location.state?.autoStartFlow) {
+      setViewMode('flow')
+      setCurrentStep(0)
+    }
+  }, [location.state])
+  const [isLoading, setIsLoading] = useState(false)
+  const [_isSaving, setIsSaving] = useState(false)
+
+  // Helpers
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  // Data Loading
+  useEffect(() => {
+    const loadDailyData = async () => {
+      if (!selectedDirectory) return
+      setIsLoading(true)
+      try {
+        const filePath = getDailyFilePath(selectedDirectory, currentDate)
+        const fileResult = await window.electronAPI.readFile(filePath)
+
+        if (fileResult.success) {
+          const { body } = parseMarkdown(fileResult.data)
+          const parsedStreams = parseStreams(body)
+          setStreams(parsedStreams)
+
+          // Only show summary if there's actually some content
+          const hasData = Object.values(parsedStreams).some(
+            (val) => val && val.trim().length > 0
+          )
+          if (!location.state?.autoStartFlow) {
+            setViewMode(hasData ? 'summary' : 'start')
+          }
+        } else {
+          setStreams({
+            clientWork: '',
+            practiceDevelopment: '',
+            businessDevelopment: '',
+          })
+          if (!location.state?.autoStartFlow) {
+            setViewMode('start')
+          }
         }
-        return new Date();
-    });
-    const [entries, setEntries] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [entryToDelete, setEntryToDelete] = useState(null);
+      } catch (error) {
+        console.error('Failed to load daily data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadDailyData()
+  }, [currentDate, selectedDirectory, location.state?.autoStartFlow])
 
-    // Helpers
-    const formatDate = (date) => {
-        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    };
+  const handleSaveDay = async () => {
+    if (!selectedDirectory) return
+    setIsSaving(true)
+    try {
+      const filePath = getDailyFilePath(selectedDirectory, currentDate)
+      const body = stringifyStreams(streams)
+      const frontmatter = {
+        date: currentDate.toISOString().split('T')[0],
+        lastModified: new Date().toISOString(),
+      }
 
-    // Data Loading
-    useEffect(() => {
-        const loadEntries = async () => {
-            if (!selectedDirectory) return;
-            setIsLoading(true);
-            try {
-                const allEntries = await loadAllEntries(selectedDirectory);
-                const dateStr = currentDate.toISOString().split('T')[0];
-                const dayEntries = allEntries.filter(e => e.date === dateStr);
+      const fileContent = stringifyMarkdown(body, frontmatter)
+      const result = await window.electronAPI.writeFile(filePath, fileContent)
 
-                if (dayEntries.length > 0) {
-                    setEntries(dayEntries.map(e => ({
-                        ...e,
-                        isSaving: false,
-                        newTag: ''
-                    })));
-                } else {
-                    setEntries([{
-                        id: 'new-' + Date.now(),
-                        content: '',
-                        tags: [],
-                        isSaving: false,
-                        newTag: '',
-                        isNew: true
-                    }]);
-                }
-            } catch (error) {
-                console.error("Failed to load entries:", error);
-                setEntries([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadEntries();
-    }, [currentDate, selectedDirectory, refreshTrigger]);
+      if (result.success) {
+        showNotification('Day archived successfully', 'success')
+        setViewMode('summary')
+      } else {
+        showNotification(`Save Error: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Failed to save day:', error)
+      showNotification('Failed to save to system', 'error')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
-    // Handlers
-    const handleSaveEntry = async (entryId) => {
-        if (!selectedDirectory) return;
-        setEntries(prev => prev.map(e => e.id === entryId ? { ...e, isSaving: true } : e));
+  const updateStream = (streamId, content) => {
+    setStreams((prev) => ({ ...prev, [streamId]: content }))
+  }
 
-        try {
-            const entry = entries.find(e => e.id === entryId);
-            let filePath = entry.path;
+  const handlePrevDay = () => {
+    const newDate = new Date(currentDate)
+    newDate.setDate(currentDate.getDate() - 1)
+    setCurrentDate(newDate)
+  }
 
-            if (!filePath || entry.isNew) {
-                const now = new Date();
-                const hhmmss = now.getHours().toString().padStart(2, '0') +
-                    now.getMinutes().toString().padStart(2, '0') +
-                    now.getSeconds().toString().padStart(2, '0');
-                filePath = getDailyFilePath(selectedDirectory, currentDate, hhmmss);
-            }
+  const handleNextDay = () => {
+    const newDate = new Date(currentDate)
+    newDate.setDate(currentDate.getDate() + 1)
+    setCurrentDate(newDate)
+  }
 
-            if (window.electronAPI) {
-                const updatedMetadata = {
-                    ...entry.metadata,
-                    tags: entry.tags,
-                    lastModified: new Date().toISOString()
-                };
-                const fileContent = stringifyMarkdown(entry.content, updatedMetadata);
-                const result = await window.electronAPI.writeFile(filePath, fileContent);
-
-                if (result.success) {
-                    setEntries(prev => prev.map(e => e.id === entryId ? {
-                        ...e,
-                        isSaving: false,
-                        isNew: false,
-                        path: filePath,
-                        id: filePath.split(/[\\/]/).pop().replace('.md', '')
-                    } : e));
-                    showNotification('Contribution archived successfully', 'success');
-                } else {
-                    showNotification(`Save Error: ${result.error}`, 'error');
-                }
-            }
-        } catch (error) {
-            console.error("Failed to save entry:", error);
-            showNotification('Failed to save to system', 'error');
-        } finally {
-            setEntries(prev => prev.map(e => e.id === entryId ? { ...e, isSaving: false } : e));
-        }
-    };
-
-    const handleDeleteEntry = async () => {
-        if (!entryToDelete || !selectedDirectory) return;
-        setIsLoading(true);
-        try {
-            const result = await window.electronAPI.deleteFile(entryToDelete.path);
-            if (result.success) {
-                setEntries(prev => prev.filter(e => e.id !== entryToDelete.id));
-                showNotification('Entry purged from archive', 'info');
-                if (entries.length <= 1) {
-                    handleAddBlankEntry();
-                }
-            }
-        } catch (error) {
-            console.error('Failed to delete entry:', error);
-            showNotification('Purge failed', 'error');
-        } finally {
-            setIsLoading(false);
-            setIsDeleteModalOpen(false);
-            setEntryToDelete(null);
-        }
-    };
-
-    const handleAddBlankEntry = () => {
-        const newEntry = {
-            id: 'new-' + Date.now(),
-            content: '',
-            tags: [],
-            isSaving: false,
-            newTag: '',
-            isNew: true,
-            date: currentDate.toISOString().split('T')[0]
-        };
-        setEntries([newEntry, ...entries]);
-        showNotification('New draft created', 'info');
-    };
-
-    const handleUpdateContent = (id, content) => {
-        setEntries(prev => prev.map(e => e.id === id ? { ...e, content } : e));
-    };
-
-    const handleUpdateTagsInput = (id, val) => {
-        setEntries(prev => prev.map(e => e.id === id ? { ...e, newTag: val } : e));
-    };
-
-    const handleAddTag = (id) => {
-        const entry = entries.find(e => e.id === id);
-        if (entry.newTag.trim() && !entry.tags.includes(entry.newTag.trim())) {
-            setEntries(prev => prev.map(e => e.id === id ? {
-                ...e,
-                tags: [...e.tags, entry.newTag.trim()],
-                newTag: ''
-            } : e));
-        }
-    };
-
-    const handleRemoveTag = (id, tagToRemove) => {
-        setEntries(prev => prev.map(e => e.id === id ? {
-            ...e,
-            tags: e.tags.filter(t => t !== tagToRemove)
-        } : e));
-    };
-
-    // Navigation handlers
-    const handlePrevDay = () => {
-        const newDate = new Date(currentDate);
-        newDate.setDate(currentDate.getDate() - 1);
-        setCurrentDate(newDate);
-    };
-
-    const handleNextDay = () => {
-        const newDate = new Date(currentDate);
-        newDate.setDate(currentDate.getDate() + 1);
-        setCurrentDate(newDate);
-    };
-
-    // Shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch (e.key.toLowerCase()) {
-                    case 'arrowleft': handlePrevDay(); break;
-                    case 'arrowright': handleNextDay(); break;
-                    case 't': setCurrentDate(new Date()); break;
-                    case 'n': handleAddBlankEntry(); break;
-                }
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentDate]);
-
+  if (isLoading) {
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <DateNavigation
-                currentDate={currentDate}
-                onPrevDay={handlePrevDay}
-                onNextDay={handleNextDay}
-                onDateChange={(val) => setCurrentDate(val)}
-                onAddEntry={handleAddBlankEntry}
-            />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <CircularProgress size={60} thickness={5} />
+      </Box>
+    )
+  }
 
-            <Typography variant="h2" sx={{ my: 2, fontWeight: 950 }}>
-                {formatDate(currentDate)}
-            </Typography>
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Unified Header with Navigation */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+        spacing={4}
+        sx={{ mt: 2, mb: 4 }}
+      >
+        <IconButton
+          onClick={handlePrevDay}
+          sx={{
+            border: '4px solid black',
+            p: 1.5,
+            '&:hover': { bgcolor: 'black', color: 'white' },
+          }}
+        >
+          <ChevronLeft sx={{ fontSize: '2.5rem' }} />
+        </IconButton>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, pb: 8 }}>
-                {isLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    entries.map((entry, index) => (
-                        <Fade in={true} timeout={500 + index * 100} key={entry.id}>
-                            <Box>
-                                <EntryCard
-                                    entry={entry}
-                                    onSave={handleSaveEntry}
-                                    onDelete={(e) => {
-                                        if (e.isNew) {
-                                            setEntries(prev => prev.filter(ent => ent.id !== e.id));
-                                        } else {
-                                            setEntryToDelete(e);
-                                            setIsDeleteModalOpen(true);
-                                        }
-                                    }}
-                                    onUpdateContent={handleUpdateContent}
-                                    onUpdateTags={handleUpdateTagsInput}
-                                    onAddTag={handleAddTag}
-                                    onRemoveTag={handleRemoveTag}
-                                />
-                            </Box>
-                        </Fade>
-                    ))
-                )}
-            </Box>
+        <Typography variant="h2" sx={{ fontWeight: 950, textAlign: 'center' }}>
+          {formatDate(currentDate)}
+        </Typography>
 
-            <Dialog
-                open={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                PaperProps={{
-                    sx: { borderRadius: '24px', border: '4px solid black', p: 3 }
-                }}
-            >
-                <DialogTitle sx={{ fontWeight: 950, fontSize: '2rem', textAlign: 'center', borderBottom: '3px solid black', mb: 3 }}>
-                    CONFIRM ARCHIVE PURGE
-                </DialogTitle>
-                <DialogContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, mb: 2 }}>Are you absolutely sure?</Typography>
-                    <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                        This specific contribution will be purged from the archive.<br />
-                        This action cannot be reversed.
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 2 }}>
-                    <Button variant="outlined" onClick={() => setIsDeleteModalOpen(false)} sx={{ px: 4 }}>
-                        KEEP IT
-                    </Button>
-                    <Button variant="contained" color="error" onClick={handleDeleteEntry} sx={{ px: 4, bgcolor: 'error.main', border: 'none' }}>
-                        DELETE FOREVER
-                    </Button>
-                </DialogActions>
-            </Dialog>
+        <IconButton
+          onClick={handleNextDay}
+          sx={{
+            border: '4px solid black',
+            p: 1.5,
+            '&:hover': { bgcolor: 'black', color: 'white' },
+          }}
+        >
+          <ChevronRight sx={{ fontSize: '2.5rem' }} />
+        </IconButton>
+      </Stack>
+
+      {viewMode === 'start' && (
+        <Box sx={flowStyles.container}>
+          <Typography variant="h3" sx={{ fontWeight: 900, mb: 2 }}>
+            Ready to log your achievements?
+          </Typography>
+          <Box
+            component="button"
+            onClick={() => {
+              setCurrentStep(0)
+              setViewMode('flow')
+            }}
+            sx={flowStyles.startButton}
+          >
+            START FLOW
+            <Box className="shine-layer" sx={flowStyles.shineLayer} />
+          </Box>
         </Box>
-    );
-};
+      )}
 
-export default DailyEditor;
+      {viewMode === 'flow' && (
+        <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
+          <Box sx={{ mb: 4 }}>
+            <LinearProgress
+              variant="determinate"
+              value={((currentStep + 1) / STEPS.length) * 100}
+              sx={{
+                height: 16,
+                borderRadius: 8,
+                border: '4px solid black',
+                bgcolor: 'white',
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: STEPS[currentStep].color,
+                },
+              }}
+            />
+            <Typography
+              sx={{
+                mt: 1,
+                textAlign: 'right',
+                fontWeight: 950,
+                fontSize: '1.1rem',
+              }}
+            >
+              STEP {currentStep + 1} OF {STEPS.length}
+            </Typography>
+          </Box>
+
+          <Fade in={true} key={currentStep}>
+            <Box>
+              <Typography
+                variant="h3"
+                sx={{ mb: 4, fontWeight: 950, color: STEPS[currentStep].color }}
+              >
+                {STEPS[currentStep].question}
+              </Typography>
+
+              <EntryCard
+                entry={{ content: streams[STEPS[currentStep].id], tags: [] }}
+                onUpdateContent={(id, content) =>
+                  updateStream(STEPS[currentStep].id, content)
+                }
+                isStreamMode
+                borderColor={STEPS[currentStep].color}
+              />
+
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                sx={{ mt: 6 }}
+              >
+                <Button
+                  variant="outlined"
+                  size="large"
+                  startIcon={<ArrowBack />}
+                  onClick={() =>
+                    currentStep === 0
+                      ? setViewMode('start')
+                      : setCurrentStep((prev) => prev - 1)
+                  }
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    border: '4px solid black',
+                    borderWidth: '3px !important',
+                    fontWeight: 900,
+                    color: 'black',
+                  }}
+                >
+                  {currentStep === 0 ? 'CANCEL' : 'BACK'}
+                </Button>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  endIcon={
+                    currentStep === STEPS.length - 1 ? (
+                      <CheckCircle />
+                    ) : (
+                      <ArrowForward />
+                    )
+                  }
+                  onClick={() =>
+                    currentStep < STEPS.length - 1
+                      ? setCurrentStep((prev) => prev + 1)
+                      : handleSaveDay()
+                  }
+                  sx={{
+                    px: 6,
+                    py: 1.5,
+                    fontWeight: 900,
+                    bgcolor: STEPS[currentStep].color,
+                    border: '4px solid black',
+                    boxShadow: '8px 8px 0px black',
+                    '&:hover': {
+                      bgcolor: STEPS[currentStep].color,
+                      transform: 'translate(-2px, -2px)',
+                      boxShadow: '10px 10px 0px black',
+                    },
+                  }}
+                >
+                  {currentStep === STEPS.length - 1 ? 'FINISH & SAVE' : 'NEXT'}
+                </Button>
+              </Stack>
+            </Box>
+          </Fade>
+        </Box>
+      )}
+
+      {viewMode === 'summary' && (
+        <Fade in={true}>
+          <Box sx={{ maxWidth: '1000px', mx: 'auto', width: '100%', mt: 4 }}>
+            <Paper
+              sx={{
+                p: 6,
+                borderRadius: '40px',
+                border: '5px solid black',
+                boxShadow: '15px 15px 0px rgba(0,0,0,0.1)',
+                mb: 10,
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 6 }}
+              >
+                <Typography
+                  variant="h2"
+                  sx={{ fontWeight: 950, letterSpacing: '-2px' }}
+                >
+                  JOURNAL SUMMARY
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<EditIcon />}
+                  onClick={() => {
+                    setCurrentStep(0)
+                    setViewMode('flow')
+                  }}
+                  sx={{
+                    bgcolor: 'black',
+                    color: 'white',
+                    fontWeight: 900,
+                    px: 4,
+                    '&:hover': { bgcolor: '#333' },
+                  }}
+                >
+                  EDIT DAY
+                </Button>
+              </Stack>
+
+              <Stack spacing={6}>
+                {STEPS.map((step) => (
+                  <Box key={step.id}>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: 950, color: step.color, mb: 2 }}
+                    >
+                      {step.label}
+                    </Typography>
+                    <Box
+                      sx={{
+                        pl: 4,
+                        borderLeft: `4px solid ${step.color}22`,
+                        fontSize: '1.25rem',
+                        lineHeight: 1.6,
+                        color: 'text.secondary',
+                        '& p': { m: 0 },
+                      }}
+                    >
+                      {streams[step.id] ? (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkBreaks]}
+                          rehypePlugins={[rehypeRaw]}
+                        >
+                          {streams[step.id]}
+                        </ReactMarkdown>
+                      ) : (
+                        <Typography sx={{ fontStyle: 'italic', opacity: 0.5 }}>
+                          No entry for this stream.
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Box>
+        </Fade>
+      )}
+    </Box>
+  )
+}
+
+export default DailyEditor
