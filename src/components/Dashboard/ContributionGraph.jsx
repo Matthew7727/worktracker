@@ -47,8 +47,8 @@ const ContributionGraph = ({ entries }) => {
         weeks.push(currentWeek);
     }
 
-    const blockSize = 14;
-    const blockGap = 5;
+    const blockSize = 12;
+    const blockGap = 4;
 
     const getDayInfo = (date) => {
         if (!date) return { color: 'transparent', title: '' };
@@ -77,15 +77,15 @@ const ContributionGraph = ({ entries }) => {
             dominant = 'Business Dev Focused';
         }
 
-        return { 
-            color, 
-            title: `${dateStr}: ${dominant} (${total} words)` 
+        return {
+            color,
+            title: `${dateStr}: ${dominant} (${total} words)`
         };
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', overflowX: 'auto', py: 2, alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', gap: `${blockGap}px`, p: 2, border: '3px solid black', borderRadius: '12px', bgcolor: 'white' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', overflowX: 'auto', py: 2, alignItems: 'center', msOverflowStyle: 'none', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+            <Box sx={{ display: 'flex', gap: `${blockGap}px` }}>
                 {weeks.map((week, wIndex) => (
                     <Box key={wIndex} sx={{ display: 'flex', flexDirection: 'column', gap: `${blockGap}px` }}>
                         {week.map((date, dIndex) => {

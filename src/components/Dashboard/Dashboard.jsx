@@ -20,18 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import ContributionGraph from './ContributionGraph';
 
 // Sub-components
-import { StatContent } from './components/SummaryTiles';
-import DashboardWidget from './components/DashboardWidget';
 import WeeklyChart from './WeeklyChart';
 import RecentActivityContent from './components/RecentActivity';
 import TodoSummaryContent from './components/TodoSummary';
-import {
-    EventAvailable,
-    Speed as BalanceIcon,
-    History as RecentIcon,
-    LocalFireDepartment as StreakIcon,
-    MenuBook as TotalWordsIcon
-} from '@mui/icons-material';
 
 const STREAM_COLORS = {
     clientWork: '#80b621',
@@ -148,69 +139,75 @@ const Dashboard = () => {
 
     return (
         <Fade in={true} timeout={600}>
-            <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 3, pb: 10, maxWidth: 1400, mx: 'auto', width: '100%' }}>
-                <Typography variant="h1" sx={{ fontSize: '3rem', mb: 1, fontWeight: 950 }}>DASHBOARD</Typography>
+            <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 6, pb: 10, maxWidth: 1000, mx: 'auto', width: '100%', pt: 4 }}>
                 
-                <Box sx={{ width: '100%' }}>
-                    <Grid container spacing={3}>
-                        {/* Top Stats */}
-                        <DashboardWidget title="ACTIVE DAYS" icon={<EventAvailable color="primary" />} xs={3}>
-                            <StatContent value={stats.totalDays} subtitle="Days Logged" loading={loading} />
-                        </DashboardWidget>
-                        
-                        <DashboardWidget title="TOTAL WORDS" icon={<TotalWordsIcon color="secondary" />} xs={3}>
-                            <StatContent value={stats.totalWords.toLocaleString()} subtitle="Across all streams" loading={loading} />
-                        </DashboardWidget>
+                {/* Hero Statement */}
+                <Box>
+                    {loading ? (
+                        <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 4 }} />
+                    ) : (
+                        <Typography variant="h3" sx={{ fontWeight: 800, lineHeight: 1.4, color: 'text.primary' }}>
+                            You've written <Typography component="span" variant="h3" color="primary.main" sx={{ fontWeight: 900 }}>{stats.totalWords.toLocaleString()} words</Typography> over <Typography component="span" variant="h3" color="secondary.main" sx={{ fontWeight: 900 }}>{stats.totalDays} active days</Typography>, maintaining a <Typography component="span" variant="h3" sx={{ fontWeight: 900, color: '#eb8449' }}>{stats.currentStreak}-day streak</Typography>. Your stream alignment sits at an <Typography component="span" variant="h3" sx={{ fontWeight: 900, color: 'success.main' }}>{stats.balanceScore}% balance score</Typography>.
+                        </Typography>
+                    )}
+                </Box>
 
-                        <DashboardWidget title="STREAK" icon={<StreakIcon sx={{ color: '#eb8449' }} />} xs={3}>
-                            <StatContent value={`${stats.currentStreak}D`} subtitle="Consecutive Days" loading={loading} />
-                        </DashboardWidget>
+                <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
 
-                        <DashboardWidget title="BALANCE SCORE" icon={<BalanceIcon color="primary" />} xs={3}>
-                            <StatContent value={`${stats.balanceScore}%`} subtitle="Stream Focus Balance" loading={loading} />
-                        </DashboardWidget>
+                {/* Activity & Stream Integration */}
+                <Box sx={{ display: 'flex', gap: 6, flexDirection: { xs: 'column', md: 'row' }, alignItems: 'flex-start' }}>
+                    {/* Weekly Chart */}
+                    <Box sx={{ flex: 2, width: '100%' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 900, mb: 3, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}>Weekly Intensity</Typography>
+                        <Box sx={{ minHeight: 250 }}>
+                            {loading ? <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 4 }} /> : <WeeklyChart entries={allEntries} />}
+                        </Box>
+                    </Box>
 
-                        {/* Weekly Distribution */}
-                        <DashboardWidget title="Weekly Intensity (Words)" xs={8}>
-                            {loading ? <Skeleton variant="rectangular" height={220} /> : <WeeklyChart entries={allEntries} />}
-                        </DashboardWidget>
+                    {/* Stream Breakdown */}
+                    <Box sx={{ flex: 1, width: '100%' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 900, mb: 3, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}>Stream Alignment</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {loading ? (
+                                <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 2 }} />
+                            ) : (
+                                <>
+                                    <StreamBar label="Client Work" value={stats.streamBreakdown.clientWork} total={stats.totalWords} color={STREAM_COLORS.clientWork} />
+                                    <StreamBar label="Practice Dev" value={stats.streamBreakdown.practiceDevelopment} total={stats.totalWords} color={STREAM_COLORS.practiceDevelopment} />
+                                    <StreamBar label="Business Dev" value={stats.streamBreakdown.businessDevelopment} total={stats.totalWords} color={STREAM_COLORS.businessDevelopment} />
+                                </>
+                            )}
+                        </Box>
+                    </Box>
+                </Box>
 
-                        {/* Stream Mix */}
-                        <DashboardWidget title="Stream Breakdown" xs={4}>
-                            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, px: 2 }}>
-                                {loading ? (
-                                    <Skeleton variant="rectangular" height={150} />
-                                ) : (
-                                    <>
-                                        <StreamBar label="Client Work" value={stats.streamBreakdown.clientWork} total={stats.totalWords} color={STREAM_COLORS.clientWork} />
-                                        <StreamBar label="Practice Dev" value={stats.streamBreakdown.practiceDevelopment} total={stats.totalWords} color={STREAM_COLORS.practiceDevelopment} />
-                                        <StreamBar label="Business Dev" value={stats.streamBreakdown.businessDevelopment} total={stats.totalWords} color={STREAM_COLORS.businessDevelopment} />
-                                    </>
-                                )}
-                            </Box>
-                        </DashboardWidget>
+                <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
 
-                        {/* Annual Graph */}
-                        <DashboardWidget title="Annual Archive Pipeline" xs={12}>
-                            {loading ? <Skeleton variant="rectangular" height={150} /> : <ContributionGraph entries={allEntries} />}
-                        </DashboardWidget>
+                {/* Current Priorities */}
+                <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 900, mb: 3, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}>Current Priorities</Typography>
+                    <TodoSummaryContent />
+                </Box>
 
-                        <DashboardWidget title="TODO SUMMARY" xs={6}>
-                            <TodoSummaryContent />
-                        </DashboardWidget>
+                <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
 
-                        <DashboardWidget title="RECENT SESSIONS" icon={<RecentIcon />} xs={6}>
-                            <RecentActivityContent
-                                loading={loading}
-                                recentEntries={stats.recentEntries}
-                                onEntryClick={handleEntryClick}
-                                onDeleteClick={(entry) => {
-                                    setEntryToDelete(entry);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                            />
-                        </DashboardWidget>
-                    </Grid>
+                {/* The Journey (Contribution & Recents) */}
+                <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 900, mb: 3, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}>The Journey</Typography>
+                    <Box sx={{ mb: 6 }}>
+                        {loading ? <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 4 }} /> : <ContributionGraph entries={allEntries} />}
+                    </Box>
+
+                    <Typography variant="h6" sx={{ fontWeight: 900, mb: 3, opacity: 0.5 }}>Recent Sessions</Typography>
+                    <RecentActivityContent
+                        loading={loading}
+                        recentEntries={stats.recentEntries}
+                        onEntryClick={handleEntryClick}
+                        onDeleteClick={(entry) => {
+                            setEntryToDelete(entry);
+                            setIsDeleteModalOpen(true);
+                        }}
+                    />
                 </Box>
 
                 <Dialog
@@ -231,10 +228,10 @@ const Dashboard = () => {
                         </Typography>
                     </DialogContent>
                     <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 2 }}>
-                        <Button variant="outlined" onClick={() => setIsDeleteModalOpen(false)} sx={{ px: 4, borderWidth: 2, fontWeight: 700, borderColor: 'black', color: 'black' }}>
+                        <Button variant="outlined" onClick={() => setIsDeleteModalOpen(false)} sx={{ px: 4, borderWidth: 2, fontWeight: 700, borderColor: 'black', color: 'black', '&:hover': { borderWidth: 2, borderColor: 'black' } }}>
                             KEEP CONTRIBUTION
                         </Button>
-                        <Button variant="contained" color="error" onClick={confirmDelete} sx={{ px: 4, bgcolor: 'error.main', border: '2px solid black', boxShadow: '4px 4px 0px black', fontWeight: 700 }}>
+                        <Button variant="contained" color="error" onClick={confirmDelete} sx={{ px: 4, bgcolor: 'error.main', border: '2px solid black', boxShadow: '4px 4px 0px black', fontWeight: 700, '&:hover': { bgcolor: 'error.dark' } }}>
                             PERMANENTLY DELETE
                         </Button>
                     </DialogActions>
