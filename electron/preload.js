@@ -21,6 +21,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // App Data
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
 
+    // Widget & Global Flow
+    triggerGlobalStartFlow: () => ipcRenderer.invoke('widget:triggerStartFlow'),
+    onStartFlowGlobal: (callback) => ipcRenderer.on('app:start-flow', callback),
+    removeStartFlowGlobalListeners: () => ipcRenderer.removeAllListeners('app:start-flow'),
+
     // Auto-Updater actions
     checkForUpdates: () => ipcRenderer.invoke('update:check'),
     quitAndInstall: () => ipcRenderer.invoke('update:quitAndInstall'),

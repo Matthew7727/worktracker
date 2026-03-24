@@ -56,8 +56,16 @@ const DailyEditor = () => {
         businessDevelopment: ''
     });
 
-    const [viewMode, setViewMode] = useState('start'); // 'start', 'flow', 'summary'
+    const [viewMode, setViewMode] = useState(() => location.state?.autoStartFlow ? 'flow' : 'start'); // 'start', 'flow', 'summary'
     const [currentStep, setCurrentStep] = useState(0);
+
+    // Watch for location state changes if already mounted
+    useEffect(() => {
+        if (location.state?.autoStartFlow) {
+            setViewMode('flow');
+            setCurrentStep(0);
+        }
+    }, [location.state]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -82,14 +90,18 @@ const DailyEditor = () => {
                     
                     // Only show summary if there's actually some content
                     const hasData = Object.values(parsedStreams).some(val => val && val.trim().length > 0);
-                    setViewMode(hasData ? 'summary' : 'start');
+                    if (!location.state?.autoStartFlow) {
+                        setViewMode(hasData ? 'summary' : 'start');
+                    }
                 } else {
                     setStreams({
                         clientWork: '',
                         practiceDevelopment: '',
                         businessDevelopment: ''
                     });
-                    setViewMode('start');
+                    if (!location.state?.autoStartFlow) {
+                        setViewMode('start');
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load daily data:", error);

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from './context/AppContext';
 import WelcomeScreen from './components/Onboarding/WelcomeScreen';
 import MainLayout from './components/Layout/MainLayout';
@@ -9,10 +9,30 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Reports from './components/Reports/Reports';
 import Settings from './components/Settings/Settings';
 import Documentation from './components/Documentation/Documentation';
+import TrayWidget from './components/Widget/TrayWidget';
 import './App.css';
 
 function App() {
   const { selectedDirectory } = useAppContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (window.electronAPI && window.electronAPI.onStartFlowGlobal) {
+        window.electronAPI.onStartFlowGlobal(() => {
+            navigate('/editor', { state: { autoStartFlow: true } });
+        });
+        return () => {
+            if (window.electronAPI.removeStartFlowGlobalListeners) {
+                window.electronAPI.removeStartFlowGlobalListeners();
+            }
+        };
+    }
+  }, [navigate]);
+
+  if (location.pathname === '/widget') {
+      return <TrayWidget />;
+  }
 
   if (!selectedDirectory) {
     return <WelcomeScreen />;

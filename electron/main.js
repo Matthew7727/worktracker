@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, Notification } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Notification, Tray, nativeImage } from 'electron';
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
 import log from 'electron-log';
@@ -54,11 +54,7 @@ function triggerNotification() {
         notif.show();
         
         notif.on('click', () => {
-            const mainWindow = BrowserWindow.getAllWindows()[0];
-            if (mainWindow) {
-                if (mainWindow.isMinimized()) mainWindow.restore();
-                mainWindow.focus();
-            }
+            performStartFlow();
         });
     }
 }
@@ -291,6 +287,81 @@ function createWindow() {
     }
 }
 
+let tray = null;
+let widgetWindow = null;
+
+function createWidgetWindow() {
+    widgetWindow = new BrowserWindow({
+        width: 380,
+        height: 86,
+        show: false,
+        frame: false,
+        resizable: false,
+        transparent: true,
+        alwaysOnTop: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true,
+        }
+    });
+
+    const isDev = !app.isPackaged;
+    if (isDev) {
+        widgetWindow.loadURL('http://localhost:5173/#/widget');
+    } else {
+        widgetWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: 'widget' });
+    }
+
+    widgetWindow.on('blur', () => {
+        widgetWindow.hide();
+    });
+}
+
+function createTray() {
+    // Use an empty image to satisfy the Tray constructor, and rely on the emoji for the visual!
+    const icon = nativeImage.createEmpty();
+
+    tray = new Tray(icon);
+    tray.setTitle('✅');
+    tray.setToolTip('Work Tracker Widget');
+
+    tray.on('click', (event, bounds) => {
+        const { x, y } = bounds;
+        const { height, width } = widgetWindow.getBounds();
+        
+        if (widgetWindow.isVisible()) {
+            widgetWindow.hide();
+        } else {
+            // Position it exactly underneath the menu bar (bounds.y + bounds.height gives the bottom of the tray icon)
+            const yPosition = process.platform === 'darwin' ? bounds.y + bounds.height + 2 : bounds.y - height;
+            const xPosition = Math.round(x - (width / 2) + (bounds.width / 2));
+            widgetWindow.setPosition(xPosition, yPosition, false);
+            widgetWindow.show();
+            widgetWindow.focus();
+        }
+    });
+}
+
+// Shared Start Flow functionality
+function performStartFlow() {
+    if (widgetWindow) widgetWindow.hide();
+    const mainWins = BrowserWindow.getAllWindows().filter(w => w !== widgetWindow);
+    if (mainWins.length > 0) {
+        const mainWin = mainWins[0];
+        if (mainWin.isMinimized()) mainWin.restore();
+        mainWin.show();
+        mainWin.focus();
+        mainWin.webContents.send('app:start-flow');
+    } else {
+        createWindow();
+        setTimeout(() => {
+            const wins = BrowserWindow.getAllWindows().filter(w => w !== widgetWindow);
+            if (wins.length > 0) wins[0].webContents.send('app:start-flow');
+        }, 1500);
+    }
+}
+
 app.whenReady().then(async () => {
     ipcMain.handle('app:getVersion', () => app.getVersion());
     ipcMain.handle('dialog:openDirectory', handleFileOpen);
@@ -329,7 +400,14 @@ app.whenReady().then(async () => {
         autoUpdater.quitAndInstall();
     });
 
+    // Widget IPC
+    ipcMain.handle('widget:triggerStartFlow', () => {
+        performStartFlow();
+    });
+
     createWindow();
+    createWidgetWindow();
+    createTray();
     updateNotificationSchedule();
 
     if (app.isPackaged) {
