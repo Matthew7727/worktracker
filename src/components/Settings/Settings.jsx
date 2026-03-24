@@ -9,9 +9,10 @@ import {
     Stack,
     Fade,
     TextField,
-    Divider
+    Divider,
+    LinearProgress
 } from '@mui/material';
-import { NotificationsActive, Schedule, BugReport } from '@mui/icons-material';
+import { NotificationsActive, Schedule, BugReport, SystemUpdateAlt } from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
 
 const Settings = () => {
@@ -21,6 +22,47 @@ const Settings = () => {
     const [notifEnabled, setNotifEnabled] = useState(false);
     const [notifTime, setNotifTime] = useState('17:00');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Auto Update State
+    const [appVersion, setAppVersion] = useState('');
+    const [updateStatus, setUpdateStatus] = useState('idle');
+    const [updateProgress, setUpdateProgress] = useState(0);
+    const [updateError, setUpdateError] = useState(null);
+
+    // Initialize version
+    useEffect(() => {
+        if (window.electronAPI && window.electronAPI.getVersion) {
+            window.electronAPI.getVersion().then(setAppVersion).catch(() => {});
+        }
+    }, []);
+
+    // Setup Update Listeners
+    useEffect(() => {
+        if (!window.electronAPI || !window.electronAPI.onUpdateAvailable) return;
+
+        window.electronAPI.onUpdateChecking(() => setUpdateStatus('checking'));
+        window.electronAPI.onUpdateAvailable(() => setUpdateStatus('available'));
+        window.electronAPI.onUpdateNotAvailable(() => {
+            setUpdateStatus('not-available');
+            showNotification('You are on the latest version.', 'success');
+            setTimeout(() => setUpdateStatus('idle'), 3000);
+        });
+        window.electronAPI.onUpdateProgress((percent) => {
+            setUpdateStatus('downloading');
+            setUpdateProgress(Math.floor(percent));
+        });
+        window.electronAPI.onUpdateDownloaded(() => setUpdateStatus('downloaded'));
+        window.electronAPI.onUpdateError((err) => {
+            setUpdateStatus('error');
+            setUpdateError(err);
+        });
+
+        return () => {
+            if (window.electronAPI.removeAllUpdateListeners) {
+                window.electronAPI.removeAllUpdateListeners();
+            }
+        };
+    }, [showNotification]);
 
     // Load initial settings
     useEffect(() => {
@@ -186,6 +228,83 @@ const Settings = () => {
                                 >
                                     Switch Workspace
                                 </Button>
+                            </Paper>
+
+                            {/* App Updates Section */}
+                            <Paper sx={{ p: 6, borderRadius: '40px', border: '4px solid black', boxShadow: '10px 10px 0px rgba(0,0,0,0.1)' }}>
+                                <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
+                                    <SystemUpdateAlt sx={{ fontSize: '2.5rem' }} />
+                                    <Typography variant="h3" sx={{ fontWeight: 950 }}>Application Updates</Typography>
+                                </Stack>
+
+                                <Typography variant="h6" sx={{ mb: 4, fontWeight: 800 }}>
+                                    Current Version: {appVersion ? `v${appVersion}` : 'Unknown'}
+                                </Typography>
+
+                                <Box sx={{ p: 3, bgcolor: 'action.hover', borderRadius: '20px', border: '3px solid black' }}>
+                                    {updateStatus === 'idle' || updateStatus === 'not-available' ? (
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => {
+                                                if (window.electronAPI && window.electronAPI.checkForUpdates) {
+                                                    window.electronAPI.checkForUpdates().then(res => {
+                                                        if (res && res.status === 'dev') {
+                                                            showNotification('Cannot check for updates in development mode.', 'info');
+                                                        }
+                                                    });
+                                                }
+                                            }}
+                                            sx={{ fontWeight: 900, px: 4, py: 1.5, fontSize: '1.1rem' }}
+                                        >
+                                            CHECK FOR UPDATES
+                                        </Button>
+                                    ) : null}
+
+                                    {updateStatus === 'checking' ? (
+                                        <Button disabled variant="contained" sx={{ fontWeight: 900, px: 4, py: 1.5, fontSize: '1.1rem' }}>
+                                            CHECKING...
+                                        </Button>
+                                    ) : null}
+
+                                    {updateStatus === 'available' || updateStatus === 'downloading' ? (
+                                        <Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+                                                Downloading Update... {updateProgress}%
+                                            </Typography>
+                                            <LinearProgress
+                                                variant="determinate"
+                                                value={updateProgress}
+                                                sx={{ height: 12, borderRadius: 6, border: '2px solid black' }}
+                                            />
+                                        </Box>
+                                    ) : null}
+
+                                    {updateStatus === 'downloaded' ? (
+                                        <Button
+                                            variant="contained"
+                                            color="success"
+                                            onClick={() => window.electronAPI.quitAndInstall()}
+                                            sx={{ fontWeight: 900, px: 4, py: 1.5, fontSize: '1.1rem', bgcolor: '#4caf50', color: '#fff', '&:hover': { bgcolor: '#388e3c' } }}
+                                        >
+                                            RESTART & INSTALL
+                                        </Button>
+                                    ) : null}
+
+                                    {updateStatus === 'error' ? (
+                                        <Box>
+                                            <Typography variant="body1" color="error" sx={{ fontWeight: 800, mb: 2 }}>
+                                                Error: {updateError}
+                                            </Typography>
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => setUpdateStatus('idle')}
+                                                sx={{ fontWeight: 900, borderWidth: '3px', borderColor: 'black', color: 'black' }}
+                                            >
+                                                TRY AGAIN
+                                            </Button>
+                                        </Box>
+                                    ) : null}
+                                </Box>
                             </Paper>
 
                             {/* About Section */}

@@ -87,6 +87,8 @@ async function updateNotificationSchedule() {
 // Auto-updater events
 autoUpdater.on('checking-for-update', () => {
     log.info('Checking for update...');
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) mainWindow.webContents.send('update:checking');
 });
 autoUpdater.on('update-available', (info) => {
     log.info('Update available:', info);
@@ -95,15 +97,21 @@ autoUpdater.on('update-available', (info) => {
 });
 autoUpdater.on('update-not-available', (info) => {
     log.info('Update not available:', info);
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) mainWindow.webContents.send('update:not-available', info);
 });
 autoUpdater.on('error', (err) => {
     log.error('Error in auto-updater:', err);
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) mainWindow.webContents.send('update:error', err.message);
 });
 autoUpdater.on('download-progress', (progressObj) => {
     let log_message = "Download speed: " + progressObj.bytesPerSecond;
     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
     log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
     log.info(log_message);
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) mainWindow.webContents.send('update:progress', progressObj.percent);
 });
 autoUpdater.on('update-downloaded', (info) => {
     log.info('Update downloaded:', info);
@@ -284,6 +292,7 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+    ipcMain.handle('app:getVersion', () => app.getVersion());
     ipcMain.handle('dialog:openDirectory', handleFileOpen);
     ipcMain.handle('dialog:saveFile', handleSaveDialog);
     ipcMain.handle('fs:readFile', handleReadFile);
