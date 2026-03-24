@@ -1,18 +1,18 @@
 
 export const appBarStyles = {
     zIndex: 1100,
-    borderBottom: '3px solid',
-    borderColor: 'divider',
-    bgcolor: 'background.paper',
-    color: 'text.primary'
+    bgcolor: 'transparent',
+    color: 'text.primary',
+    boxShadow: 'none',
 };
 
 export const toolbarStyles = {
-    height: '5.5rem',
+    height: '4rem',
+    minHeight: '4rem !important',
     px: '4rem !important',
     display: 'flex',
     gap: 4,
-    bgcolor: 'background.paper'
+    bgcolor: 'transparent',
 };
 
 export const brandStyles = {

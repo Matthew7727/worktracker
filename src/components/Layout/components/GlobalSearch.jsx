@@ -6,7 +6,7 @@ import {
 import { Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material';
 import { searchDialogStyles, toolbarIconStyles } from '../MainLayout.styles';
 
-const GlobalSearch = ({ rootDir, onResultClick }) => {
+const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
@@ -55,15 +55,17 @@ const GlobalSearch = ({ rootDir, onResultClick }) => {
 
     return (
         <>
-            <Tooltip title="Search Archive (Ctrl+F)" arrow>
-                <IconButton
-                    onClick={() => setIsOpen(true)}
-                    sx={toolbarIconStyles}
-                    aria-label="Open search"
-                >
-                    <SearchIcon />
-                </IconButton>
-            </Tooltip>
+            {renderTrigger ? renderTrigger(() => setIsOpen(true)) : (
+                <Tooltip title="Search Archive (Ctrl+F)" arrow>
+                    <IconButton
+                        onClick={() => setIsOpen(true)}
+                        sx={toolbarIconStyles}
+                        aria-label="Open search"
+                    >
+                        <SearchIcon />
+                    </IconButton>
+                </Tooltip>
+            )}
 
             <Dialog
                 open={isOpen}

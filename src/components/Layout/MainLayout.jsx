@@ -1,14 +1,11 @@
 import React from 'react';
 import {
-    AppBar,
-    Toolbar,
     Box,
     Zoom,
     useScrollTrigger,
     Fab,
     IconButton,
     Tooltip,
-    Stack
 } from '@mui/material';
 import {
     Home,
@@ -20,7 +17,7 @@ import {
     KeyboardArrowUp as KeyboardArrowUpIcon,
     Checklist,
     Brightness4,
-    Brightness7
+    Brightness7,
 } from '@mui/icons-material';
 import { useAppContext } from '../../context/AppContext';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -28,10 +25,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 // Sub-components
 import Brand from './components/Brand';
-import Navigation from './components/Navigation';
-import GlobalSearch from './components/GlobalSearch';
+import FloatingPillNav from './components/FloatingPillNav';
 import FeedbackSystem from './components/FeedbackSystem';
-import { appBarStyles, toolbarStyles, fabStyles, toolbarIconStyles } from './MainLayout.styles';
+import { fabStyles, toolbarIconStyles } from './MainLayout.styles';
 
 function ScrollTop({ children }) {
     const trigger = useScrollTrigger({
@@ -67,6 +63,11 @@ const MainLayout = ({ children }) => {
         { label: 'Settings', path: '/settings', icon: <Settings /> },
     ];
 
+    const actionItems = [
+        { label: 'Docs', icon: <DocsIcon />, onClick: () => navigate('/docs'), path: '/docs' },
+        { label: 'Workspace', icon: <FolderOpen />, onClick: () => setProjectDirectory(null) },
+    ];
+
     const handleSearchResultClick = (date) => {
         navigate('/', { state: { initialDate: date } });
     };
@@ -75,56 +76,28 @@ const MainLayout = ({ children }) => {
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
             <div id="back-to-top-anchor" style={{ position: 'absolute', top: 0 }} />
 
-            <AppBar position="fixed" elevation={0} sx={appBarStyles}>
-                <Toolbar sx={toolbarStyles}>
+            <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, height: '4rem', display: 'flex', alignItems: 'center', px: '4rem', pointerEvents: 'none' }}>
+                <Box sx={{ pointerEvents: 'auto' }}>
                     <Brand onClick={() => navigate('/')} />
+                </Box>
+                <Box sx={{ flexGrow: 1 }} />
+                <Tooltip title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`} arrow>
+                    <IconButton onClick={toggleTheme} sx={{ ...toolbarIconStyles, pointerEvents: 'auto' }}>
+                        {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+                    </IconButton>
+                </Tooltip>
+            </Box>
 
-                    <Navigation
-                        items={navItems}
-                        currentPath={location.pathname}
-                        onNavigate={navigate}
-                    />
+            <FloatingPillNav
+                items={navItems}
+                currentPath={location.pathname}
+                onNavigate={navigate}
+                actions={actionItems}
+                searchRootDir={selectedDirectory}
+                onSearchResultClick={handleSearchResultClick}
+            />
 
-                    <Box sx={{ flexGrow: 1 }} />
-
-                    <Stack direction="row" spacing={2} alignItems="center">
-                        <GlobalSearch
-                            rootDir={selectedDirectory}
-                            onResultClick={handleSearchResultClick}
-                        />
-
-                        <Tooltip title="Application Docs" arrow>
-                            <IconButton
-                                onClick={() => navigate('/docs')}
-                                sx={{
-                                    ...toolbarIconStyles,
-                                    color: location.pathname === '/docs' ? 'primary.main' : 'inherit',
-                                    borderColor: location.pathname === '/docs' ? 'primary.main' : 'black'
-                                }}
-                            >
-                                <DocsIcon />
-                            </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Switch Workspace" arrow>
-                            <IconButton
-                                onClick={() => setProjectDirectory(null)}
-                                sx={toolbarIconStyles}
-                            >
-                                <FolderOpen />
-                            </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`} arrow>
-                            <IconButton onClick={toggleTheme} sx={toolbarIconStyles}>
-                                {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
-                </Toolbar>
-            </AppBar>
-
-            <Box component="main" sx={{ flexGrow: 1, pt: '5.5rem', overflowY: 'auto', bgcolor: 'background.default' }}>
+            <Box component="main" sx={{ flexGrow: 1, pt: '4.5rem', overflowY: 'auto', bgcolor: 'background.default' }}>
                 <Box sx={{ py: 6, px: '4rem' }}>
                     {children}
                 </Box>

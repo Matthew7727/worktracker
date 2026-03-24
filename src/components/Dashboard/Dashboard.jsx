@@ -148,7 +148,7 @@ const Dashboard = () => {
 
     return (
         <Fade in={true} timeout={600}>
-            <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 3, pb: 10 }}>
+            <Box className="dashboard-page" sx={{ display: 'flex', flexDirection: 'column', gap: 3, pb: 10, maxWidth: 1400, mx: 'auto', width: '100%' }}>
                 <Typography variant="h1" sx={{ fontSize: '3rem', mb: 1, fontWeight: 950 }}>DASHBOARD</Typography>
                 
                 <Box sx={{ width: '100%' }}>
