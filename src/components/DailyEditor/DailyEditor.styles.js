@@ -82,6 +82,7 @@ export const flowStyles = {
     gap: 4,
   },
   startButton: {
+    fontFamily: 'inherit',
     fontSize: '3rem',
     fontWeight: 950,
     px: 8,

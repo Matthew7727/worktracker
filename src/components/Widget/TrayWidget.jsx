@@ -15,6 +15,7 @@ const flowStyles = {
     overflow: 'hidden',
   },
   startButton: {
+    fontFamily: 'inherit',
     fontSize: '1.5rem',
     fontWeight: 950,
     px: 4,
