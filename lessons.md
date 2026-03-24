@@ -3,11 +3,13 @@
 This file accumulates knowledge to prevent regression.
 
 ## ⚠️ "Do Not Break" Rules
+
 1. **Design Guidelines**: Always follow the Carbon Design System guidelines strictly. Minimalist B&W aesthetic.
 2. **File Paths**: Use absolute paths when referencing files in tool calls.
 3. **Tool Usage**: Do not assume tools exist unless verified.
 
 ## 🧠 Solved Problems
+
 - None yet.
 - **MUI Theme in Production**: When using `createTheme`, explicitly define nested objects like `palette.action` even if using defaults. In production builds (especially with Vite/Electron), tree-shaking or minification might cause issues if internal components try to access these properties on an undefined object (e.g., `reading 'active'`).
 - **Gradients in MUI Themes**: Use `backgroundImage: 'linear-gradient(...)'` instead of `background` shorthand within `styleOverrides`. Emotion or MUI's color manipulator might try to parse the string as a color if strictly assigned to `background`, leading to parsing errors like `reading 'match'` on undefined values during build optimization.

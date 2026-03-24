@@ -1,36 +1,35 @@
-
 /**
  * Mock Electron API for Browser Development
  * simulates the IPC bridge exposed by preload.js
  */
 
 export const setupElectronMock = () => {
-    if (window.electronAPI) return; // Don't overwrite if actual Electron is present
+  if (window.electronAPI) return // Don't overwrite if actual Electron is present
 
-    console.log("🔧 Initializing Electron Mock for Browser Development");
+  console.log('🔧 Initializing Electron Mock for Browser Development')
 
-    // Use forward slashes for cross-platform consistency in JS
-    const MOCK_ROOT = "C:/Mock/WorkTracker";
+  // Use forward slashes for cross-platform consistency in JS
+  const MOCK_ROOT = 'C:/Mock/WorkTracker'
 
-    // Helper to format date parts
-    const formatDatePath = (dateObj) => {
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        const dateStr = `${year}-${month}-${day}`;
-        return { year, month, dateStr };
-    };
+  // Helper to format date parts
+  const formatDatePath = (dateObj) => {
+    const year = dateObj.getFullYear()
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+    const day = String(dateObj.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    return { year, month, dateStr }
+  }
 
-    // Generate some fake file data
-    const today = new Date();
-    const yesterday = new Date(Date.now() - 86400000);
+  // Generate some fake file data
+  const today = new Date()
+  const yesterday = new Date(Date.now() - 86400000)
 
-    const todayParts = formatDatePath(today);
-    const yesterdayParts = formatDatePath(yesterday);
+  const todayParts = formatDatePath(today)
+  const yesterdayParts = formatDatePath(yesterday)
 
-    const mockFiles = {
-        // Journal Entry - Today
-        [`${MOCK_ROOT}/${todayParts.year}/${todayParts.month}/${todayParts.dateStr}.md`]: `---
+  const mockFiles = {
+    // Journal Entry - Today
+    [`${MOCK_ROOT}/${todayParts.year}/${todayParts.month}/${todayParts.dateStr}.md`]: `---
 tags: [dev, planning]
 ---
 # Daily Log ${todayParts.dateStr}
@@ -42,16 +41,16 @@ Things are looking good.
 - [x] Create mock
 - [ ] Test in browser
 `,
-        // Journal Entry - Yesterday
-        [`${MOCK_ROOT}/${yesterdayParts.year}/${yesterdayParts.month}/${yesterdayParts.dateStr}.md`]: `---
+    // Journal Entry - Yesterday
+    [`${MOCK_ROOT}/${yesterdayParts.year}/${yesterdayParts.month}/${yesterdayParts.dateStr}.md`]: `---
 tags: [meeting]
 ---
 # Daily Log ${yesterdayParts.dateStr}
 
 Had a sync with the team.
 `,
-        // Todos - Today
-        [`${MOCK_ROOT}/${todayParts.year}/${todayParts.month}/${todayParts.dateStr}-todos.md`]: `# To Do
+    // Todos - Today
+    [`${MOCK_ROOT}/${todayParts.year}/${todayParts.month}/${todayParts.dateStr}-todos.md`]: `# To Do
 - [ ] Finish the mock implementation
 - [ ] Verify browser load
 
@@ -61,125 +60,134 @@ Had a sync with the team.
 # Done
 - [x] Create plan
 `,
-        // Todos - Yesterday
-        [`${MOCK_ROOT}/${yesterdayParts.year}/${yesterdayParts.month}/${yesterdayParts.dateStr}-todos.md`]: `# To Do
+    // Todos - Yesterday
+    [`${MOCK_ROOT}/${yesterdayParts.year}/${yesterdayParts.month}/${yesterdayParts.dateStr}-todos.md`]: `# To Do
 - [x] Create plan
-`
-    };
+`,
+  }
 
-    window.electronAPI = {
-        isMock: true,
+  window.electronAPI = {
+    isMock: true,
 
-        // Mock Event Emitter for Updates
-        _listeners: {},
-        _on: (event, callback) => {
-            if (!window.electronAPI._listeners[event]) window.electronAPI._listeners[event] = [];
-            window.electronAPI._listeners[event].push(callback);
-        },
-        _emit: (event, ...args) => {
-            if (window.electronAPI._listeners[event]) {
-                window.electronAPI._listeners[event].forEach(cb => cb(...args));
-            }
-        },
+    // Mock Event Emitter for Updates
+    _listeners: {},
+    _on: (event, callback) => {
+      if (!window.electronAPI._listeners[event])
+        window.electronAPI._listeners[event] = []
+      window.electronAPI._listeners[event].push(callback)
+    },
+    _emit: (event, ...args) => {
+      if (window.electronAPI._listeners[event]) {
+        window.electronAPI._listeners[event].forEach((cb) => cb(...args))
+      }
+    },
 
-        // Update Pub/Sub Mocks
-        onUpdateChecking: (cb) => window.electronAPI._on('checking', cb),
-        onUpdateAvailable: (cb) => window.electronAPI._on('available', cb),
-        onUpdateNotAvailable: (cb) => window.electronAPI._on('not-available', cb),
-        onUpdateProgress: (cb) => window.electronAPI._on('progress', cb),
-        onUpdateDownloaded: (cb) => window.electronAPI._on('downloaded', cb),
-        onUpdateError: (cb) => window.electronAPI._on('error', cb),
-        removeAllUpdateListeners: () => { window.electronAPI._listeners = {}; },
-        checkForUpdates: async () => ({ status: 'dev' }),
-        quitAndInstall: () => console.log('[Mock] quitAndInstall called'),
-        getVersion: async () => '1.0.0-mock',
+    // Update Pub/Sub Mocks
+    onUpdateChecking: (cb) => window.electronAPI._on('checking', cb),
+    onUpdateAvailable: (cb) => window.electronAPI._on('available', cb),
+    onUpdateNotAvailable: (cb) => window.electronAPI._on('not-available', cb),
+    onUpdateProgress: (cb) => window.electronAPI._on('progress', cb),
+    onUpdateDownloaded: (cb) => window.electronAPI._on('downloaded', cb),
+    onUpdateError: (cb) => window.electronAPI._on('error', cb),
+    removeAllUpdateListeners: () => {
+      window.electronAPI._listeners = {}
+    },
+    checkForUpdates: async () => ({ status: 'dev' }),
+    quitAndInstall: () => console.log('[Mock] quitAndInstall called'),
+    getVersion: async () => '1.0.0-mock',
 
-        // Dev Tools Helpers
-        testNotification: async () => {
-            console.log("[Mock] testNotification called");
-            if (Notification.permission === 'granted') {
-                new Notification('Work Tracker (Mock)', { body: 'This is a test notification from dev mode!' });
-            } else if (Notification.permission !== 'denied') {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        new Notification('Work Tracker (Mock)', { body: 'This is a test notification from dev mode!' });
-                    }
-                });
-            } else {
-                alert('Test Notification: Permissions denied. Check console.');
-            }
-        },
+    // Dev Tools Helpers
+    testNotification: async () => {
+      console.log('[Mock] testNotification called')
+      if (Notification.permission === 'granted') {
+        new Notification('Work Tracker (Mock)', {
+          body: 'This is a test notification from dev mode!',
+        })
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            new Notification('Work Tracker (Mock)', {
+              body: 'This is a test notification from dev mode!',
+            })
+          }
+        })
+      } else {
+        alert('Test Notification: Permissions denied. Check console.')
+      }
+    },
 
-        devSimulateUpdate: () => {
-            console.log("[Mock] Simulating App Update...");
-            window.electronAPI._emit('checking');
-            setTimeout(() => {
-                window.electronAPI._emit('available');
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 10;
-                    window.electronAPI._emit('progress', progress);
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        setTimeout(() => window.electronAPI._emit('downloaded'), 500);
-                    }
-                }, 300);
-            }, 1000);
-        },
+    devSimulateUpdate: () => {
+      console.log('[Mock] Simulating App Update...')
+      window.electronAPI._emit('checking')
+      setTimeout(() => {
+        window.electronAPI._emit('available')
+        let progress = 0
+        const interval = setInterval(() => {
+          progress += 10
+          window.electronAPI._emit('progress', progress)
+          if (progress >= 100) {
+            clearInterval(interval)
+            setTimeout(() => window.electronAPI._emit('downloaded'), 500)
+          }
+        }, 300)
+      }, 1000)
+    },
 
-        selectDirectory: async () => {
-            console.log("[Mock] selectDirectory called");
-            return MOCK_ROOT;
-        },
+    selectDirectory: async () => {
+      console.log('[Mock] selectDirectory called')
+      return MOCK_ROOT
+    },
 
-        listAllFiles: async (path) => {
-            console.log(`[Mock] listAllFiles called for ${path}`);
-            return {
-                success: true,
-                files: Object.keys(mockFiles)
-            };
-        },
+    listAllFiles: async (path) => {
+      console.log(`[Mock] listAllFiles called for ${path}`)
+      return {
+        success: true,
+        files: Object.keys(mockFiles),
+      }
+    },
 
-        readFile: async (path) => {
-            console.log(`[Mock] readFile called for ${path}`);
-            // Normalize path for comparison (handle mixing of backslashes from potential OS interactions)
-            const normalizedPath = path.replace(/\\/g, '/');
+    readFile: async (path) => {
+      console.log(`[Mock] readFile called for ${path}`)
+      // Normalize path for comparison (handle mixing of backslashes from potential OS interactions)
+      const normalizedPath = path.replace(/\\/g, '/')
 
-            // Try explicit match first
-            if (mockFiles[normalizedPath]) {
-                return { success: true, data: mockFiles[normalizedPath] };
-            }
+      // Try explicit match first
+      if (mockFiles[normalizedPath]) {
+        return { success: true, data: mockFiles[normalizedPath] }
+      }
 
-            // Loose match (case insensitive or slight variation)
-            const key = Object.keys(mockFiles).find(k => k.toLowerCase() === normalizedPath.toLowerCase());
-            if (key) {
-                return { success: true, data: mockFiles[key] };
-            }
+      // Loose match (case insensitive or slight variation)
+      const key = Object.keys(mockFiles).find(
+        (k) => k.toLowerCase() === normalizedPath.toLowerCase()
+      )
+      if (key) {
+        return { success: true, data: mockFiles[key] }
+      }
 
-            console.warn(`[Mock] File not found: ${path}`);
-            return { success: false, error: "File not found in mock" };
-        },
+      console.warn(`[Mock] File not found: ${path}`)
+      return { success: false, error: 'File not found in mock' }
+    },
 
-        writeFile: async (path, content) => {
-            console.log(`[Mock] writeFile called for ${path}`);
-            const normalizedPath = path.replace(/\\/g, '/');
-            mockFiles[normalizedPath] = content;
-            return { success: true };
-        },
+    writeFile: async (path, content) => {
+      console.log(`[Mock] writeFile called for ${path}`)
+      const normalizedPath = path.replace(/\\/g, '/')
+      mockFiles[normalizedPath] = content
+      return { success: true }
+    },
 
-        watchWorkspace: async (path) => {
-            console.log(`[Mock] watchWorkspace called for ${path}`);
-            return { success: true };
-        },
+    watchWorkspace: async (path) => {
+      console.log(`[Mock] watchWorkspace called for ${path}`)
+      return { success: true }
+    },
 
-        onWorkspaceChanged: (callback) => {
-            console.log(`[Mock] onWorkspaceChanged listener registered`);
-            // We could simulate changes here if needed, e.g. with setTimeout
-        },
+    onWorkspaceChanged: () => {
+      console.log(`[Mock] onWorkspaceChanged listener registered`)
+      // We could simulate changes here if needed, e.g. with setTimeout
+    },
 
-        openExternal: async (url) => {
-            console.log(`[Mock] openExternal called for ${url}`);
-            window.open(url, '_blank');
-        }
-    };
-};
+    openExternal: async (url) => {
+      console.log(`[Mock] openExternal called for ${url}`)
+      window.open(url, '_blank')
+    },
+  }
+}

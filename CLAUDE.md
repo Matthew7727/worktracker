@@ -44,13 +44,17 @@ Each daily entry is a Markdown file with gray-matter frontmatter:
 ---
 tags: [dev, meeting]
 ---
+
 # Client Work
+
 ...
 
 # Practice Development
+
 ...
 
 # Business Development
+
 ...
 ```
 
@@ -61,6 +65,7 @@ Todo files follow the same path convention with a `-todos.md` suffix.
 ### Global State
 
 `src/context/AppContext.jsx` provides:
+
 - `selectedDirectory` — the root workspace path, persisted to `localStorage`
 - `refreshTrigger` — incremented when `chokidar` detects external file changes
 - `showNotification` / `hideNotification` — global snackbar

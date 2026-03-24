@@ -1,9 +1,8 @@
-
 export const docsContent = [
-    {
-        id: 'philosophy',
-        title: 'Philosophy & Core Concepts',
-        content: `
+  {
+    id: 'philosophy',
+    title: 'Philosophy & Core Concepts',
+    content: `
 # Philosophy & Core Concepts
 
 Work Tracker is built on three unshakeable pillars: **Ownership**, **Speed**, and **Simplicity**.
@@ -25,12 +24,12 @@ The interface is designed to reduce friction.
 ### 3. "What, Not When"
 Traditional time trackers ask you to punch a clock. Work Tracker asks: *"What did you achieve?"*
 We believe that describing your output is more valuable than measuring your minutes.
-`
-    },
-    {
-        id: 'filesystem-db',
-        title: 'The File System Database',
-        content: `
+`,
+  },
+  {
+    id: 'filesystem-db',
+    title: 'The File System Database',
+    content: `
 # The File System Database
 
 Understanding how Work Tracker stores data allows you to master it.
@@ -64,12 +63,12 @@ Contains your tasks for the day.
 
 ### Backups
 To backup your data, simply **copy/paste the entire folder** to a USB drive or sync it with Google Drive/Dropbox. The app doesn't care; it just reads files.
-`
-    },
-    {
-        id: 'dashboard-logic',
-        title: 'Dashboard Intelligence',
-        content: `
+`,
+  },
+  {
+    id: 'dashboard-logic',
+    title: 'Dashboard Intelligence',
+    content: `
 # Dashboard Intelligence
 
 The Dashboard isn't just pretty charts; it's a calculated analysis of your work habits.
@@ -92,12 +91,12 @@ Streaks are calculated with strict precision.
 The Heatmap/Matrix scans **every single file** in your history to find your top tags.
 - It aggregates tags defined in the editor (e.g., \`#feature\`).
 - It helps you visualize where your effort is actually going versus where you *think* it's going.
-`
-    },
-    {
-        id: 'daily-editor',
-        title: 'Daily Editor Deep Dive',
-        content: `
+`,
+  },
+  {
+    id: 'daily-editor',
+    title: 'Daily Editor Deep Dive',
+    content: `
 # Daily Editor Deep Dive
 
 The Editor is your command center.
@@ -122,12 +121,12 @@ The editor supports Github Flavored Markdown.
 - \`Code\`: \` \`text\` \`
 - **Lists**: \`- item\` or \`1. item\`
 - **Headers**: \`# H1\`, \`## H2\`
-`
-    },
-    {
-        id: 'todo-logic',
-        title: 'Todo System & Rollover',
-        content: `
+`,
+  },
+  {
+    id: 'todo-logic',
+    title: 'Todo System & Rollover',
+    content: `
 # Todo System & Rollover
 
 The Todo Board is more than a checklist; it's a daily workflow engine.
@@ -149,12 +148,12 @@ When you open the Todo Board for a **new day** (e.g., you open the app on Tuesda
 
 ### File Persistence
 Remember, these lanes are just H1 headers in a markdown file: \`# Morning\`. You can open the file in Notepad to mass-edit your tasks if needed.
-`
-    },
-    {
-        id: 'reports-export',
-        title: 'Reports & Exporting',
-        content: `
+`,
+  },
+  {
+    id: 'reports-export',
+    title: 'Reports & Exporting',
+    content: `
 # Reports & Exporting
 
 Your data is yours. The Reports page helps you get it out.
@@ -175,6 +174,6 @@ The Global Search (Ctrl+F) and Report Filter use a linear scan algorithm.
 #### JSON Export (\`.json\`)
 - Exports the raw data structure.
 - Useful for developers who want to write their own visualization scripts or migrate to other database systems.
-`
-    }
-];
+`,
+  },
+]

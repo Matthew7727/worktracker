@@ -1,41 +1,47 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useAppContext } from './context/AppContext';
-import WelcomeScreen from './components/Onboarding/WelcomeScreen';
-import MainLayout from './components/Layout/MainLayout';
-import DailyEditor from './components/DailyEditor/DailyEditor';
-import TodoBoard from './components/TodoBoard/TodoBoard';
-import Dashboard from './components/Dashboard/Dashboard';
-import Reports from './components/Reports/Reports';
-import Settings from './components/Settings/Settings';
-import Documentation from './components/Documentation/Documentation';
-import TrayWidget from './components/Widget/TrayWidget';
-import './App.css';
+import React, { useEffect } from 'react'
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import { useAppContext } from './context/AppContext'
+import WelcomeScreen from './components/Onboarding/WelcomeScreen'
+import MainLayout from './components/Layout/MainLayout'
+import DailyEditor from './components/DailyEditor/DailyEditor'
+import TodoBoard from './components/TodoBoard/TodoBoard'
+import Dashboard from './components/Dashboard/Dashboard'
+import Reports from './components/Reports/Reports'
+import Settings from './components/Settings/Settings'
+import Documentation from './components/Documentation/Documentation'
+import TrayWidget from './components/Widget/TrayWidget'
+import './App.css'
 
 function App() {
-  const { selectedDirectory } = useAppContext();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const { selectedDirectory } = useAppContext()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (window.electronAPI && window.electronAPI.onStartFlowGlobal) {
-        window.electronAPI.onStartFlowGlobal(() => {
-            navigate('/editor', { state: { autoStartFlow: true } });
-        });
-        return () => {
-            if (window.electronAPI.removeStartFlowGlobalListeners) {
-                window.electronAPI.removeStartFlowGlobalListeners();
-            }
-        };
+      window.electronAPI.onStartFlowGlobal(() => {
+        navigate('/editor', { state: { autoStartFlow: true } })
+      })
+      return () => {
+        if (window.electronAPI.removeStartFlowGlobalListeners) {
+          window.electronAPI.removeStartFlowGlobalListeners()
+        }
+      }
     }
-  }, [navigate]);
+  }, [navigate])
 
   if (location.pathname === '/widget') {
-      return <TrayWidget />;
+    return <TrayWidget />
   }
 
   if (!selectedDirectory) {
-    return <WelcomeScreen />;
+    return <WelcomeScreen />
   }
 
   return (
@@ -51,7 +57,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </MainLayout>
-  );
+  )
 }
 
-export default App;
+export default App
