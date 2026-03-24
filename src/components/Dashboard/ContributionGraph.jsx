@@ -1,9 +1,15 @@
 import React from 'react';
-import { Tooltip, Box, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Tooltip, Box, Typography, Stack } from '@mui/material';
+
+const STREAM_COLORS = {
+    clientWork: '#80b621',
+    practiceDevelopment: '#4a6b13',
+    businessDevelopment: '#eb8449',
+    mixed: '#777',
+    empty: '#f0f0f0'
+};
 
 const ContributionGraph = ({ entries }) => {
-    const theme = useTheme();
     // 1. Generate last 365 days
     const today = new Date();
     const days = [];
@@ -14,7 +20,10 @@ const ContributionGraph = ({ entries }) => {
     }
 
     // 2. Map entries for quick lookup
-    const entryMap = new Set(entries.map(e => e.date));
+    const entryMap = new Map();
+    entries.forEach(e => {
+        entryMap.set(e.date, e);
+    });
 
     // 3. Group by weeks
     const weeks = [];
@@ -38,57 +47,93 @@ const ContributionGraph = ({ entries }) => {
         weeks.push(currentWeek);
     }
 
-    const blockSize = 12;
-    const blockGap = 4;
+    const blockSize = 14;
+    const blockGap = 5;
 
-    const getColor = (date) => {
-        if (!date) return 'transparent';
+    const getDayInfo = (date) => {
+        if (!date) return { color: 'transparent', title: '' };
         const dateStr = date.toISOString().split('T')[0];
-        return entryMap.has(dateStr) ? theme.palette.primary.main : '#bdbdbd';
-    };
+        const entry = entryMap.get(dateStr);
 
-    const getTitle = (date) => {
-        if (!date) return '';
-        const dateStr = date.toISOString().split('T')[0];
-        return `${dateStr}: ${entryMap.has(dateStr) ? 'Logged Contribution' : 'Empty Archive'}`;
+        if (!entry) return { color: STREAM_COLORS.empty, title: `${dateStr}: No logs` };
+
+        const { clientWork, practiceDevelopment, businessDevelopment } = entry.streamCounts;
+        const total = clientWork + practiceDevelopment + businessDevelopment;
+
+        if (total === 0) return { color: STREAM_COLORS.empty, title: `${dateStr}: Empty log` };
+
+        // Determine dominant stream
+        let color = STREAM_COLORS.mixed;
+        let dominant = 'Mixed Activity';
+
+        if (clientWork > practiceDevelopment && clientWork > businessDevelopment) {
+            color = STREAM_COLORS.clientWork;
+            dominant = 'Client Work Focused';
+        } else if (practiceDevelopment > clientWork && practiceDevelopment > businessDevelopment) {
+            color = STREAM_COLORS.practiceDevelopment;
+            dominant = 'Practice Dev Focused';
+        } else if (businessDevelopment > clientWork && businessDevelopment > practiceDevelopment) {
+            color = STREAM_COLORS.businessDevelopment;
+            dominant = 'Business Dev Focused';
+        }
+
+        return { 
+            color, 
+            title: `${dateStr}: ${dominant} (${total} words)` 
+        };
     };
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', overflowX: 'auto', py: 2, alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', gap: `${blockGap}px` }}>
+            <Box sx={{ display: 'flex', gap: `${blockGap}px`, p: 2, border: '3px solid black', borderRadius: '12px', bgcolor: 'white' }}>
                 {weeks.map((week, wIndex) => (
                     <Box key={wIndex} sx={{ display: 'flex', flexDirection: 'column', gap: `${blockGap}px` }}>
-                        {week.map((date, dIndex) => (
-                            <Tooltip
-                                key={dIndex}
-                                title={getTitle(date)}
-                                arrow
-                                placement="top"
-                            >
-                                <Box
-                                    sx={{
-                                        width: `${blockSize}px`,
-                                        height: `${blockSize}px`,
-                                        backgroundColor: getColor(date),
-                                        borderRadius: '3px',
-                                        transition: 'all 0.1s',
-                                        '&:hover': {
-                                            transform: 'scale(1.2)',
-                                            zIndex: 1,
-                                            boxShadow: date ? '0 0 8px rgba(0,0,0,0.2)' : 'none'
-                                        }
-                                    }}
-                                />
-                            </Tooltip>
-                        ))}
+                        {week.map((date, dIndex) => {
+                            const info = getDayInfo(date);
+                            return (
+                                <Tooltip
+                                    key={dIndex}
+                                    title={info.title}
+                                    arrow
+                                    placement="top"
+                                >
+                                    <Box
+                                        sx={{
+                                            width: `${blockSize}px`,
+                                            height: `${blockSize}px`,
+                                            backgroundColor: info.color,
+                                            borderRadius: '3px',
+                                            border: date ? '1px solid rgba(0,0,0,0.1)' : 'none',
+                                            transition: 'all 0.1s',
+                                            '&:hover': {
+                                                transform: 'scale(1.4)',
+                                                zIndex: 1,
+                                                boxShadow: date ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
+                                                borderColor: 'black'
+                                            }
+                                        }}
+                                    />
+                                </Tooltip>
+                            );
+                        })}
                     </Box>
                 ))}
             </Box>
-            <Typography variant="caption" sx={{ mt: 2, fontWeight: 700, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                CONTRIBUTION PIPELINE: LAST 365 DAYS
-            </Typography>
+            <Stack direction="row" spacing={2} sx={{ mt: 3, opacity: 0.8 }}>
+                <LegendItem color={STREAM_COLORS.clientWork} label="CW" />
+                <LegendItem color={STREAM_COLORS.practiceDevelopment} label="PD" />
+                <LegendItem color={STREAM_COLORS.businessDevelopment} label="BD" />
+                <LegendItem color={STREAM_COLORS.mixed} label="Mixed" />
+            </Stack>
         </Box>
     );
 };
+
+const LegendItem = ({ color, label }) => (
+    <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: color, border: '1px solid black' }} />
+        <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.65rem' }}>{label}</Typography>
+    </Stack>
+);
 
 export default ContributionGraph;

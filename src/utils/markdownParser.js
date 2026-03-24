@@ -35,3 +35,50 @@ export const stringifyMarkdown = (body, frontmatter) => {
         return body;
     }
 };
+
+/**
+ * Parses the markdown body into three predefined streams.
+ * @param {string} body - The markdown body content
+ * @returns {Object} { clientWork, practiceDevelopment, businessDevelopment }
+ */
+export const parseStreams = (body) => {
+    const streams = {
+        clientWork: '',
+        practiceDevelopment: '',
+        businessDevelopment: ''
+    };
+
+    if (!body) return streams;
+
+    const sections = body.split(/^# (Client Work|Practice Development|Business Development)/m);
+
+    for (let i = 1; i < sections.length; i += 2) {
+        const title = sections[i];
+        const content = sections[i + 1] ? sections[i + 1].trim() : '';
+
+        if (title === 'Client Work') streams.clientWork = content;
+        else if (title === 'Practice Development') streams.practiceDevelopment = content;
+        else if (title === 'Business Development') streams.businessDevelopment = content;
+    }
+
+    return streams;
+};
+
+/**
+ * Converts stream contents into a single markdown body string.
+ * @param {Object} streams - { clientWork, practiceDevelopment, businessDevelopment }
+ * @returns {string} The formatted markdown body
+ */
+export const stringifyStreams = (streams) => {
+    let body = '';
+    if (streams.clientWork) {
+        body += `# Client Work\n${streams.clientWork}\n\n`;
+    }
+    if (streams.practiceDevelopment) {
+        body += `# Practice Development\n${streams.practiceDevelopment}\n\n`;
+    }
+    if (streams.businessDevelopment) {
+        body += `# Business Development\n${streams.businessDevelopment}\n\n`;
+    }
+    return body.trim();
+};

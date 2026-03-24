@@ -11,5 +11,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     searchEntries: (options) => ipcRenderer.invoke('fs:searchEntries', options),
     watchWorkspace: (path) => ipcRenderer.invoke('fs:watchWorkspace', path),
     onWorkspaceChanged: (callback) => ipcRenderer.on('workspace:changed', (event, data) => callback(data)),
-    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
+    
+    // Settings & Notifications
+    loadSettings: () => ipcRenderer.invoke('settings:load'),
+    saveSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
+    testNotification: () => ipcRenderer.invoke('notifications:test')
 });

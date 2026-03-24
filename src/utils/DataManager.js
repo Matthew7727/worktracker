@@ -1,9 +1,9 @@
-import { parseMarkdown } from './markdownParser';
+import { parseMarkdown, parseStreams } from './markdownParser';
 
 /**
  * loads all daily entries from the project directory.
  * @param {string} rootDir 
- * @returns {Promise<Array>} Array of entry objects { date, tags, content, path }
+ * @returns {Promise<Array>} Array of entry objects { date, tags, content, path, streams, wordCount }
  */
 export const loadAllEntries = async (rootDir) => {
     if (!window.electronAPI || !rootDir) return [];
@@ -17,7 +17,6 @@ export const loadAllEntries = async (rootDir) => {
         }
 
         const files = result.files;
-        const entries = [];
 
         // 2. Process each file
         const filePromises = files.map(async (filePath) => {
@@ -42,16 +41,31 @@ export const loadAllEntries = async (rootDir) => {
 
             // Parse content
             const { frontmatter, body } = parseMarkdown(fileResult.data);
+            const streams = parseStreams(body);
+
+            // Calculate word counts for each stream
+            const getWordCount = (text) => text ? text.trim().split(/\s+/).filter(w => w.length > 0).length : 0;
+            
+            const streamCounts = {
+                clientWork: getWordCount(streams.clientWork),
+                practiceDevelopment: getWordCount(streams.practiceDevelopment),
+                businessDevelopment: getWordCount(streams.businessDevelopment)
+            };
+
+            const totalWords = streamCounts.clientWork + streamCounts.practiceDevelopment + streamCounts.businessDevelopment;
 
             return {
-                id: fileName.replace('.md', ''), // Use filename as unique ID
+                id: fileName.replace('.md', ''),
                 date: dateStr,
                 time: timeStr !== '000000' ? `${hours}:${mins}` : null,
                 dateObj: fullDateObj,
                 tags: frontmatter.tags || [],
                 content: body,
                 path: filePath,
-                metadata: frontmatter
+                metadata: frontmatter,
+                streams,
+                streamCounts,
+                totalWords
             };
         });
 

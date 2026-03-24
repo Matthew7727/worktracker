@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Add } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { toolbarStyles, datePickerStyles } from '../DailyEditor.styles';
 
-const DateNavigation = ({ currentDate, onPrevDay, onNextDay, onDateChange, onAddEntry }) => {
+const DateNavigation = ({ currentDate, onPrevDay, onNextDay, onDateChange, onAddEntry, hideAddEntry }) => {
     return (
         <Paper sx={toolbarStyles}>
             <Stack direction="row" spacing={2} alignItems="center">
@@ -28,18 +28,20 @@ const DateNavigation = ({ currentDate, onPrevDay, onNextDay, onDateChange, onAdd
                 </IconButton>
             </Stack>
 
-            <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={onAddEntry}
-                sx={{
-                    fontWeight: 900,
-                    px: 4,
-                    boxShadow: '0 4px 14px rgba(128, 182, 33, 0.3)'
-                }}
-            >
-                Add Contribution
-            </Button>
+            {!hideAddEntry && (
+                <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={onAddEntry}
+                    sx={{
+                        fontWeight: 900,
+                        px: 4,
+                        boxShadow: '0 4px 14px rgba(128, 182, 33, 0.3)'
+                    }}
+                >
+                    Add Contribution
+                </Button>
+            )}
         </Paper>
     );
 };

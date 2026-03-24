@@ -17,8 +17,8 @@ import rehypeRaw from 'rehype-raw';
 import { cardStyles, entryBodyStyles, markdownToolbarStyles, toolbarBtnStyles } from '../DailyEditor.styles';
 import { injectMarkdown } from '../../../utils/markdownHelpers';
 
-const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onAddTag, onRemoveTag }) => {
-    const [isEditing, setIsEditing] = useState(entry.isNew || false);
+const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onAddTag, onRemoveTag, isStreamMode, borderColor }) => {
+    const [isEditing, setIsEditing] = useState(entry.isNew || isStreamMode || false);
     const [isExpanded, setIsExpanded] = useState(false);
     const textareaRef = useRef(null);
 
@@ -40,7 +40,9 @@ const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onA
     };
 
     const handleSave = async () => {
-        await onSave(entry.id);
+        if (onSave) {
+            await onSave(entry.id);
+        }
         setIsEditing(false);
     };
 
@@ -62,103 +64,105 @@ const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onA
         <Paper
             sx={{
                 ...cardStyles,
-                borderColor: entry.isNew ? 'primary.main' : 'black',
+                borderColor: borderColor || (entry.isNew ? 'primary.main' : 'black'),
             }}
         >
             {/* Header Area */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Stack direction="row" spacing={2} alignItems="center">
-                    {entry.time && (
-                        <Chip
-                            icon={<AccessTime sx={{ fontSize: '1.2rem !important' }} />}
-                            label={entry.time}
-                            sx={{
-                                bgcolor: 'rgba(128, 182, 33, 0.15)',
-                                color: 'primary.main',
-                                border: '1px solid currentColor',
-                                fontWeight: 900,
-                                fontSize: '1rem'
-                            }}
-                        />
-                    )}
-                    {isEditing && (
-                        <TextField
-                            size="small"
-                            placeholder="Add tag..."
-                            value={entry.newTag || ''}
-                            onChange={(e) => onUpdateTags(entry.id, e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    onAddTag(entry.id);
-                                }
-                            }}
-                            InputProps={{
-                                startAdornment: <LocalOffer sx={{ mr: 1, fontSize: '0.9rem', opacity: 0.5 }} />,
-                                sx: {
-                                    height: '32px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: 800,
-                                    borderRadius: '8px',
-                                    bgcolor: 'rgba(0,0,0,0.03)',
-                                    '& fieldset': { border: 'none', borderColor: 'transparent' },
-                                    '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.1)' },
-                                    '&.Mui-focused fieldset': { borderColor: 'primary.main' }
-                                }
-                            }}
-                            sx={{ width: '130px' }}
-                        />
-                    )}
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                        {entry.tags.map(tag => (
+            {!isStreamMode && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        {entry.time && (
                             <Chip
-                                key={tag}
-                                label={tag}
-                                onDelete={isEditing ? () => onRemoveTag(entry.id, tag) : undefined}
-                                color="secondary"
-                                variant="outlined"
-                                sx={{ borderWidth: '2px', fontWeight: 900, '&:hover': { borderWidth: '2px' } }}
+                                icon={<AccessTime sx={{ fontSize: '1.2rem !important' }} />}
+                                label={entry.time}
+                                sx={{
+                                    bgcolor: 'rgba(128, 182, 33, 0.15)',
+                                    color: 'primary.main',
+                                    border: '1px solid currentColor',
+                                    fontWeight: 900,
+                                    fontSize: '1rem'
+                                }}
                             />
-                        ))}
+                        )}
+                        {isEditing && (
+                            <TextField
+                                size="small"
+                                placeholder="Add tag..."
+                                value={entry.newTag || ''}
+                                onChange={(e) => onUpdateTags(entry.id, e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        onAddTag(entry.id);
+                                    }
+                                }}
+                                InputProps={{
+                                    startAdornment: <LocalOffer sx={{ mr: 1, fontSize: '0.9rem', opacity: 0.5 }} />,
+                                    sx: {
+                                        height: '32px',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 800,
+                                        borderRadius: '8px',
+                                        bgcolor: 'rgba(0,0,0,0.03)',
+                                        '& fieldset': { border: 'none', borderColor: 'transparent' },
+                                        '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.1)' },
+                                        '&.Mui-focused fieldset': { borderColor: 'primary.main' }
+                                    }
+                                }}
+                                sx={{ width: '130px' }}
+                            />
+                        )}
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                            {entry.tags?.map(tag => (
+                                <Chip
+                                    key={tag}
+                                    label={tag}
+                                    onDelete={isEditing ? () => onRemoveTag(entry.id, tag) : undefined}
+                                    color="secondary"
+                                    variant="outlined"
+                                    sx={{ borderWidth: '2px', fontWeight: 900, '&:hover': { borderWidth: '2px' } }}
+                                />
+                            ))}
+                        </Stack>
                     </Stack>
-                </Stack>
-                <Stack direction="row" spacing={2}>
-                    {!isEditing && (
+                    <Stack direction="row" spacing={2}>
+                        {!isEditing && (
+                            <IconButton
+                                onClick={() => setIsEditing(true)}
+                                aria-label="Edit contribution"
+                                sx={{ border: '2px solid black', '&:hover': { bgcolor: 'primary.main', color: 'white' } }}
+                            >
+                                <Edit />
+                            </IconButton>
+                        )}
                         <IconButton
-                            onClick={() => setIsEditing(true)}
-                            aria-label="Edit contribution"
-                            sx={{ border: '2px solid black', '&:hover': { bgcolor: 'primary.main', color: 'white' } }}
+                            onClick={() => onDelete(entry)}
+                            sx={{
+                                border: '2px solid black',
+                                color: 'error.main',
+                                '&:hover': { bgcolor: 'error.main', color: 'white' }
+                            }}
                         >
-                            <Edit />
+                            <Delete />
                         </IconButton>
-                    )}
-                    <IconButton
-                        onClick={() => onDelete(entry)}
-                        sx={{
-                            border: '2px solid black',
-                            color: 'error.main',
-                            '&:hover': { bgcolor: 'error.main', color: 'white' }
-                        }}
-                    >
-                        <Delete />
-                    </IconButton>
-                    {isEditing && (
-                        <Button
-                            variant="contained"
-                            startIcon={entry.isSaving ? <CircularProgress size={20} color="inherit" /> : <Save />}
-                            onClick={handleSave}
-                            disabled={entry.isSaving}
-                            sx={{ px: 4 }}
-                        >
-                            {entry.isSaving ? 'SAVING...' : 'SAVE'}
-                        </Button>
-                    )}
-                </Stack>
-            </Box>
+                        {isEditing && (
+                            <Button
+                                variant="contained"
+                                startIcon={entry.isSaving ? <CircularProgress size={20} color="inherit" /> : <Save />}
+                                onClick={handleSave}
+                                disabled={entry.isSaving}
+                                sx={{ px: 4 }}
+                            >
+                                {entry.isSaving ? 'SAVING...' : 'SAVE'}
+                            </Button>
+                        )}
+                    </Stack>
+                </Box>
+            )}
 
             {/* Markdown Toolbar (Only when editing) */}
             <Collapse in={isEditing}>
-                <Box sx={{ ...markdownToolbarStyles, flexWrap: 'wrap', mt: 2 }}>
+                <Box sx={{ ...markdownToolbarStyles, flexWrap: 'wrap', mt: isStreamMode ? 0 : 2 }}>
                     <Tooltip title="Bold">
                         <IconButton size="small" sx={toolbarBtnStyles} onClick={() => handleToolbarAction('bold')}><FormatBold /></IconButton>
                     </Tooltip>
@@ -194,6 +198,17 @@ const EntryCard = ({ entry, onSave, onDelete, onUpdateContent, onUpdateTags, onA
                     <Tooltip title="Link">
                         <IconButton size="small" sx={toolbarBtnStyles} onClick={() => handleToolbarAction('link')}><LinkIcon /></IconButton>
                     </Tooltip>
+                    {isStreamMode && (
+                        <Box sx={{ ml: 'auto' }}>
+                            <Button
+                                size="small"
+                                onClick={() => setIsEditing(false)}
+                                sx={{ fontWeight: 800, color: 'text.secondary' }}
+                            >
+                                Preview
+                            </Button>
+                        </Box>
+                    )}
                 </Box>
             </Collapse>
 

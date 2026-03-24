@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Notification } from 'electron';
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
 import log from 'electron-log';
@@ -13,6 +13,76 @@ const __dirname = path.dirname(__filename);
 // Configure logging
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
+
+// Settings Management
+const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
+
+async function loadSettings() {
+    try {
+        const data = await fs.readFile(SETTINGS_PATH, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        return {
+            notificationsEnabled: false,
+            notificationTime: '17:00', // Default to 5 PM
+            selectedDirectory: null
+        };
+    }
+}
+
+async function saveSettings(settings) {
+    try {
+        await fs.writeFile(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+// Notification Engine
+let notificationInterval = null;
+
+function triggerNotification() {
+    if (Notification.isSupported()) {
+        const notif = new Notification({
+            title: 'Work Tracker',
+            body: 'Time to log your day! What did you achieve in Client Work, PD, and BD today?',
+            icon: path.join(__dirname, '../build/icon.png'),
+            silent: false
+        });
+
+        notif.show();
+        
+        notif.on('click', () => {
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+                if (mainWindow.isMinimized()) mainWindow.restore();
+                mainWindow.focus();
+            }
+        });
+    }
+}
+
+async function updateNotificationSchedule() {
+    if (notificationInterval) {
+        clearInterval(notificationInterval);
+        notificationInterval = null;
+    }
+
+    const settings = await loadSettings();
+    if (!settings.notificationsEnabled) return;
+
+    const [hours, minutes] = settings.notificationTime.split(':').map(Number);
+    log.info(`Scheduling notification for ${hours}:${minutes}`);
+
+    // Check every minute
+    notificationInterval = setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === hours && now.getMinutes() === minutes) {
+            triggerNotification();
+        }
+    }, 60000); // 1 minute
+}
 
 // Auto-updater events
 autoUpdater.on('checking-for-update', () => {
@@ -122,7 +192,6 @@ async function getMarkdownFiles(dir) {
         }
     } catch (err) {
         // Ignore errors for now or log them
-        // console.error("Error reading dir:", dir, err);
     }
     return results;
 }
@@ -204,8 +273,6 @@ function createWindow() {
         },
     });
 
-    // In development, load from Vite dev server
-    // In production, load from the dist folder
     const isDev = !app.isPackaged;
 
     if (isDev) {
@@ -216,7 +283,7 @@ function createWindow() {
     }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
     ipcMain.handle('dialog:openDirectory', handleFileOpen);
     ipcMain.handle('dialog:saveFile', handleSaveDialog);
     ipcMain.handle('fs:readFile', handleReadFile);
@@ -227,6 +294,20 @@ app.whenReady().then(() => {
     ipcMain.handle('fs:searchEntries', handleSearchEntries);
     ipcMain.handle('fs:watchWorkspace', handleWatchWorkspace);
     ipcMain.handle('shell:openExternal', (event, url) => shell.openExternal(url));
+
+    // Settings & Notifications IPC
+    ipcMain.handle('settings:load', () => loadSettings());
+    ipcMain.handle('settings:save', async (event, settings) => {
+        const result = await saveSettings(settings);
+        if (result.success) {
+            updateNotificationSchedule();
+        }
+        return result;
+    });
+    ipcMain.handle('notifications:test', () => {
+        triggerNotification();
+        return { success: true };
+    });
 
     // Auto-update IPC
     ipcMain.handle('update:check', () => {
@@ -240,8 +321,8 @@ app.whenReady().then(() => {
     });
 
     createWindow();
+    updateNotificationSchedule();
 
-    // Check for updates after window creation (only in production)
     if (app.isPackaged) {
         autoUpdater.checkForUpdatesAndNotify();
     }
