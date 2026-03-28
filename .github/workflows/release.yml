@@ -13,14 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      tag: ${{ steps.create_tag.outputs.tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Bump package.json version and push tag
-        id: create_tag
         shell: bash
         run: |
           VERSION=${GITHUB_HEAD_REF#release/}
@@ -36,37 +33,3 @@ jobs:
           git push origin HEAD:main
           git tag "$TAG"
           git push origin "$TAG"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-  release:
-    needs: tag
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.tag.outputs.tag }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build and Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Skip macOS code signing so unsigned DMGs build on GitHub runners
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx vite build && npx electron-builder --publish always
