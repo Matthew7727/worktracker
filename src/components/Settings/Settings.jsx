@@ -524,7 +524,7 @@ const Settings = () => {
                   About System
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 800, mb: 1 }}>
-                  Work Tracker v1.0.0
+                  Work Tracker {appVersion ? `v${appVersion}` : 'Unknown'}
                 </Typography>
                 <Typography
                   variant="body2"

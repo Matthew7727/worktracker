@@ -24,11 +24,14 @@ jobs:
         shell: bash
         run: |
           VERSION=${GITHUB_HEAD_REF#release/}
+          # Strip leading V or v prefix so both release/V1.5.0 and release/1.5.0 work
+          VERSION="${VERSION#v}"
+          VERSION="${VERSION#V}"
           TAG="v${VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           npm version "$VERSION" --no-git-tag-version
-          git add package.json
+          git add package.json package-lock.json
           git commit -m "chore: bump version to ${VERSION}"
           git push origin HEAD:main
           git tag "$TAG"
@@ -64,4 +67,6 @@ jobs:
       - name: Build and Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Skip macOS code signing so unsigned DMGs build on GitHub runners
+          CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx vite build && npx electron-builder --publish always
