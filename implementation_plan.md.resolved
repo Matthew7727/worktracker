@@ -1,0 +1,68 @@
+# Active Project Tagging for Daily Entries
+
+Users want to explicitly associate daily entries with their active Client Projects, Practice Development (PD), and Business Development (BD) activities. We will attach these as metadata tags to the markdown file's frontmatter, keeping the text notes clean.
+
+## The Visual Approach
+
+### 1. Selecting Tags (During the "Flow" Entry)
+- When writing a daily entry in `FlowView`, a clean row of project "Pill/Chip" buttons will appear above the markdown text box. 
+- These chips will be dynamically pre-populated based on the current step (e.g., showing only active Client Projects precisely on the Client Work step).
+- **Interaction:** Users toggle these chips simply by clicking them. Selected chips will visually "activate" (fill with the step's specific accent color—Green, Yellow, or Orange). 
+- **Storage:** The toggled chips are stored in state and written to the background `frontmatter` of the markdown file upon saving:
+  ```yaml
+  ---
+  clientProjects: ["Project Alpha"]
+  pdActivities: ["React Course"]
+  bdActivities: []
+  ---
+  ```
+
+### 2. Viewing Tags (On the Workspace Page)
+- Inside the Workspace view (`EntryViewer.jsx`), the header (below the Date) will be slightly expanded.
+- Tagged projects for that day will render horizontally as beautifully styled, color-matched tags (Client Work = Green, PD = Yellow, BD = Orange).
+- These tags exist solely for quick visual recognition when scanning past days, and do not impact global dashboards or charts.
+
+---
+
+## Technical Implementation Plan
+
+### 1. State Management & Saving
+#### [MODIFY] `src/components/DailyEditor/hooks/useDailyEditor.js`
+- Import `loadProjects` from `../../../utils/projectsManager.js`.
+- Add a fetching mechanism within `useEffect` dependent on `selectedDirectory` to load active `clientProjects` and `activities`.
+- Add a new state object `taggedItems` structured as `{ clientWork: [], practiceDevelopment: [], businessDevelopment: [] }`.
+- Provide an `updateTaggedItems` handler to toggle selecting/deselecting a project for a specific stream.
+- In `handleSaveDay()`, merge these arrays into the markdown file's frontmatter during stringification (`stringifyMarkdown`).
+- In `loadDailyData()`, safely parse any existing tags out of the markdown file's frontmatter so they reload perfectly when editing an existing entry.
+
+#### [MODIFY] `src/utils/DataManager.js`
+- Ensure `loadAllEntries` extracts `clientProjects`, `pdActivities`, and `bdActivities` arrays directly from the file's `frontmatter` so they are attached to the entry object flowing into the Workspace.
+
+### 2. UI Delivery - The Entry Flow
+#### [MODIFY] `src/components/DailyEditor/DailyEditor.jsx`
+- Pass the loaded projects, `taggedItems` state, and the `updateTaggedItems` toggler down into `FlowView`.
+
+#### [MODIFY] `src/components/DailyEditor/components/FlowView.jsx`
+- Based on `currentStep`, compute the available chips for tagging (matching the stream to the correct project array from the hook).
+- Render a horizontally scrollable sequence of `Chip` components immediately above the `EntryCard`.
+- Apply dynamic styles checking if the chip's label currently exists in the `taggedItems[step.id]` array.
+- Wire up the `onClick` handler on each chip to toggle its presence in `taggedItems[step.id]`.
+
+### 3. UI Delivery - The Workspace View
+#### [MODIFY] `src/components/Workspace/components/EntryViewer.jsx`
+- Below the formatted Date typography in the header `Box`, add a new `Stack` rendering mapped chips for any arrays found in `entry.metadata.clientProjects`, `entry.metadata.pdActivities`, and `entry.metadata.bdActivities`.
+- Apply strict color styling matching the application's Brutalist palette based on tag category (using `STREAM_COLORS` mapping).
+
+## Verification Plan
+
+### Automated & Build Checks
+- Start the app using `npm run dev`.
+- Ensure there are no React hook dependency loop errors introduced by fetching projects in `useDailyEditor.js`.
+
+### Manual Verification
+1. Boot the application and navigate to the Activities Board to ensure at least one Client project and one PD/BD activity exist active.
+2. Initialize the Daily Entry Flow.
+3. Verify that applicable projects map correctly to each step's newly added chip row.
+4. Toggle an active chip, write sample text, and "Finish & Save" the day.
+5. In the file system, confirm the raw `.md` file correctly holds the tag arrays in its YAML frontmatter.
+6. Open the Workspace tab, click the newly saved entry, and verify the visually distinct tags render prominently under the entry date.

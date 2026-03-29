@@ -6,12 +6,24 @@ import {
   Button,
   Stack,
   LinearProgress,
+  Chip,
 } from '@mui/material'
 import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material'
 import { STEPS } from '../constants'
+import { flowStyles } from '../DailyEditor.styles'
 import EntryCard from './EntryCard'
 
-const FlowView = ({ streams, currentStep, setCurrentStep, onCancel, onSave, updateStream }) => {
+const FlowView = ({
+  streams,
+  currentStep,
+  setCurrentStep,
+  onCancel,
+  onSave,
+  updateStream,
+  taggedItems,
+  updateTaggedItems,
+  availableProjects,
+}) => {
   const step = STEPS[currentStep]
   const isLastStep = currentStep === STEPS.length - 1
 
@@ -55,6 +67,39 @@ const FlowView = ({ streams, currentStep, setCurrentStep, onCancel, onSave, upda
             </Typography>
           )}
 
+          {availableProjects[step.id]?.length > 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                mb: 2,
+              }}
+            >
+              {availableProjects[step.id].map((title) => {
+                const isActive = taggedItems[step.id]?.includes(title)
+                return (
+                  <Chip
+                    key={title}
+                    label={title}
+                    onClick={() => updateTaggedItems(step.id, title)}
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: '0.75rem',
+                      border: '2px solid',
+                      borderColor: 'text.primary',
+                      borderRadius: 0,
+                      bgcolor: isActive ? step.color : 'transparent',
+                      color: isActive ? 'text.primary' : 'text.secondary',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: step.color, color: 'text.primary', opacity: 0.85 },
+                    }}
+                  />
+                )
+              })}
+            </Box>
+          )}
+
           <EntryCard
             entry={{ content: streams[step.id], tags: [] }}
             onUpdateContent={(_id, content) => updateStream(step.id, content)}
@@ -63,50 +108,43 @@ const FlowView = ({ streams, currentStep, setCurrentStep, onCancel, onSave, upda
           />
 
           <Stack direction="row" justifyContent="space-between" sx={{ mt: 6 }}>
-            <Button
-              variant="outlined"
-              size="large"
-              startIcon={<ArrowBack />}
+            <Box
+              component="button"
               onClick={() =>
                 currentStep === 0
                   ? onCancel()
                   : setCurrentStep((prev) => prev - 1)
               }
               sx={{
+                ...flowStyles.flowButton,
                 px: 4,
-                py: 1.5,
-                border: '4px solid', borderColor: 'text.primary',
-                borderWidth: '3px !important',
-                fontWeight: 900,
-                color: 'text.primary',
+                bgcolor: 'transparent',
               }}
             >
+              <ArrowBack sx={{ fontSize: '1.2rem' }} />
               {currentStep === 0 ? 'CANCEL' : 'BACK'}
-            </Button>
+              <Box className="shine-layer" sx={flowStyles.shineLayer} />
+            </Box>
 
-            <Button
-              variant="contained"
-              size="large"
-              endIcon={isLastStep ? <CheckCircle /> : <ArrowForward />}
+            <Box
+              component="button"
               onClick={() =>
                 isLastStep ? onSave() : setCurrentStep((prev) => prev + 1)
               }
               sx={{
-                px: 6,
-                py: 1.5,
-                fontWeight: 900,
+                ...flowStyles.flowButton,
+                px: 4,
                 bgcolor: step.color,
-                border: '4px solid', borderColor: 'text.primary',
-                boxShadow: (theme) => `8px 8px 0px ${theme.palette.text.primary}`,
                 '&:hover': {
+                  ...flowStyles.flowButton['&:hover'],
                   bgcolor: step.color,
-                  transform: 'translate(-2px, -2px)',
-                  boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary}`,
                 },
               }}
             >
               {isLastStep ? 'FINISH & SAVE' : 'NEXT'}
-            </Button>
+              {isLastStep ? <CheckCircle sx={{ fontSize: '1.2rem' }} /> : <ArrowForward sx={{ fontSize: '1.2rem' }} />}
+              <Box className="shine-layer" sx={flowStyles.shineLayer} />
+            </Box>
           </Stack>
         </Box>
       </Fade>

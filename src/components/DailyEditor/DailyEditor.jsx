@@ -13,6 +13,9 @@ const DailyEditor = () => {
     weekStatus,
     streams,
     updateStream,
+    taggedItems,
+    updateTaggedItems,
+    availableProjects,
     viewMode,
     setViewMode,
     currentStep,
@@ -61,6 +64,9 @@ const DailyEditor = () => {
           onCancel={() => setViewMode('start')}
           onSave={handleSaveDay}
           updateStream={updateStream}
+          taggedItems={taggedItems}
+          updateTaggedItems={updateTaggedItems}
+          availableProjects={availableProjects}
         />
       )}
 

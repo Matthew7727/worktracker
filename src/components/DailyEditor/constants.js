@@ -11,7 +11,7 @@ export const STEPS = [
     label: 'PRACTICE DEVELOPMENT',
     question: 'What PD have you done today?',
     description: '',
-    color: 'secondary.main',
+    color: '#ffd166',
   },
   {
     id: 'businessDevelopment',

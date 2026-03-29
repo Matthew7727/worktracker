@@ -9,7 +9,6 @@ export const cardStyles = {
   transition: 'all 0.2s',
   bgcolor: 'background.paper',
   '&:hover': {
-    borderColor: 'primary.main',
     bgcolor: 'action.hover',
     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
   },
@@ -49,6 +48,9 @@ export const entryBodyStyles = {
     textAlign: 'left',
     color: 'text.primary',
     '&:hover': { bgcolor: 'action.selected' },
+    '&::after': { borderBottom: 'none !important' },
+    '&.Mui-focused::after': { borderBottom: 'none !important' },
+    '& textarea:focus': { outline: 'none' },
   },
 }
 
@@ -98,6 +100,32 @@ export const flowStyles = {
     '&:hover': {
       transform: 'scale(1.1)',
       boxShadow: (theme) => `20px 20px 0px ${theme.palette.text.primary}`,
+      '& .shine-layer': {
+        opacity: 1,
+        transform: 'translateX(100%) skewX(-15deg)',
+      },
+    },
+  },
+  flowButton: {
+    fontFamily: 'inherit',
+    fontSize: '1rem',
+    fontWeight: 900,
+    px: 4,
+    py: 1.5,
+    borderRadius: '25px',
+    border: '3px solid', borderColor: 'text.primary',
+    color: 'text.primary',
+    bgcolor: 'background.paper',
+    cursor: 'pointer',
+    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    position: 'relative',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    '&:hover': {
+      transform: 'translate(-2px, -2px)',
+      boxShadow: (theme) => `6px 6px 0px ${theme.palette.text.primary}`,
       '& .shine-layer': {
         opacity: 1,
         transform: 'translateX(100%) skewX(-15deg)',
