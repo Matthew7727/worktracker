@@ -15,7 +15,7 @@ import {
   Assessment,
   MenuBook as DocsIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
-  Checklist,
+  Bolt,
   Brightness4,
   Brightness7,
 } from '@mui/icons-material'
@@ -69,7 +69,7 @@ const MainLayout = ({ children }) => {
   const navItems = [
     { label: 'Dashboard', path: '/', icon: <Home /> },
     { label: 'Entries', path: '/editor', icon: <Notes /> },
-    { label: 'To-Dos', path: '/todos', icon: <Checklist /> },
+    { label: 'Activities', path: '/todos', icon: <Bolt /> },
     { label: 'Reports', path: '/reports', icon: <Assessment /> },
     { label: 'Settings', path: '/settings', icon: <Settings /> },
   ]
