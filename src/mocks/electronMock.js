@@ -353,7 +353,7 @@ ${bd}
     },
     checkForUpdates: async () => ({ status: 'dev' }),
     quitAndInstall: () => console.log('[Mock] quitAndInstall called'),
-    getVersion: async () => '1.0.0-mock',
+    getVersion: async () => __APP_VERSION__,
 
     testNotification: async () => {
       console.log('[Mock] testNotification called')

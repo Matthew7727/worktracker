@@ -108,7 +108,7 @@ const Documentation = () => {
               sx={{ fontWeight: 700, fontSize: '1.2rem', opacity: 0.9 }}
             >
               If you have specific technical questions, check the source code on
-              GitHub or reach out to the development team.
+              GitHub or reach out to Matt.
             </Typography>
           </Box>
         </Box>
