@@ -7,37 +7,40 @@ const STREAM_COLORS = {
   businessDevelopment: '#eb8449',
 }
 
+const getCurrentWeekDays = () => {
+  const today = new Date()
+  const dow = today.getDay() // 0=Sun, 1=Mon, ...
+  const daysFromMonday = dow === 0 ? 6 : dow - 1
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - daysFromMonday)
+
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return {
+      dateStr: d.toISOString().split('T')[0],
+      label: d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+      isToday: d.toISOString().split('T')[0] === today.toISOString().split('T')[0],
+    }
+  })
+}
+
 const WeeklyChart = ({ entries }) => {
-  // Generate last 7 days (including today)
-  const days = []
-  const streamTally = new Array(7).fill(0).map(() => ({
+  const weekDays = getCurrentWeekDays()
+  const dateMap = new Map(weekDays.map((d, i) => [d.dateStr, i]))
+
+  const streamTally = weekDays.map(() => ({
     clientWork: 0,
     practiceDevelopment: 0,
     businessDevelopment: 0,
   }))
-  const dateMap = new Map() // Map date string YYYY-MM-DD to index 0-6
 
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().split('T')[0]
-    const dayLabel = d
-      .toLocaleDateString('en-US', { weekday: 'short' })
-      .toUpperCase()
-
-    days.push(dayLabel)
-    dateMap.set(dateStr, 6 - i)
-  }
-
-  // Tally word counts per stream for each day
   entries.forEach((entry) => {
     if (dateMap.has(entry.date) && entry.streamCounts) {
       const index = dateMap.get(entry.date)
       streamTally[index].clientWork += entry.streamCounts.clientWork
-      streamTally[index].practiceDevelopment +=
-        entry.streamCounts.practiceDevelopment
-      streamTally[index].businessDevelopment +=
-        entry.streamCounts.businessDevelopment
+      streamTally[index].practiceDevelopment += entry.streamCounts.practiceDevelopment
+      streamTally[index].businessDevelopment += entry.streamCounts.businessDevelopment
     }
   })
 
@@ -45,6 +48,27 @@ const WeeklyChart = ({ entries }) => {
     (s) => s.clientWork + s.practiceDevelopment + s.businessDevelopment
   )
   const maxTotal = Math.max(...dailyTotals, 1)
+  const hasAnyData = dailyTotals.some((t) => t > 0)
+
+  if (!hasAnyData) {
+    return (
+      <Box
+        sx={{
+          height: '220px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px dashed',
+          borderColor: 'divider',
+          borderRadius: 3,
+        }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
+          No sessions logged this week yet.
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
     <Box
@@ -69,24 +93,15 @@ const WeeklyChart = ({ entries }) => {
             title={
               <Box sx={{ p: 1 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
-                  {days[index]}
+                  {weekDays[index].label}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: STREAM_COLORS.clientWork }}
-                >
+                <Typography variant="body2" sx={{ color: STREAM_COLORS.clientWork }}>
                   CW: {streams.clientWork} words
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: STREAM_COLORS.practiceDevelopment }}
-                >
+                <Typography variant="body2" sx={{ color: STREAM_COLORS.practiceDevelopment }}>
                   PD: {streams.practiceDevelopment} words
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: STREAM_COLORS.businessDevelopment }}
-                >
+                <Typography variant="body2" sx={{ color: STREAM_COLORS.businessDevelopment }}>
                   BD: {streams.businessDevelopment} words
                 </Typography>
               </Box>
@@ -97,7 +112,7 @@ const WeeklyChart = ({ entries }) => {
             <Box
               sx={{
                 width: '100%',
-                maxWidth: '45px',
+                maxWidth: '55px',
                 height:
                   dailyTotals[index] > 0
                     ? `${(dailyTotals[index] / maxTotal) * 100}%`
@@ -106,10 +121,7 @@ const WeeklyChart = ({ entries }) => {
                 flexDirection: 'column',
                 borderRadius: '10px 10px 0 0',
                 overflow: 'hidden',
-                border:
-                  dailyTotals[index] > 0
-                    ? '3px solid black'
-                    : '2px dashed #ccc',
+                border: dailyTotals[index] > 0 ? '3px solid black' : '2px dashed #ccc',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'scaleY(1.05)',
@@ -117,37 +129,21 @@ const WeeklyChart = ({ entries }) => {
                 },
               }}
             >
-              {/* Stacked segments */}
-              <Box
-                sx={{
-                  flex: streams.businessDevelopment,
-                  bgcolor: STREAM_COLORS.businessDevelopment,
-                }}
-              />
-              <Box
-                sx={{
-                  flex: streams.practiceDevelopment,
-                  bgcolor: STREAM_COLORS.practiceDevelopment,
-                }}
-              />
-              <Box
-                sx={{
-                  flex: streams.clientWork,
-                  bgcolor: STREAM_COLORS.clientWork,
-                }}
-              />
+              <Box sx={{ flex: streams.businessDevelopment, bgcolor: STREAM_COLORS.businessDevelopment }} />
+              <Box sx={{ flex: streams.practiceDevelopment, bgcolor: STREAM_COLORS.practiceDevelopment }} />
+              <Box sx={{ flex: streams.clientWork, bgcolor: STREAM_COLORS.clientWork }} />
             </Box>
           </Tooltip>
           <Typography
             variant="caption"
             sx={{
               fontWeight: 900,
-              opacity: index === 6 ? 1 : 0.6,
-              color: index === 6 ? 'black' : 'text.secondary',
+              opacity: weekDays[index].isToday ? 1 : 0.6,
+              color: weekDays[index].isToday ? 'black' : 'text.secondary',
               fontSize: '0.75rem',
             }}
           >
-            {days[index]}
+            {weekDays[index].label}
           </Typography>
         </Stack>
       ))}
