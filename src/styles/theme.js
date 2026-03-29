@@ -58,6 +58,15 @@ const baseOptions = {
         },
       },
     },
+    MuiFilledInput: {
+      styleOverrides: {
+        root: {
+          '&::before': { borderBottom: 'none !important' },
+          '&::after': { borderBottom: 'none !important' },
+          '&:hover:not(.Mui-disabled)::before': { borderBottom: 'none !important' },
+        },
+      },
+    },
   },
 }
 

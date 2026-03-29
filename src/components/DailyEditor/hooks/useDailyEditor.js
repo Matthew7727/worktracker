@@ -8,12 +8,19 @@ import {
   parseStreams,
   stringifyStreams,
 } from '../../../utils/markdownParser'
+import { loadProjects } from '../../../utils/projectsManager'
 import { getWeekDays, getDefaultDate } from '../utils/weekDays'
 
 const EMPTY_STREAMS = {
   clientWork: '',
   practiceDevelopment: '',
   businessDevelopment: '',
+}
+
+const EMPTY_TAGGED_ITEMS = {
+  clientWork: [],
+  practiceDevelopment: [],
+  businessDevelopment: [],
 }
 
 export const useDailyEditor = () => {
@@ -29,6 +36,12 @@ export const useDailyEditor = () => {
 
   const [weekStatus, setWeekStatus] = useState({})
   const [streams, setStreams] = useState(EMPTY_STREAMS)
+  const [taggedItems, setTaggedItems] = useState(EMPTY_TAGGED_ITEMS)
+  const [availableProjects, setAvailableProjects] = useState({
+    clientWork: [],
+    practiceDevelopment: [],
+    businessDevelopment: [],
+  })
   const [viewMode, setViewMode] = useState(() =>
     location.state?.autoStartFlow ? 'flow' : 'start'
   )
@@ -43,6 +56,24 @@ export const useDailyEditor = () => {
       setCurrentStep(0)
     }
   }, [location.state])
+
+  // Load active projects and activities for tagging chips
+  useEffect(() => {
+    if (!selectedDirectory) return
+    loadProjects(selectedDirectory).then((data) => {
+      setAvailableProjects({
+        clientWork: (data.clientProjects || [])
+          .filter((p) => p.status === 'active')
+          .map((p) => p.title),
+        practiceDevelopment: (data.activities || [])
+          .filter((a) => a.type === 'PD' && a.status === 'active')
+          .map((a) => a.title),
+        businessDevelopment: (data.activities || [])
+          .filter((a) => a.type === 'BD' && a.status === 'active')
+          .map((a) => a.title),
+      })
+    })
+  }, [selectedDirectory])
 
   // Load completion status for each day of the current week
   const loadWeekStatus = async () => {
@@ -84,9 +115,14 @@ export const useDailyEditor = () => {
         const fileResult = await window.electronAPI.readFile(filePath)
 
         if (fileResult.success) {
-          const { body } = parseMarkdown(fileResult.data)
+          const { frontmatter, body } = parseMarkdown(fileResult.data)
           const parsedStreams = parseStreams(body)
           setStreams(parsedStreams)
+          setTaggedItems({
+            clientWork: frontmatter.clientProjects || [],
+            practiceDevelopment: frontmatter.pdActivities || [],
+            businessDevelopment: frontmatter.bdActivities || [],
+          })
 
           const hasData = Object.values(parsedStreams).some(
             (val) => val && val.trim().length > 0
@@ -96,6 +132,7 @@ export const useDailyEditor = () => {
           }
         } else {
           setStreams(EMPTY_STREAMS)
+          setTaggedItems(EMPTY_TAGGED_ITEMS)
           if (!location.state?.autoStartFlow) {
             setViewMode('start')
           }
@@ -118,6 +155,9 @@ export const useDailyEditor = () => {
       const frontmatter = {
         date: currentDate.toISOString().split('T')[0],
         lastModified: new Date().toISOString(),
+        clientProjects: taggedItems.clientWork,
+        pdActivities: taggedItems.practiceDevelopment,
+        bdActivities: taggedItems.businessDevelopment,
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
@@ -142,12 +182,25 @@ export const useDailyEditor = () => {
     setStreams((prev) => ({ ...prev, [streamId]: content }))
   }
 
+  const updateTaggedItems = (streamId, title) => {
+    setTaggedItems((prev) => {
+      const current = prev[streamId]
+      const next = current.includes(title)
+        ? current.filter((t) => t !== title)
+        : [...current, title]
+      return { ...prev, [streamId]: next }
+    })
+  }
+
   return {
     currentDate,
     setCurrentDate,
     weekStatus,
     streams,
     updateStream,
+    taggedItems,
+    updateTaggedItems,
+    availableProjects,
     viewMode,
     setViewMode,
     currentStep,

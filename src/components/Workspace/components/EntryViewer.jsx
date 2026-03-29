@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Paper, Typography, IconButton } from '@mui/material'
+import { Box, Paper, Typography, IconButton, Stack, Chip } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -65,9 +65,6 @@ const EntryViewer = ({ entry, onClose }) => {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
           px: 2.5,
           py: 1.25,
           borderBottom: '1px solid',
@@ -75,24 +72,60 @@ const EntryViewer = ({ entry, onClose }) => {
           flexShrink: 0,
         }}
       >
-        <Typography
-          sx={{
-            fontSize: '0.65rem',
-            fontWeight: 800,
-            letterSpacing: '0.08em',
-            color: 'text.secondary',
-            fontFamily: '"JetBrains Mono", monospace',
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {formatDate(entry.date)}
-        </Typography>
-        <IconButton onClick={onClose} size="small">
-          <Close sx={{ fontSize: 16 }} />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography
+            sx={{
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              color: 'text.secondary',
+              fontFamily: '"JetBrains Mono", monospace',
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {formatDate(entry.date)}
+          </Typography>
+          <IconButton onClick={onClose} size="small">
+            <Close sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Box>
+
+        {(() => {
+          const clientProjects = entry.metadata?.clientProjects || []
+          const pdActivities = entry.metadata?.pdActivities || []
+          const bdActivities = entry.metadata?.bdActivities || []
+          const allTags = [
+            ...clientProjects.map((t) => ({ label: t, color: STREAM_COLORS['client work'] })),
+            ...pdActivities.map((t) => ({ label: t, color: STREAM_COLORS['practice development'] })),
+            ...bdActivities.map((t) => ({ label: t, color: STREAM_COLORS['business development'] })),
+          ]
+          if (allTags.length === 0) return null
+          return (
+            <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mt: 1 }}>
+              {allTags.map(({ label, color }) => (
+                <Chip
+                  key={label}
+                  label={label}
+                  size="small"
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: '0.6rem',
+                    height: 18,
+                    border: '1.5px solid',
+                    borderColor: color,
+                    borderRadius: 0,
+                    bgcolor: `${color}22`,
+                    color: color,
+                    '& .MuiChip-label': { px: '6px' },
+                  }}
+                />
+              ))}
+            </Stack>
+          )
+        })()}
       </Box>
 
       {/* Markdown content */}
