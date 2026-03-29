@@ -191,7 +191,7 @@ const ActiveCard = ({
   const { confirm, openConfirm, closeConfirm } = useConfirm()
 
   const isBD = activity.type === 'BD'
-  const accentColor = isBD ? '#eb8449' : '#4a6b13'
+  const accentColor = isBD ? '#eb8449' : '#ffd166'
 
   const handleAddTask = () => {
     if (!newTaskText.trim()) return
@@ -234,7 +234,7 @@ const ActiveCard = ({
           sx={{
             fontWeight: 900,
             fontSize: '0.65rem',
-            bgcolor: isBD ? '#eb8449' : '#4a6b13',
+            bgcolor: isBD ? '#eb8449' : '#ffd166',
             color: '#fff',
             border: 'none',
             flexShrink: 0,

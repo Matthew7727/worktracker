@@ -2,7 +2,7 @@ import React from 'react'
 import { Box, Typography, Stack, Chip } from '@mui/material'
 import { EmojiEvents } from '@mui/icons-material'
 
-const COLORS = { CW: '#80b621', PD: '#4a6b13', BD: '#eb8449' }
+const COLORS = { CW: '#80b621', PD: '#ffd166', BD: '#eb8449' }
 
 const RecentAccomplishments = ({ projects }) => {
   const completed = [
@@ -45,9 +45,9 @@ const RecentAccomplishments = ({ projects }) => {
                 key={item.id}
                 sx={{
                   p: 1.5,
-                  border: '2px solid black',
+                  border: '2px solid', borderColor: 'text.primary',
                   borderRadius: 2,
-                  boxShadow: '3px 3px 0px #000',
+                  boxShadow: (theme) => `3px 3px 0px ${theme.palette.text.primary}`,
                   borderLeft: `5px solid ${color}`,
                 }}
               >
@@ -60,7 +60,7 @@ const RecentAccomplishments = ({ projects }) => {
                         fontWeight: 900,
                         fontSize: '0.65rem',
                         bgcolor: color,
-                        color: 'white',
+                        color: 'background.paper',
                         border: '1.5px solid black',
                         height: 20,
                       }}

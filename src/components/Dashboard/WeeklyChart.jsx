@@ -3,7 +3,7 @@ import { Box, Typography, Stack, Tooltip } from '@mui/material'
 
 const STREAM_COLORS = {
   clientWork: '#80b621',
-  practiceDevelopment: '#4a6b13',
+  practiceDevelopment: '#ffd166',
   businessDevelopment: '#eb8449',
 }
 
@@ -121,7 +121,8 @@ const WeeklyChart = ({ entries }) => {
                 flexDirection: 'column',
                 borderRadius: '10px 10px 0 0',
                 overflow: 'hidden',
-                border: dailyTotals[index] > 0 ? '3px solid black' : '2px dashed #ccc',
+                border: dailyTotals[index] > 0 ? '3px solid' : '2px dashed',
+                borderColor: dailyTotals[index] > 0 ? 'text.primary' : 'divider',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'scaleY(1.05)',
@@ -139,7 +140,7 @@ const WeeklyChart = ({ entries }) => {
             sx={{
               fontWeight: 900,
               opacity: weekDays[index].isToday ? 1 : 0.6,
-              color: weekDays[index].isToday ? 'black' : 'text.secondary',
+              color: weekDays[index].isToday ? 'text.primary' : 'text.secondary',
               fontSize: '0.75rem',
             }}
           >

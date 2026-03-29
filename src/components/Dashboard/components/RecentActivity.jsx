@@ -13,7 +13,7 @@ import { Delete } from '@mui/icons-material'
 
 const STREAM_COLORS = {
   clientWork: '#80b621',
-  practiceDevelopment: '#4a6b13',
+  practiceDevelopment: '#ffd166',
   businessDevelopment: '#eb8449',
 }
 
@@ -36,7 +36,7 @@ const StreamMiniBar = ({ streamCounts, totalWords }) => {
         height: 8,
         borderRadius: 4,
         overflow: 'hidden',
-        border: '2px solid black',
+        border: '2px solid', borderColor: 'text.primary',
         width: '100%',
       }}
     >
@@ -74,7 +74,7 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
         <Typography sx={{ mb: 2, fontWeight: 700 }}>No sessions logged yet.</Typography>
         <Button
           variant="outlined"
-          sx={{ fontWeight: 700, border: '2px solid black', color: 'black' }}
+          sx={{ fontWeight: 700, border: '2px solid', borderColor: 'text.primary', color: 'text.primary' }}
           onClick={() => onEntryClick(new Date().toISOString().split('T')[0])}
         >
           Start Today
@@ -101,7 +101,7 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
               alignItems: 'center',
               gap: 2,
               p: 2,
-              border: '2px solid black',
+              border: '2px solid', borderColor: 'text.primary',
               borderRadius: 2,
               boxShadow: '3px 3px 0px #000',
               borderLeft: `5px solid ${dominantColor}`,
@@ -170,8 +170,8 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
                 onDeleteClick(entry)
               }}
               sx={{
-                border: '2px solid black',
-                '&:hover': { bgcolor: 'error.main', color: 'white', borderColor: 'error.main' },
+                border: '2px solid', borderColor: 'text.primary',
+                '&:hover': { bgcolor: 'error.main', color: 'background.paper', borderColor: 'error.main' },
               }}
             >
               <Delete fontSize="small" />

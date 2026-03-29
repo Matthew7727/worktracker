@@ -17,7 +17,7 @@ const DateNavigation = ({
       <Stack direction="row" spacing={2} alignItems="center">
         <IconButton
           onClick={onPrevDay}
-          sx={{ border: '2px solid black' }}
+          sx={{ border: '2px solid', borderColor: 'text.primary' }}
           aria-label="Previous Day"
         >
           <ChevronLeft />
@@ -36,7 +36,7 @@ const DateNavigation = ({
 
         <IconButton
           onClick={onNextDay}
-          sx={{ border: '2px solid black' }}
+          sx={{ border: '2px solid', borderColor: 'text.primary' }}
           aria-label="Next Day"
         >
           <ChevronRight />

@@ -110,7 +110,7 @@ const EntryCard = ({
     <Paper
       sx={{
         ...cardStyles,
-        borderColor: borderColor || (entry.isNew ? 'primary.main' : 'black'),
+        borderColor: borderColor || (entry.isNew ? 'primary.main' : 'text.primary'),
       }}
     >
       {/* Header Area */}
@@ -196,8 +196,8 @@ const EntryCard = ({
                 onClick={() => setIsEditing(true)}
                 aria-label="Edit contribution"
                 sx={{
-                  border: '2px solid black',
-                  '&:hover': { bgcolor: 'primary.main', color: 'white' },
+                  border: '2px solid', borderColor: 'text.primary',
+                  '&:hover': { bgcolor: 'primary.main', color: 'background.paper' },
                 }}
               >
                 <Edit />
@@ -206,9 +206,9 @@ const EntryCard = ({
             <IconButton
               onClick={() => onDelete(entry)}
               sx={{
-                border: '2px solid black',
+                border: '2px solid', borderColor: 'text.primary',
                 color: 'error.main',
-                '&:hover': { bgcolor: 'error.main', color: 'white' },
+                '&:hover': { bgcolor: 'error.main', color: 'background.paper' },
               }}
             >
               <Delete />

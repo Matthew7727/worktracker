@@ -3,7 +3,7 @@ import { Box, Typography, Stack, Chip } from '@mui/material'
 import { Schedule, Warning } from '@mui/icons-material'
 
 const STALE_THRESHOLD = 30
-const COLORS = { CW: '#80b621', PD: '#4a6b13', BD: '#eb8449' }
+const COLORS = { CW: '#80b621', PD: '#ffd166', BD: '#eb8449' }
 
 const ProjectDurationsWidget = ({ projects }) => {
   const allActive = [
@@ -62,8 +62,8 @@ const ProjectDurationsWidget = ({ projects }) => {
                       fontWeight: 900,
                       fontSize: '0.6rem',
                       bgcolor: isStale ? 'error.main' : color,
-                      color: 'white',
-                      border: '1.5px solid black',
+                      color: 'background.paper',
+                      border: '1.5px solid', borderColor: 'text.primary',
                       height: 18,
                     }}
                   />
@@ -85,8 +85,8 @@ const ProjectDurationsWidget = ({ projects }) => {
                 sx={{
                   height: 6,
                   borderRadius: 3,
-                  border: '1.5px solid black',
-                  bgcolor: 'white',
+                  border: '1.5px solid', borderColor: 'text.primary',
+                  bgcolor: 'background.paper',
                   overflow: 'hidden',
                 }}
               >

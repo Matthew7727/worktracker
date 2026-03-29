@@ -121,7 +121,7 @@ const Reports = () => {
         <Grid container spacing={6} justifyContent="center">
           <Grid item xs={12} md={7}>
             <Paper
-              sx={{ p: 6, borderRadius: '24px', border: '3px solid black' }}
+              sx={{ p: 6, borderRadius: '24px', border: '3px solid', borderColor: 'text.primary' }}
             >
               <Typography variant="h4" sx={{ mb: 4 }}>
                 Configuration
@@ -130,7 +130,7 @@ const Reports = () => {
               <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
                 <InputLabel
                   id="export-range-label"
-                  sx={{ fontWeight: 900, color: 'black' }}
+                  sx={{ fontWeight: 900, color: 'text.primary' }}
                 >
                   DATE RANGE
                 </InputLabel>
@@ -144,7 +144,7 @@ const Reports = () => {
                     fontWeight: 900,
                     '& .MuiOutlinedInput-notchedOutline': {
                       borderWidth: '3px',
-                      borderColor: 'black',
+                      borderColor: 'text.primary',
                     },
                   }}
                 >
@@ -205,7 +205,7 @@ const Reports = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '3px dashed black',
+                border: '3px dashed', borderColor: 'text.primary',
                 borderRadius: '24px',
                 bgcolor: 'rgba(0,0,0,0.02)',
               }}

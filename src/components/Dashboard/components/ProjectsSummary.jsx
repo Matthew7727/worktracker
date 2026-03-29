@@ -13,7 +13,7 @@ import { loadProjects } from '../../../utils/projectsManager'
 import { useAppContext } from '../../../context/AppContext'
 
 const STALE_THRESHOLD = 30
-const ACTIVITY_COLORS = { PD: '#4a6b13', BD: '#eb8449' }
+const ACTIVITY_COLORS = { PD: '#ffd166', BD: '#eb8449' }
 
 const getAge = (createdAt) =>
   Math.floor((new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24))
@@ -65,10 +65,10 @@ const ProjectsSummary = () => {
                   key={project.id}
                   sx={{
                     p: 2,
-                    border: `2px solid ${isStale ? 'error.main' : 'black'}`,
-                    borderColor: isStale ? 'error.main' : 'black',
+                    border: '2px solid',
+                    borderColor: isStale ? 'error.main' : 'text.primary',
                     borderRadius: 2,
-                    boxShadow: '3px 3px 0px #000',
+                    boxShadow: (theme) => `3px 3px 0px ${theme.palette.text.primary}`,
                     borderLeft: `5px solid ${isStale ? '#d32f2f' : '#80b621'}`,
                   }}
                 >
@@ -145,8 +145,8 @@ const ProjectsSummary = () => {
                           fontWeight: 900,
                           fontSize: '0.65rem',
                           bgcolor: color,
-                          color: 'white',
-                          border: '1.5px solid black',
+                          color: 'background.paper',
+                          border: '1.5px solid', borderColor: 'text.primary',
                           height: 20,
                         }}
                       />
@@ -173,8 +173,8 @@ const ProjectsSummary = () => {
                       sx={{
                         height: 8,
                         borderRadius: 4,
-                        border: '2px solid black',
-                        bgcolor: 'white',
+                        border: '2px solid', borderColor: 'text.primary',
+                        bgcolor: 'background.paper',
                         '& .MuiLinearProgress-bar': { bgcolor: isStale ? 'error.main' : color },
                       }}
                     />

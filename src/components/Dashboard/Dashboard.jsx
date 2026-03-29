@@ -48,7 +48,7 @@ const Dashboard = () => {
           )}
         </Box>
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
+        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
 
         {/* ── Weekly Intensity + Stream Alignment ── */}
         <StreamAlignment
@@ -58,7 +58,7 @@ const Dashboard = () => {
           loading={loading}
         />
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
+        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
 
         {/* ── The Journey ── */}
         <Box>
@@ -70,7 +70,7 @@ const Dashboard = () => {
           )}
         </Box>
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
+        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
 
         {/* ── Recent Accomplishments ── */}
         <Box>
@@ -81,7 +81,7 @@ const Dashboard = () => {
           )}
         </Box>
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'black' }} />
+        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
 
         {/* ── Current Priorities ── */}
         <Box>

@@ -70,7 +70,7 @@ export const getTheme = (mode) => {
         ? {
             // Light Mode
             primary: { main: '#80b621' },
-            secondary: { main: '#4a6b13' },
+            secondary: { main: '#ffd166' },
             text: { primary: '#000000', secondary: '#393939' },
             background: {
               default: '#ffffff',
@@ -103,7 +103,7 @@ export const getTheme = (mode) => {
           containedPrimary: {
             backgroundImage:
               mode === 'light'
-                ? 'linear-gradient(135deg, #80b621 0%, #4a6b13 100%)'
+                ? 'linear-gradient(135deg, #80b621 0%, #ffd166 100%)'
                 : 'linear-gradient(135deg, #aedd4d 0%, #80b621 100%)',
             color: mode === 'light' ? '#ffffff' : '#000000',
             border: 'none',
