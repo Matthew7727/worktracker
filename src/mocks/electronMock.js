@@ -316,6 +316,15 @@ ${bd}
     2
   )
 
+  // ─── In-memory settings store ─────────────────────────────────────────────
+
+  let mockSettings = {
+    notificationsEnabled: false,
+    notificationTime: '17:00',
+    utilisationTarget: 70,
+    selectedDirectory: MOCK_ROOT,
+  }
+
   // ─── Electron API ─────────────────────────────────────────────────────────
 
   window.electronAPI = {
@@ -380,6 +389,17 @@ ${bd}
           }
         }, 300)
       }, 1000)
+    },
+
+    loadSettings: async () => {
+      console.log('[Mock] loadSettings called')
+      return { ...mockSettings }
+    },
+
+    saveSettings: async (settings) => {
+      console.log('[Mock] saveSettings called', settings)
+      mockSettings = { ...mockSettings, ...settings }
+      return { success: true }
     },
 
     selectDirectory: async () => {

@@ -17,6 +17,7 @@ import {
   Schedule,
   BugReport,
   SystemUpdateAlt,
+  TrendingUp,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 
@@ -28,6 +29,10 @@ const Settings = () => {
   const [notifEnabled, setNotifEnabled] = useState(false)
   const [notifTime, setNotifTime] = useState('17:00')
   const [isSaving, setIsSaving] = useState(false)
+
+  // Utilisation Target
+  const [utilisationTarget, setUtilisationTarget] = useState(70)
+  const [isUtilSaving, setIsUtilSaving] = useState(false)
 
   // Auto Update State
   const [appVersion, setAppVersion] = useState('')
@@ -80,18 +85,43 @@ const Settings = () => {
         const settings = await window.electronAPI.loadSettings()
         setNotifEnabled(settings.notificationsEnabled || false)
         setNotifTime(settings.notificationTime || '17:00')
+        if (settings.utilisationTarget !== undefined) {
+          setUtilisationTarget(settings.utilisationTarget)
+        }
       }
     }
     fetchSettings()
   }, [])
 
+  const handleSaveUtilisation = async (value) => {
+    const parsed = Math.min(100, Math.max(0, parseInt(value, 10) || 0))
+    setIsUtilSaving(true)
+    try {
+      const current = window.electronAPI?.loadSettings ? await window.electronAPI.loadSettings() : {}
+      const result = await window.electronAPI.saveSettings({
+        ...current,
+        utilisationTarget: parsed,
+      })
+      if (result.success) {
+        setUtilisationTarget(parsed)
+        showNotification('Utilisation target updated', 'success')
+      }
+    } catch {
+      showNotification('Failed to save utilisation target', 'error')
+    } finally {
+      setIsUtilSaving(false)
+    }
+  }
+
   const handleSaveSettings = async (enabled, time) => {
     setIsSaving(true)
     try {
+      const current = window.electronAPI?.loadSettings ? await window.electronAPI.loadSettings() : {}
       const result = await window.electronAPI.saveSettings({
+        ...current,
         notificationsEnabled: enabled,
         notificationTime: time,
-        selectedDirectory, // Keep existing
+        selectedDirectory,
       })
       if (result.success) {
         showNotification('Settings updated successfully', 'success')
@@ -275,6 +305,94 @@ const Settings = () => {
                     </Stack>
                   </Box>
                 </Stack>
+              </Paper>
+
+              {/* Utilisation Target Section */}
+              <Paper
+                sx={{
+                  p: 6,
+                  borderRadius: '40px',
+                  border: '4px solid black',
+                  boxShadow: '10px 10px 0px black',
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
+                  <TrendingUp sx={{ fontSize: '2.5rem' }} />
+                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                    Utilisation Target
+                  </Typography>
+                </Stack>
+
+                <Typography variant="body1" sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}>
+                  Set the percentage of your total logged work that should be Client Work.
+                  This will be tracked on your dashboard.
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    p: 3,
+                    bgcolor: 'action.hover',
+                    borderRadius: '20px',
+                    border: '3px solid black',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                      Client Work Target
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, opacity: 0.7 }}>
+                      What % of your time should be billable?
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <TextField
+                      type="number"
+                      value={utilisationTarget}
+                      onChange={(e) => setUtilisationTarget(e.target.value)}
+                      inputProps={{ min: 0, max: 100, step: 5 }}
+                      sx={{
+                        width: 100,
+                        '& .MuiInputBase-root': {
+                          fontWeight: 900,
+                          fontSize: '1.2rem',
+                          borderRadius: '12px',
+                          border: '2px solid black',
+                        },
+                      }}
+                    />
+                    <Typography variant="h5" sx={{ fontWeight: 900 }}>%</Typography>
+                    <Button
+                      variant="contained"
+                      onClick={() => handleSaveUtilisation(utilisationTarget)}
+                      disabled={isUtilSaving}
+                      sx={{
+                        fontWeight: 900,
+                        px: 3,
+                        backgroundImage: 'none',
+                        bgcolor: 'white',
+                        color: 'black',
+                        border: '2px solid black',
+                        boxShadow: '4px 4px 0px black',
+                        '&:hover': {
+                          bgcolor: '#f0f0f0',
+                          boxShadow: '2px 2px 0px black',
+                          transform: 'translate(2px, 2px)',
+                        },
+                        '&.Mui-disabled': {
+                          opacity: 0.5,
+                          boxShadow: 'none',
+                          border: '2px solid #999',
+                          bgcolor: '#f0f0f0',
+                        },
+                      }}
+                    >
+                      SAVE
+                    </Button>
+                  </Stack>
+                </Box>
               </Paper>
 
               {/* Workspace Section */}

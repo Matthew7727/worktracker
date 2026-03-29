@@ -92,6 +92,26 @@ const ContributionGraph = ({ entries }) => {
     }
   }
 
+  if (entries.length === 0) {
+    return (
+      <Box
+        sx={{
+          py: 6,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px dashed',
+          borderColor: 'divider',
+          borderRadius: 3,
+        }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
+          Your journey starts when you log your first session.
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box
       sx={{
