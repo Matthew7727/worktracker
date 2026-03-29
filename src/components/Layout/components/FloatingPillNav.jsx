@@ -14,6 +14,7 @@ const PillItem = ({
   isHovered,
   isPressed,
   isDark,
+  activeColor,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -45,7 +46,7 @@ const PillItem = ({
         `padding 0.35s ${SPRING}`,
       ].join(', '),
       bgcolor: isActive
-        ? 'primary.main'
+        ? (activeColor ?? 'primary.main')
         : isHovered
           ? isDark
             ? 'rgba(255,255,255,0.10)'
@@ -146,6 +147,7 @@ const FloatingPillNav = ({
           isHovered={hoveredIndex === index}
           isPressed={pressedIndex === index}
           isDark={isDark}
+          activeColor={item.activeColor}
           onClick={() => onNavigate(item.path)}
           onMouseEnter={() => setHoveredIndex(index)}
           onMouseLeave={() => {
