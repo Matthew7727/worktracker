@@ -128,7 +128,11 @@ const MainLayout = ({ children }) => {
             size="small"
             sx={{ ...toolbarIconStyles, pointerEvents: 'auto', p: 1 }}
           >
-            {mode === 'light' ? <DarkMode fontSize="small" /> : <LightMode fontSize="small" />}
+            {mode === 'light' ? (
+              <DarkMode fontSize="small" />
+            ) : (
+              <LightMode fontSize="small" />
+            )}
           </IconButton>
         </Tooltip>
       </Box>
@@ -161,7 +165,9 @@ const MainLayout = ({ children }) => {
           aria-label="scroll back to top"
           sx={fabStyles}
         >
-          <KeyboardArrowUpIcon sx={{ fontSize: '2rem', color: 'background.paper' }} />
+          <KeyboardArrowUpIcon
+            sx={{ fontSize: '2rem', color: 'background.paper' }}
+          />
         </Fab>
       </ScrollTop>
 

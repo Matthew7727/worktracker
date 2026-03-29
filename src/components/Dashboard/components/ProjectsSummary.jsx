@@ -20,7 +20,10 @@ const getAge = (createdAt) =>
 
 const ProjectsSummary = () => {
   const { selectedDirectory, refreshTrigger } = useAppContext()
-  const [projects, setProjects] = useState({ activities: [], clientProjects: [] })
+  const [projects, setProjects] = useState({
+    activities: [],
+    clientProjects: [],
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -35,24 +38,42 @@ const ProjectsSummary = () => {
 
   if (loading) return <CircularProgress size={20} />
 
-  const activeClients = projects.clientProjects.filter((p) => p.status === 'active')
-  const activeActivities = projects.activities.filter((a) => a.status === 'active')
+  const activeClients = projects.clientProjects.filter(
+    (p) => p.status === 'active'
+  )
+  const activeActivities = projects.activities.filter(
+    (a) => a.status === 'active'
+  )
 
   return (
-    <Box sx={{ display: 'flex', gap: 6, flexDirection: { xs: 'column', md: 'row' } }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 6,
+        flexDirection: { xs: 'column', md: 'row' },
+      }}
+    >
       {/* Client Work Pipeline */}
       <Box sx={{ flex: 1 }}>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
           <FolderOpen sx={{ fontSize: 20, opacity: 0.7 }} />
           <Typography
             variant="body1"
-            sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}
+            sx={{
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              opacity: 0.7,
+            }}
           >
             Client Work Pipeline
           </Typography>
         </Stack>
         {activeClients.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+          >
             No active client projects.
           </Typography>
         ) : (
@@ -68,27 +89,42 @@ const ProjectsSummary = () => {
                     border: '2px solid',
                     borderColor: isStale ? 'error.main' : 'text.primary',
                     borderRadius: 2,
-                    boxShadow: (theme) => `3px 3px 0px ${theme.palette.text.primary}`,
+                    boxShadow: (theme) =>
+                      `3px 3px 0px ${theme.palette.text.primary}`,
                     borderLeft: `5px solid ${isStale ? '#d32f2f' : '#80b621'}`,
                   }}
                 >
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
                     <Stack direction="row" alignItems="center" spacing={0.75}>
                       {isStale && (
-                        <Tooltip title="Stale — active for over 30 days" placement="top">
+                        <Tooltip
+                          title="Stale — active for over 30 days"
+                          placement="top"
+                        >
                           <Warning sx={{ fontSize: 15, color: 'error.main' }} />
                         </Tooltip>
                       )}
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 800, color: isStale ? 'error.main' : 'text.primary' }}
+                        sx={{
+                          fontWeight: 800,
+                          color: isStale ? 'error.main' : 'text.primary',
+                        }}
                       >
                         {project.title}
                       </Typography>
                     </Stack>
                     <Typography
                       variant="caption"
-                      sx={{ fontWeight: 700, color: isStale ? 'error.main' : 'text.secondary', opacity: isStale ? 1 : 0.5 }}
+                      sx={{
+                        fontWeight: 700,
+                        color: isStale ? 'error.main' : 'text.secondary',
+                        opacity: isStale ? 1 : 0.5,
+                      }}
                     >
                       {age}d active
                     </Typography>
@@ -106,13 +142,21 @@ const ProjectsSummary = () => {
           <Build sx={{ fontSize: 20, opacity: 0.7 }} />
           <Typography
             variant="body1"
-            sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}
+            sx={{
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              opacity: 0.7,
+            }}
           >
             Activities Breakdown
           </Typography>
         </Stack>
         {activeActivities.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+          >
             No active activities.
           </Typography>
         ) : (
@@ -134,7 +178,10 @@ const ProjectsSummary = () => {
                   >
                     <Stack direction="row" alignItems="center" spacing={0.75}>
                       {isStale && (
-                        <Tooltip title="Stale — active for over 30 days" placement="top">
+                        <Tooltip
+                          title="Stale — active for over 30 days"
+                          placement="top"
+                        >
                           <Warning sx={{ fontSize: 15, color: 'error.main' }} />
                         </Tooltip>
                       )}
@@ -146,22 +193,32 @@ const ProjectsSummary = () => {
                           fontSize: '0.65rem',
                           bgcolor: color,
                           color: 'background.paper',
-                          border: '1.5px solid', borderColor: 'text.primary',
+                          border: '1.5px solid',
+                          borderColor: 'text.primary',
                           height: 20,
                         }}
                       />
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 800, color: isStale ? 'error.main' : 'text.primary' }}
+                        sx={{
+                          fontWeight: 800,
+                          color: isStale ? 'error.main' : 'text.primary',
+                        }}
                       >
                         {activity.title}
                       </Typography>
                     </Stack>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 700, opacity: 0.5 }}
+                      >
                         {age}d
                       </Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.6 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 700, opacity: 0.6 }}
+                      >
                         {completed}/{total}
                       </Typography>
                     </Stack>
@@ -173,9 +230,12 @@ const ProjectsSummary = () => {
                       sx={{
                         height: 8,
                         borderRadius: 4,
-                        border: '2px solid', borderColor: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
                         bgcolor: 'background.paper',
-                        '& .MuiLinearProgress-bar': { bgcolor: isStale ? 'error.main' : color },
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor: isStale ? 'error.main' : color,
+                        },
                       }}
                     />
                   )}

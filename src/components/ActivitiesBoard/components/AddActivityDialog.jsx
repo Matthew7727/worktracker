@@ -41,7 +41,8 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
           borderRadius: '24px',
           border: '4px solid',
           borderColor: 'text.primary',
-          boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
+          boxShadow: (theme) =>
+            `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
           p: 2,
         },
       }}

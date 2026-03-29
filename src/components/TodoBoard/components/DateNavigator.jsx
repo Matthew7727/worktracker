@@ -48,7 +48,8 @@ const DateNavigator = ({
           onClick={onNextDay}
           disabled={disableNext}
           sx={{
-            border: '2px solid', borderColor: 'text.primary',
+            border: '2px solid',
+            borderColor: 'text.primary',
             opacity: disableNext ? 0.3 : 1,
             bgcolor: disableNext ? 'action.disabledBackground' : 'transparent',
             cursor: disableNext ? 'not-allowed' : 'pointer',

@@ -16,13 +16,18 @@ const ProjectDurationsWidget = ({ projects }) => {
   ]
     .map((item) => ({
       ...item,
-      age: Math.floor((new Date() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)),
+      age: Math.floor(
+        (new Date() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24)
+      ),
     }))
     .sort((a, b) => b.age - a.age)
 
   if (allActive.length === 0) {
     return (
-      <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+      <Typography
+        variant="body2"
+        sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+      >
         No active work items.
       </Typography>
     )
@@ -34,7 +39,12 @@ const ProjectDurationsWidget = ({ projects }) => {
         <Schedule sx={{ fontSize: 20, opacity: 0.7 }} />
         <Typography
           variant="body1"
-          sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}
+          sx={{
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+            opacity: 0.7,
+          }}
         >
           Work Lifecycle
         </Typography>
@@ -54,7 +64,9 @@ const ProjectDurationsWidget = ({ projects }) => {
                 sx={{ mb: 0.5 }}
               >
                 <Stack direction="row" alignItems="center" spacing={0.75}>
-                  {isStale && <Warning sx={{ fontSize: 14, color: 'error.main' }} />}
+                  {isStale && (
+                    <Warning sx={{ fontSize: 14, color: 'error.main' }} />
+                  )}
                   <Chip
                     label={item.category}
                     size="small"
@@ -63,7 +75,8 @@ const ProjectDurationsWidget = ({ projects }) => {
                       fontSize: '0.6rem',
                       bgcolor: isStale ? 'error.main' : color,
                       color: 'background.paper',
-                      border: '1.5px solid', borderColor: 'text.primary',
+                      border: '1.5px solid',
+                      borderColor: 'text.primary',
                       height: 18,
                     }}
                   />
@@ -77,7 +90,10 @@ const ProjectDurationsWidget = ({ projects }) => {
                     {item.title}
                   </Typography>
                 </Stack>
-                <Typography variant="caption" sx={{ fontWeight: 900, opacity: 0.7 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 900, opacity: 0.7 }}
+                >
                   {item.age}d
                 </Typography>
               </Stack>
@@ -85,7 +101,8 @@ const ProjectDurationsWidget = ({ projects }) => {
                 sx={{
                   height: 6,
                   borderRadius: 3,
-                  border: '1.5px solid', borderColor: 'text.primary',
+                  border: '1.5px solid',
+                  borderColor: 'text.primary',
                   bgcolor: 'background.paper',
                   overflow: 'hidden',
                 }}

@@ -36,13 +36,19 @@ const FlowView = ({
           sx={{
             height: 16,
             borderRadius: 8,
-            border: '4px solid', borderColor: 'text.primary',
+            border: '4px solid',
+            borderColor: 'text.primary',
             bgcolor: 'background.paper',
             '& .MuiLinearProgress-bar': { bgcolor: step.color },
           }}
         />
         <Typography
-          sx={{ mt: 1, textAlign: 'right', fontWeight: 950, fontSize: '1.1rem' }}
+          sx={{
+            mt: 1,
+            textAlign: 'right',
+            fontWeight: 950,
+            fontSize: '1.1rem',
+          }}
         >
           STEP {currentStep + 1} OF {STEPS.length}
         </Typography>
@@ -62,7 +68,9 @@ const FlowView = ({
           </Typography>
 
           {step.description && (
-            <Typography sx={{ mb: 4, fontSize: '1.1rem', color: 'text.secondary' }}>
+            <Typography
+              sx={{ mb: 4, fontSize: '1.1rem', color: 'text.secondary' }}
+            >
               {step.description}
             </Typography>
           )}
@@ -92,7 +100,11 @@ const FlowView = ({
                       bgcolor: isActive ? step.color : 'transparent',
                       color: isActive ? 'text.primary' : 'text.secondary',
                       cursor: 'pointer',
-                      '&:hover': { bgcolor: step.color, color: 'text.primary', opacity: 0.85 },
+                      '&:hover': {
+                        bgcolor: step.color,
+                        color: 'text.primary',
+                        opacity: 0.85,
+                      },
                     }}
                   />
                 )
@@ -142,7 +154,11 @@ const FlowView = ({
               }}
             >
               {isLastStep ? 'FINISH & SAVE' : 'NEXT'}
-              {isLastStep ? <CheckCircle sx={{ fontSize: '1.2rem' }} /> : <ArrowForward sx={{ fontSize: '1.2rem' }} />}
+              {isLastStep ? (
+                <CheckCircle sx={{ fontSize: '1.2rem' }} />
+              ) : (
+                <ArrowForward sx={{ fontSize: '1.2rem' }} />
+              )}
               <Box className="shine-layer" sx={flowStyles.shineLayer} />
             </Box>
           </Stack>

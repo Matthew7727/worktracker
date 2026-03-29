@@ -295,7 +295,7 @@ const ActivitiesBoard = () => {
               ALL: { bg: 'text.primary', fg: 'background.default' },
               PD: { bg: '#ffd166', fg: '#000000' },
               BD: { bg: '#eb8449', fg: '#000000' },
-            }[f];
+            }[f]
 
             return (
               <Box

@@ -26,13 +26,21 @@ const RecentAccomplishments = ({ projects }) => {
         <EmojiEvents sx={{ fontSize: 20, opacity: 0.7 }} />
         <Typography
           variant="body1"
-          sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}
+          sx={{
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+            opacity: 0.7,
+          }}
         >
           Recent Accomplishments
         </Typography>
       </Stack>
       {completed.length === 0 ? (
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+        >
           No completed work yet — keep going!
         </Typography>
       ) : (
@@ -45,13 +53,19 @@ const RecentAccomplishments = ({ projects }) => {
                 key={item.id}
                 sx={{
                   p: 1.5,
-                  border: '2px solid', borderColor: 'text.primary',
+                  border: '2px solid',
+                  borderColor: 'text.primary',
                   borderRadius: 2,
-                  boxShadow: (theme) => `3px 3px 0px ${theme.palette.text.primary}`,
+                  boxShadow: (theme) =>
+                    `3px 3px 0px ${theme.palette.text.primary}`,
                   borderLeft: `5px solid ${color}`,
                 }}
               >
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <Chip
                       label={item.category}
@@ -70,7 +84,10 @@ const RecentAccomplishments = ({ projects }) => {
                     </Typography>
                   </Stack>
                   {dateStr && (
-                    <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 700, opacity: 0.5 }}
+                    >
                       {dateStr}
                     </Typography>
                   )}

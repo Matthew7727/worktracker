@@ -11,14 +11,21 @@ import { Typography } from '@mui/material'
 const SectionLabel = ({ children }) => (
   <Typography
     variant="h6"
-    sx={{ fontWeight: 900, mb: 3, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7 }}
+    sx={{
+      fontWeight: 900,
+      mb: 3,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      opacity: 0.7,
+    }}
   >
     {children}
   </Typography>
 )
 
 const Dashboard = () => {
-  const { stats, projects, allEntries, utilisationTarget, loading } = useDashboardData()
+  const { stats, projects, allEntries, utilisationTarget, loading } =
+    useDashboardData()
 
   return (
     <Fade in={true} timeout={600}>
@@ -38,7 +45,11 @@ const Dashboard = () => {
         {/* ── Hero ── */}
         <Box>
           {loading ? (
-            <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 4 }} />
+            <Skeleton
+              variant="rectangular"
+              height={160}
+              sx={{ borderRadius: 4 }}
+            />
           ) : (
             <HeroStatement
               projects={projects}
@@ -64,7 +75,11 @@ const Dashboard = () => {
         <Box>
           <SectionLabel>The Journey</SectionLabel>
           {loading ? (
-            <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 4 }} />
+            <Skeleton
+              variant="rectangular"
+              height={150}
+              sx={{ borderRadius: 4 }}
+            />
           ) : (
             <ContributionGraph entries={allEntries} />
           )}
@@ -75,7 +90,11 @@ const Dashboard = () => {
         {/* ── Recent Accomplishments ── */}
         <Box>
           {loading ? (
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
           ) : (
             <RecentAccomplishments projects={projects} />
           )}

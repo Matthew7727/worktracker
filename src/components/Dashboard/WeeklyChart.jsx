@@ -20,7 +20,8 @@ const getCurrentWeekDays = () => {
     return {
       dateStr: d.toISOString().split('T')[0],
       label: d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
-      isToday: d.toISOString().split('T')[0] === today.toISOString().split('T')[0],
+      isToday:
+        d.toISOString().split('T')[0] === today.toISOString().split('T')[0],
     }
   })
 }
@@ -39,8 +40,10 @@ const WeeklyChart = ({ entries }) => {
     if (dateMap.has(entry.date) && entry.streamCounts) {
       const index = dateMap.get(entry.date)
       streamTally[index].clientWork += entry.streamCounts.clientWork
-      streamTally[index].practiceDevelopment += entry.streamCounts.practiceDevelopment
-      streamTally[index].businessDevelopment += entry.streamCounts.businessDevelopment
+      streamTally[index].practiceDevelopment +=
+        entry.streamCounts.practiceDevelopment
+      streamTally[index].businessDevelopment +=
+        entry.streamCounts.businessDevelopment
     }
   })
 
@@ -95,13 +98,22 @@ const WeeklyChart = ({ entries }) => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
                   {weekDays[index].label}
                 </Typography>
-                <Typography variant="body2" sx={{ color: STREAM_COLORS.clientWork }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: STREAM_COLORS.clientWork }}
+                >
                   CW: {streams.clientWork} words
                 </Typography>
-                <Typography variant="body2" sx={{ color: STREAM_COLORS.practiceDevelopment }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: STREAM_COLORS.practiceDevelopment }}
+                >
                   PD: {streams.practiceDevelopment} words
                 </Typography>
-                <Typography variant="body2" sx={{ color: STREAM_COLORS.businessDevelopment }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: STREAM_COLORS.businessDevelopment }}
+                >
                   BD: {streams.businessDevelopment} words
                 </Typography>
               </Box>
@@ -122,7 +134,8 @@ const WeeklyChart = ({ entries }) => {
                 borderRadius: '10px 10px 0 0',
                 overflow: 'hidden',
                 border: dailyTotals[index] > 0 ? '3px solid' : '2px dashed',
-                borderColor: dailyTotals[index] > 0 ? 'text.primary' : 'divider',
+                borderColor:
+                  dailyTotals[index] > 0 ? 'text.primary' : 'divider',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'scaleY(1.05)',
@@ -130,9 +143,24 @@ const WeeklyChart = ({ entries }) => {
                 },
               }}
             >
-              <Box sx={{ flex: streams.businessDevelopment, bgcolor: STREAM_COLORS.businessDevelopment }} />
-              <Box sx={{ flex: streams.practiceDevelopment, bgcolor: STREAM_COLORS.practiceDevelopment }} />
-              <Box sx={{ flex: streams.clientWork, bgcolor: STREAM_COLORS.clientWork }} />
+              <Box
+                sx={{
+                  flex: streams.businessDevelopment,
+                  bgcolor: STREAM_COLORS.businessDevelopment,
+                }}
+              />
+              <Box
+                sx={{
+                  flex: streams.practiceDevelopment,
+                  bgcolor: STREAM_COLORS.practiceDevelopment,
+                }}
+              />
+              <Box
+                sx={{
+                  flex: streams.clientWork,
+                  bgcolor: STREAM_COLORS.clientWork,
+                }}
+              />
             </Box>
           </Tooltip>
           <Typography
@@ -140,7 +168,9 @@ const WeeklyChart = ({ entries }) => {
             sx={{
               fontWeight: 900,
               opacity: weekDays[index].isToday ? 1 : 0.6,
-              color: weekDays[index].isToday ? 'text.primary' : 'text.secondary',
+              color: weekDays[index].isToday
+                ? 'text.primary'
+                : 'text.secondary',
               fontSize: '0.75rem',
             }}
           >

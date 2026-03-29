@@ -90,11 +90,19 @@ export const useDailyEditor = () => {
           const parsed = parseStreams(body)
           status[key] = {
             clientWork: !!(parsed.clientWork && parsed.clientWork.trim()),
-            practiceDevelopment: !!(parsed.practiceDevelopment && parsed.practiceDevelopment.trim()),
-            businessDevelopment: !!(parsed.businessDevelopment && parsed.businessDevelopment.trim()),
+            practiceDevelopment: !!(
+              parsed.practiceDevelopment && parsed.practiceDevelopment.trim()
+            ),
+            businessDevelopment: !!(
+              parsed.businessDevelopment && parsed.businessDevelopment.trim()
+            ),
           }
         } else {
-          status[key] = { clientWork: false, practiceDevelopment: false, businessDevelopment: false }
+          status[key] = {
+            clientWork: false,
+            practiceDevelopment: false,
+            businessDevelopment: false,
+          }
         }
       })
     )

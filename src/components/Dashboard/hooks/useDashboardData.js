@@ -27,9 +27,16 @@ const useDashboardData = () => {
     totalWords: 0,
     currentStreak: 0,
     balanceScore: 0,
-    streamBreakdown: { clientWork: 0, practiceDevelopment: 0, businessDevelopment: 0 },
+    streamBreakdown: {
+      clientWork: 0,
+      practiceDevelopment: 0,
+      businessDevelopment: 0,
+    },
   })
-  const [projects, setProjects] = useState({ activities: [], clientProjects: [] })
+  const [projects, setProjects] = useState({
+    activities: [],
+    clientProjects: [],
+  })
   const [allEntries, setAllEntries] = useState([])
   const [utilisationTarget, setUtilisationTarget] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -42,7 +49,9 @@ const useDashboardData = () => {
         const [resolvedEntries, projectsData, settings] = await Promise.all([
           loadAllEntries(selectedDirectory),
           loadProjects(selectedDirectory),
-          window.electronAPI?.loadSettings ? window.electronAPI.loadSettings() : Promise.resolve({}),
+          window.electronAPI?.loadSettings
+            ? window.electronAPI.loadSettings()
+            : Promise.resolve({}),
         ])
 
         if (settings.utilisationTarget !== undefined) {
@@ -52,15 +61,23 @@ const useDashboardData = () => {
         setAllEntries(resolvedEntries)
         setProjects(projectsData)
 
-        const uniqueDates = Array.from(new Set(resolvedEntries.map((e) => e.date)))
-        const streamBreakdown = { clientWork: 0, practiceDevelopment: 0, businessDevelopment: 0 }
+        const uniqueDates = Array.from(
+          new Set(resolvedEntries.map((e) => e.date))
+        )
+        const streamBreakdown = {
+          clientWork: 0,
+          practiceDevelopment: 0,
+          businessDevelopment: 0,
+        }
         let totalWords = 0
 
         resolvedEntries.forEach((entry) => {
           if (entry.streamCounts) {
             streamBreakdown.clientWork += entry.streamCounts.clientWork
-            streamBreakdown.practiceDevelopment += entry.streamCounts.practiceDevelopment
-            streamBreakdown.businessDevelopment += entry.streamCounts.businessDevelopment
+            streamBreakdown.practiceDevelopment +=
+              entry.streamCounts.practiceDevelopment
+            streamBreakdown.businessDevelopment +=
+              entry.streamCounts.businessDevelopment
             totalWords += entry.totalWords
           }
         })
@@ -70,7 +87,10 @@ const useDashboardData = () => {
         let balanceScore = 0
         if (sum > 0) {
           const percentages = counts.map((c) => (c / sum) * 100)
-          const variance = percentages.reduce((acc, p) => acc + Math.abs(p - 33.33), 0)
+          const variance = percentages.reduce(
+            (acc, p) => acc + Math.abs(p - 33.33),
+            0
+          )
           balanceScore = Math.max(0, Math.round(100 - variance / 1.33))
         }
 

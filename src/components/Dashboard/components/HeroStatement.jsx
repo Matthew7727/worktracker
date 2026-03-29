@@ -2,7 +2,11 @@ import React from 'react'
 import { Box, Typography } from '@mui/material'
 
 const B = ({ children, color }) => (
-  <Typography component="span" variant="h3" sx={{ fontWeight: 900, color: color || 'text.primary' }}>
+  <Typography
+    component="span"
+    variant="h3"
+    sx={{ fontWeight: 900, color: color || 'text.primary' }}
+  >
     {children}
   </Typography>
 )
@@ -10,7 +14,9 @@ const B = ({ children, color }) => (
 const HeroStatement = ({ projects, stats, utilisationTarget }) => {
   const currentYear = new Date().getFullYear().toString()
 
-  const activeClients = projects.clientProjects.filter((p) => p.status === 'active')
+  const activeClients = projects.clientProjects.filter(
+    (p) => p.status === 'active'
+  )
 
   const completedThisYear = (type) =>
     projects.activities.filter((a) => {
@@ -22,29 +28,45 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
   const pdDone = completedThisYear('PD')
   const bdDone = completedThisYear('BD')
 
-  const currentUtil = stats.totalWords > 0
-    ? Math.round((stats.streamBreakdown.clientWork / stats.totalWords) * 100)
-    : 0
+  const currentUtil =
+    stats.totalWords > 0
+      ? Math.round((stats.streamBreakdown.clientWork / stats.totalWords) * 100)
+      : 0
 
   // ── Line 1: client engagements ───────────────────────────────────────────
   let clientLine
   if (activeClients.length === 0) {
-    clientLine = <>You have <B color="#888">no active client engagements</B> right now.</>
+    clientLine = (
+      <>
+        You have <B color="#888">no active client engagements</B> right now.
+      </>
+    )
   } else if (activeClients.length === 1) {
-    clientLine = <>You are currently engaged on <B color="#80b621">{activeClients[0].title}</B>.</>
+    clientLine = (
+      <>
+        You are currently engaged on{' '}
+        <B color="#80b621">{activeClients[0].title}</B>.
+      </>
+    )
   } else if (activeClients.length === 2) {
     clientLine = (
       <>
-        You are currently engaged on <B color="#80b621">{activeClients[0].title}</B> and{' '}
+        You are currently engaged on{' '}
+        <B color="#80b621">{activeClients[0].title}</B> and{' '}
         <B color="#80b621">{activeClients[1].title}</B>.
       </>
     )
   } else {
     clientLine = (
       <>
-        You are currently engaged on <B color="#80b621">{activeClients[0].title}</B>,{' '}
+        You are currently engaged on{' '}
+        <B color="#80b621">{activeClients[0].title}</B>,{' '}
         <B color="#80b621">{activeClients[1].title}</B>, and{' '}
-        <B color="#80b621">{activeClients.length - 2} other engagement{activeClients.length - 2 !== 1 ? 's' : ''}</B>.
+        <B color="#80b621">
+          {activeClients.length - 2} other engagement
+          {activeClients.length - 2 !== 1 ? 's' : ''}
+        </B>
+        .
       </>
     )
   }
@@ -53,10 +75,20 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
   let utilSuffix = null
   if (utilisationTarget !== null) {
     const diff = currentUtil - utilisationTarget
-    const utilColor = diff >= 0 ? '#80b621' : diff >= -10 ? '#f59e0b' : '#d32f2f'
-    utilSuffix = diff >= 0
-      ? <>, and are <B color={utilColor}>{diff}% above</B> your utilisation target</>
-      : <>, and are <B color={utilColor}>{Math.abs(diff)}% below</B> your utilisation target</>
+    const utilColor =
+      diff >= 0 ? '#80b621' : diff >= -10 ? '#f59e0b' : '#d32f2f'
+    utilSuffix =
+      diff >= 0 ? (
+        <>
+          , and are <B color={utilColor}>{diff}% above</B> your utilisation
+          target
+        </>
+      ) : (
+        <>
+          , and are <B color={utilColor}>{Math.abs(diff)}% below</B> your
+          utilisation target
+        </>
+      )
   }
 
   const activityLine = (
@@ -70,8 +102,12 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Typography variant="h3" sx={hStyle}>{clientLine}</Typography>
-      <Typography variant="h3" sx={hStyle}>{activityLine}</Typography>
+      <Typography variant="h3" sx={hStyle}>
+        {clientLine}
+      </Typography>
+      <Typography variant="h3" sx={hStyle}>
+        {activityLine}
+      </Typography>
     </Box>
   )
 }

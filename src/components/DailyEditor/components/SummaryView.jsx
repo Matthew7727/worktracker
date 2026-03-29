@@ -14,8 +14,10 @@ const SummaryView = ({ streams, onEdit }) => (
         sx={{
           p: 6,
           borderRadius: '40px',
-          border: '5px solid', borderColor: 'text.primary',
-          boxShadow: (theme) => `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+          border: '5px solid',
+          borderColor: 'text.primary',
+          boxShadow: (theme) =>
+            `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           mb: 10,
         }}
       >
@@ -25,7 +27,10 @@ const SummaryView = ({ streams, onEdit }) => (
           alignItems="center"
           sx={{ mb: 6 }}
         >
-          <Typography variant="h2" sx={{ fontWeight: 950, letterSpacing: '-2px' }}>
+          <Typography
+            variant="h2"
+            sx={{ fontWeight: 950, letterSpacing: '-2px' }}
+          >
             JOURNAL SUMMARY
           </Typography>
           <Button

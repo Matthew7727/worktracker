@@ -99,7 +99,8 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '2px solid', borderColor: 'text.primary',
+            borderBottom: '2px solid',
+            borderColor: 'text.primary',
             mb: 2,
           }}
         >
@@ -148,13 +149,16 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                       p: 3,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      border: '3px solid', borderColor: 'text.primary',
+                      border: '3px solid',
+                      borderColor: 'text.primary',
                       borderRadius: '16px',
                       '&:hover': {
                         transform: 'translateY(-2px)',
-                        boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
+                        boxShadow: (theme) =>
+                          `0 8px 0 ${theme.palette.text.primary}`,
                       },
-                      boxShadow: (theme) => `0 4px 0 ${theme.palette.text.primary}`,
+                      boxShadow: (theme) =>
+                        `0 4px 0 ${theme.palette.text.primary}`,
                     }}
                   >
                     <Box

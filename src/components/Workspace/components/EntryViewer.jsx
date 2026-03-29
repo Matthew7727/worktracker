@@ -98,9 +98,18 @@ const EntryViewer = ({ entry, onClose }) => {
           const pdActivities = entry.metadata?.pdActivities || []
           const bdActivities = entry.metadata?.bdActivities || []
           const allTags = [
-            ...clientProjects.map((t) => ({ label: t, color: STREAM_COLORS['client work'] })),
-            ...pdActivities.map((t) => ({ label: t, color: STREAM_COLORS['practice development'] })),
-            ...bdActivities.map((t) => ({ label: t, color: STREAM_COLORS['business development'] })),
+            ...clientProjects.map((t) => ({
+              label: t,
+              color: STREAM_COLORS['client work'],
+            })),
+            ...pdActivities.map((t) => ({
+              label: t,
+              color: STREAM_COLORS['practice development'],
+            })),
+            ...bdActivities.map((t) => ({
+              label: t,
+              color: STREAM_COLORS['business development'],
+            })),
           ]
           if (allTags.length === 0) return null
           return (
@@ -170,7 +179,8 @@ const EntryViewer = ({ entry, onClose }) => {
           },
           '& pre': {
             bgcolor: 'action.hover',
-            border: '2px solid', borderColor: 'text.primary',
+            border: '2px solid',
+            borderColor: 'text.primary',
             p: '12px',
             overflowX: 'auto',
             mb: '12px',
@@ -182,7 +192,12 @@ const EntryViewer = ({ entry, onClose }) => {
             marginLeft: 0,
             color: 'text.secondary',
           },
-          '& hr': { border: 'none', borderTop: '2px solid', borderColor: 'text.primary', my: '16px' },
+          '& hr': {
+            border: 'none',
+            borderTop: '2px solid',
+            borderColor: 'text.primary',
+            my: '16px',
+          },
           '& a': { color: ACCENT, textDecoration: 'underline' },
         }}
       >

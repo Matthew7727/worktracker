@@ -35,7 +35,8 @@ const Documentation = () => {
             elevation={0}
             sx={{
               p: 3,
-              border: '3px solid', borderColor: 'text.primary',
+              border: '3px solid',
+              borderColor: 'text.primary',
               borderRadius: '24px',
               boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
               bgcolor: 'background.paper',
@@ -52,7 +53,11 @@ const Documentation = () => {
               CONTENTS
             </Typography>
             <Divider
-              sx={{ borderBottomWidth: '2px', borderColor: 'text.primary', mb: 2 }}
+              sx={{
+                borderBottomWidth: '2px',
+                borderColor: 'text.primary',
+                mb: 2,
+              }}
             />
             <List component="nav" sx={{ p: 0 }}>
               {docsContent.map((section) => (
@@ -97,7 +102,8 @@ const Documentation = () => {
               bgcolor: 'primary.main',
               borderRadius: '24px',
               color: 'background.paper',
-              border: '3px solid', borderColor: 'text.primary',
+              border: '3px solid',
+              borderColor: 'text.primary',
               boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
             }}
           >

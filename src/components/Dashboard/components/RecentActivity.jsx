@@ -24,7 +24,9 @@ const STREAM_LABELS = {
 }
 
 const getDominantStream = (streamCounts) => {
-  return Object.entries(streamCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+  return (
+    Object.entries(streamCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+  )
 }
 
 const StreamMiniBar = ({ streamCounts, totalWords }) => {
@@ -36,14 +38,19 @@ const StreamMiniBar = ({ streamCounts, totalWords }) => {
         height: 8,
         borderRadius: 4,
         overflow: 'hidden',
-        border: '2px solid', borderColor: 'text.primary',
+        border: '2px solid',
+        borderColor: 'text.primary',
         width: '100%',
       }}
     >
       {Object.entries(streamCounts).map(([stream, count]) => {
         if (count === 0) return null
         return (
-          <Tooltip key={stream} title={`${STREAM_LABELS[stream]}: ${count} words`} placement="top">
+          <Tooltip
+            key={stream}
+            title={`${STREAM_LABELS[stream]}: ${count} words`}
+            placement="top"
+          >
             <Box
               sx={{
                 flex: count,
@@ -57,7 +64,12 @@ const StreamMiniBar = ({ streamCounts, totalWords }) => {
   )
 }
 
-const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteClick }) => {
+const RecentActivityContent = ({
+  loading,
+  recentEntries,
+  onEntryClick,
+  onDeleteClick,
+}) => {
   if (loading) {
     return (
       <Stack spacing={2}>
@@ -71,10 +83,17 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
   if (recentEntries.length === 0) {
     return (
       <Box sx={{ p: 4, textAlign: 'center', opacity: 0.5 }}>
-        <Typography sx={{ mb: 2, fontWeight: 700 }}>No sessions logged yet.</Typography>
+        <Typography sx={{ mb: 2, fontWeight: 700 }}>
+          No sessions logged yet.
+        </Typography>
         <Button
           variant="outlined"
-          sx={{ fontWeight: 700, border: '2px solid', borderColor: 'text.primary', color: 'text.primary' }}
+          sx={{
+            fontWeight: 700,
+            border: '2px solid',
+            borderColor: 'text.primary',
+            color: 'text.primary',
+          }}
           onClick={() => onEntryClick(new Date().toISOString().split('T')[0])}
         >
           Start Today
@@ -86,11 +105,16 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
   return (
     <Stack spacing={1.5}>
       {recentEntries.map((entry) => {
-        const dominant = entry.streamCounts ? getDominantStream(entry.streamCounts) : null
+        const dominant = entry.streamCounts
+          ? getDominantStream(entry.streamCounts)
+          : null
         const dominantColor = dominant ? STREAM_COLORS[dominant] : '#ccc'
-        const dayLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', {
-          weekday: 'short',
-        })
+        const dayLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString(
+          'en-US',
+          {
+            weekday: 'short',
+          }
+        )
 
         return (
           <Box
@@ -101,22 +125,33 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
               alignItems: 'center',
               gap: 2,
               p: 2,
-              border: '2px solid', borderColor: 'text.primary',
+              border: '2px solid',
+              borderColor: 'text.primary',
               borderRadius: 2,
               boxShadow: '3px 3px 0px #000',
               borderLeft: `5px solid ${dominantColor}`,
               cursor: 'pointer',
               transition: 'all 0.15s',
-              '&:hover': { transform: 'translate(-1px, -1px)', boxShadow: '4px 4px 0px #000' },
+              '&:hover': {
+                transform: 'translate(-1px, -1px)',
+                boxShadow: '4px 4px 0px #000',
+              },
             }}
           >
             {/* Date */}
             <Box sx={{ minWidth: 90 }}>
-              <Typography variant="body2" sx={{ fontWeight: 900, lineHeight: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 900, lineHeight: 1 }}
+              >
                 {entry.date}
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.5 }}>
-                {dayLabel}{entry.time ? ` · ${entry.time}` : ''}
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 700, opacity: 0.5 }}
+              >
+                {dayLabel}
+                {entry.time ? ` · ${entry.time}` : ''}
               </Typography>
             </Box>
 
@@ -129,24 +164,28 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
                     totalWords={entry.totalWords}
                   />
                   <Stack direction="row" spacing={1.5} sx={{ mt: 0.75 }}>
-                    {Object.entries(entry.streamCounts).map(([stream, count]) =>
-                      count > 0 ? (
-                        <Typography
-                          key={stream}
-                          variant="caption"
-                          sx={{
-                            fontWeight: 800,
-                            color: STREAM_COLORS[stream],
-                          }}
-                        >
-                          {STREAM_LABELS[stream]} {count}
-                        </Typography>
-                      ) : null
+                    {Object.entries(entry.streamCounts).map(
+                      ([stream, count]) =>
+                        count > 0 ? (
+                          <Typography
+                            key={stream}
+                            variant="caption"
+                            sx={{
+                              fontWeight: 800,
+                              color: STREAM_COLORS[stream],
+                            }}
+                          >
+                            {STREAM_LABELS[stream]} {count}
+                          </Typography>
+                        ) : null
                     )}
                   </Stack>
                 </>
               ) : (
-                <Typography variant="caption" sx={{ opacity: 0.4, fontStyle: 'italic' }}>
+                <Typography
+                  variant="caption"
+                  sx={{ opacity: 0.4, fontStyle: 'italic' }}
+                >
                   Empty session
                 </Typography>
               )}
@@ -157,7 +196,10 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
               <Typography variant="body2" sx={{ fontWeight: 900 }}>
                 {entry.totalWords?.toLocaleString()}
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 700, opacity: 0.5 }}
+              >
                 words
               </Typography>
             </Box>
@@ -170,8 +212,13 @@ const RecentActivityContent = ({ loading, recentEntries, onEntryClick, onDeleteC
                 onDeleteClick(entry)
               }}
               sx={{
-                border: '2px solid', borderColor: 'text.primary',
-                '&:hover': { bgcolor: 'error.main', color: 'background.paper', borderColor: 'error.main' },
+                border: '2px solid',
+                borderColor: 'text.primary',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'background.paper',
+                  borderColor: 'error.main',
+                },
               }}
             >
               <Delete fontSize="small" />

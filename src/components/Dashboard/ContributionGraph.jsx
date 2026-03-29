@@ -179,7 +179,8 @@ const LegendItem = ({ color, label }) => (
         height: 12,
         borderRadius: '2px',
         bgcolor: color,
-        border: '1px solid', borderColor: 'text.primary',
+        border: '1px solid',
+        borderColor: 'text.primary',
       }}
     />
     <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.65rem' }}>
