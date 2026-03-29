@@ -56,21 +56,37 @@ function ScrollTop({ children }) {
 }
 
 const MainLayout = ({ children }) => {
-  const {
-    selectedDirectory,
-    setProjectDirectory,
-    notification,
-    hideNotification,
-  } = useAppContext()
+  const { selectedDirectory, notification, hideNotification } = useAppContext()
   const { mode, toggleTheme } = useThemeContext()
   const navigate = useNavigate()
   const location = useLocation()
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: <Home /> },
-    { label: 'Entries', path: '/editor', icon: <Notes /> },
-    { label: 'Activities', path: '/todos', icon: <Bolt /> },
-    { label: 'Reports', path: '/reports', icon: <Assessment /> },
+    {
+      label: 'Entries',
+      path: '/editor',
+      icon: <Notes />,
+      activeColor: '#80b621',
+    },
+    {
+      label: 'Activities',
+      path: '/todos',
+      icon: <Bolt />,
+      activeColor: '#eb8449',
+    },
+    {
+      label: 'Reports',
+      path: '/reports',
+      icon: <Assessment />,
+      activeColor: '#4a6b13',
+    },
+    {
+      label: 'Workspace',
+      path: '/workspace',
+      icon: <FolderOpen />,
+      activeColor: '#00d2ff',
+    },
     { label: 'Settings', path: '/settings', icon: <Settings /> },
   ]
 
@@ -80,11 +96,6 @@ const MainLayout = ({ children }) => {
       icon: <DocsIcon />,
       onClick: () => navigate('/docs'),
       path: '/docs',
-    },
-    {
-      label: 'Workspace',
-      icon: <FolderOpen />,
-      onClick: () => setProjectDirectory(null),
     },
   ]
 

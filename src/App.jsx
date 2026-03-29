@@ -16,6 +16,7 @@ import Reports from './components/Reports/Reports'
 import Settings from './components/Settings/Settings'
 import Documentation from './components/Documentation/Documentation'
 import TrayWidget from './components/Widget/TrayWidget'
+import WorkspaceExplorer from './components/Workspace/WorkspaceExplorer'
 import './App.css'
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/docs" element={<Documentation />} />
+        <Route path="/workspace" element={<WorkspaceExplorer />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </MainLayout>
