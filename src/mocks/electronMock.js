@@ -64,6 +64,72 @@ Had a sync with the team.
     [`${MOCK_ROOT}/${yesterdayParts.year}/${yesterdayParts.month}/${yesterdayParts.dateStr}-todos.md`]: `# To Do
 - [x] Create plan
 `,
+    // Projects & Activities
+    [`${MOCK_ROOT}/projects.json`]: JSON.stringify(
+      {
+        activities: [
+          {
+            id: 'mock-activity-1',
+            type: 'PD',
+            title: 'Get AWS Solutions Architect Certified',
+            tasks: [
+              {
+                id: 'task-1',
+                text: 'Complete Cloud Practitioner course',
+                completed: true,
+              },
+              { id: 'task-2', text: 'Purchase exam voucher', completed: false },
+              { id: 'task-3', text: 'Book exam date', completed: false },
+            ],
+            status: 'active',
+            completedAt: null,
+            createdAt: todayParts.dateStr,
+          },
+          {
+            id: 'mock-activity-2',
+            type: 'BD',
+            title: 'Build standard pitch deck',
+            tasks: [
+              { id: 'task-4', text: 'Gather case studies', completed: true },
+              { id: 'task-5', text: 'Draft slides 1-5', completed: false },
+            ],
+            status: 'active',
+            completedAt: null,
+            createdAt: todayParts.dateStr,
+          },
+          {
+            id: 'mock-activity-3',
+            type: 'PD',
+            title: 'Complete TypeScript deep dive',
+            tasks: [
+              { id: 'task-6', text: 'Finish generics module', completed: true },
+              { id: 'task-7', text: 'Build capstone project', completed: true },
+            ],
+            status: 'archived',
+            completedAt: yesterdayParts.dateStr,
+            createdAt: yesterdayParts.dateStr,
+          },
+        ],
+        clientProjects: [
+          {
+            id: 'mock-project-1',
+            title: 'Acme Corp Audit',
+            status: 'active',
+            createdAt: yesterdayParts.dateStr,
+            completedAt: null,
+          },
+          {
+            id: 'mock-project-2',
+            title: 'Globex Strategy Review',
+            status: 'done',
+            createdAt: yesterdayParts.dateStr,
+            completedAt: todayParts.dateStr,
+          },
+        ],
+      },
+      null,
+      2
+    ),
   }
 
   window.electronAPI = {
