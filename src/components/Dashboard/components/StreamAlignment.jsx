@@ -4,7 +4,7 @@ import WeeklyChart from '../WeeklyChart'
 
 const STREAM_COLORS = {
   clientWork: '#80b621',
-  practiceDevelopment: '#4a6b13',
+  practiceDevelopment: '#ffd166',
   businessDevelopment: '#eb8449',
 }
 
@@ -23,8 +23,8 @@ const StreamBar = ({ label, value, total, color, targetPct }) => {
           sx={{
             height: 12,
             borderRadius: 6,
-            border: '2px solid black',
-            bgcolor: 'white',
+            border: '2px solid', borderColor: 'text.primary',
+            bgcolor: 'background.paper',
             '& .MuiLinearProgress-bar': { bgcolor: color },
           }}
         />
@@ -36,7 +36,7 @@ const StreamBar = ({ label, value, total, color, targetPct }) => {
               bottom: -3,
               left: `${targetPct}%`,
               width: 3,
-              bgcolor: 'black',
+              bgcolor: 'text.primary',
               borderRadius: 1,
               transform: 'translateX(-50%)',
             }}

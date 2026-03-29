@@ -24,8 +24,8 @@ const FlowView = ({ streams, currentStep, setCurrentStep, onCancel, onSave, upda
           sx={{
             height: 16,
             borderRadius: 8,
-            border: '4px solid black',
-            bgcolor: 'white',
+            border: '4px solid', borderColor: 'text.primary',
+            bgcolor: 'background.paper',
             '& .MuiLinearProgress-bar': { bgcolor: step.color },
           }}
         />
@@ -75,10 +75,10 @@ const FlowView = ({ streams, currentStep, setCurrentStep, onCancel, onSave, upda
               sx={{
                 px: 4,
                 py: 1.5,
-                border: '4px solid black',
+                border: '4px solid', borderColor: 'text.primary',
                 borderWidth: '3px !important',
                 fontWeight: 900,
-                color: 'black',
+                color: 'text.primary',
               }}
             >
               {currentStep === 0 ? 'CANCEL' : 'BACK'}
@@ -96,12 +96,12 @@ const FlowView = ({ streams, currentStep, setCurrentStep, onCancel, onSave, upda
                 py: 1.5,
                 fontWeight: 900,
                 bgcolor: step.color,
-                border: '4px solid black',
-                boxShadow: '8px 8px 0px black',
+                border: '4px solid', borderColor: 'text.primary',
+                boxShadow: (theme) => `8px 8px 0px ${theme.palette.text.primary}`,
                 '&:hover': {
                   bgcolor: step.color,
                   transform: 'translate(-2px, -2px)',
-                  boxShadow: '10px 10px 0px black',
+                  boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary}`,
                 },
               }}
             >

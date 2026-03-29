@@ -78,15 +78,15 @@ export const fabStyles = {
 }
 
 export const toolbarIconStyles = {
-  border: '2px solid',
+  border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '12px',
+  borderRadius: '50%',
   p: 1.5,
   transition: 'all 0.2s',
   color: 'text.primary',
   '&:hover': {
     bgcolor: 'primary.main',
-    color: 'white',
+    color: 'background.paper',
     borderColor: 'primary.main', // Match border on hover
     transform: 'translateY(-2px)',
   },

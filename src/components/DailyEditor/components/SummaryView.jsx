@@ -14,8 +14,8 @@ const SummaryView = ({ streams, onEdit }) => (
         sx={{
           p: 6,
           borderRadius: '40px',
-          border: '5px solid black',
-          boxShadow: '15px 15px 0px rgba(0,0,0,0.1)',
+          border: '5px solid', borderColor: 'text.primary',
+          boxShadow: (theme) => `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           mb: 10,
         }}
       >
@@ -33,8 +33,8 @@ const SummaryView = ({ streams, onEdit }) => (
             startIcon={<EditIcon />}
             onClick={onEdit}
             sx={{
-              bgcolor: 'black',
-              color: 'white',
+              bgcolor: 'text.primary',
+              color: 'background.paper',
               fontWeight: 900,
               px: 4,
               '&:hover': { bgcolor: '#333' },

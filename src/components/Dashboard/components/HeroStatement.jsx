@@ -61,7 +61,7 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
 
   const activityLine = (
     <>
-      You've completed <B color="#4a6b13">{pdDone} PD</B> and{' '}
+      You've completed <B color="#ffd166">{pdDone} PD</B> and{' '}
       <B color="#eb8449">{bdDone} BD</B> activities this year{utilSuffix}.
     </>
   )

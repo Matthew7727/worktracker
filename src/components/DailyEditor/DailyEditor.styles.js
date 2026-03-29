@@ -68,7 +68,7 @@ export const toolbarBtnStyles = {
   color: 'text.secondary',
   '&:hover': {
     bgcolor: 'primary.main',
-    color: 'white',
+    color: 'background.paper',
   },
 }
 
@@ -88,16 +88,16 @@ export const flowStyles = {
     px: 8,
     py: 4,
     borderRadius: '40px',
-    border: '6px solid black',
-    color: 'black',
-    bgcolor: 'white',
+    border: '6px solid', borderColor: 'text.primary',
+    color: 'text.primary',
+    bgcolor: 'background.paper',
     cursor: 'pointer',
     transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
     position: 'relative',
     overflow: 'hidden',
     '&:hover': {
       transform: 'scale(1.1)',
-      boxShadow: '20px 20px 0px black',
+      boxShadow: (theme) => `20px 20px 0px ${theme.palette.text.primary}`,
       '& .shine-layer': {
         opacity: 1,
         transform: 'translateX(100%) skewX(-15deg)',

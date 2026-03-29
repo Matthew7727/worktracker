@@ -290,20 +290,28 @@ const ActivitiesBoard = () => {
 
         {/* Filter tabs */}
         <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-          {ACTIVITY_FILTERS.map((f) => (
-            <Box
-              key={f}
-              component="button"
-              onClick={() => setActivityFilter(f)}
-              sx={filterTabStyles(activityFilter === f)}
-            >
-              {f === 'ALL'
-                ? 'All'
-                : f === 'PD'
-                  ? 'Practice Dev'
-                  : 'Business Dev'}
-            </Box>
-          ))}
+          {ACTIVITY_FILTERS.map((f) => {
+            const config = {
+              ALL: { bg: 'text.primary', fg: 'background.default' },
+              PD: { bg: '#ffd166', fg: '#000000' },
+              BD: { bg: '#eb8449', fg: '#000000' },
+            }[f];
+
+            return (
+              <Box
+                key={f}
+                component="button"
+                onClick={() => setActivityFilter(f)}
+                sx={filterTabStyles(activityFilter === f, config.bg, config.fg)}
+              >
+                {f === 'ALL'
+                  ? 'All'
+                  : f === 'PD'
+                    ? 'Practice Dev'
+                    : 'Business Dev'}
+              </Box>
+            )
+          })}
         </Box>
 
         {activeActivities.length === 0 && archivedActivities.length === 0 ? (

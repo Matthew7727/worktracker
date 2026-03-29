@@ -38,14 +38,56 @@ const WorkspaceExplorer = () => {
           Workspace
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
-        <Button
-          variant="outlined"
-          size="small"
+        <Box
+          component="button"
           onClick={() => setProjectDirectory(null)}
-          sx={{ py: 0.5, px: 1.5, fontSize: '0.7rem' }}
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.75,
+            mr: 1.5,
+            fontFamily: 'inherit',
+            fontSize: '0.85rem',
+            fontWeight: 900,
+            px: 2.5,
+            py: 1,
+            borderRadius: '25px',
+            border: '3px solid',
+            borderColor: 'text.primary',
+            color: 'text.primary',
+            bgcolor: 'background.paper',
+            cursor: 'pointer',
+            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            position: 'relative',
+            overflow: 'hidden',
+            '&:hover': {
+              transform: 'scale(1.05)',
+              boxShadow: (theme) => `6px 6px 0px ${theme.palette.text.primary}`,
+              '& .shine-layer': {
+                opacity: 1,
+                transform: 'translateX(100%) skewX(-15deg)',
+              },
+            },
+          }}
         >
           SWITCH WORKSPACE
-        </Button>
+          <Box
+            className="shine-layer"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '200%',
+              height: '100%',
+              opacity: 0,
+              transition: 'all 0.8s ease',
+              background:
+                'linear-gradient(90deg, transparent, #80b621, #00d2ff, #eb8449, transparent)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+        </Box>
       </Box>
 
       {/* Split pane */}

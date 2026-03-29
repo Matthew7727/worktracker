@@ -35,7 +35,7 @@ const WelcomeScreen = () => {
           p: 8,
           maxWidth: '600px',
           borderRadius: '32px',
-          border: '4px solid black',
+          border: '4px solid', borderColor: 'text.primary',
           textAlign: 'center',
         }}
       >
@@ -55,10 +55,10 @@ const WelcomeScreen = () => {
             px: 6,
             py: 2,
             fontSize: '1.25rem',
-            boxShadow: '0 8px 0 black',
+            boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
             '&:hover': {
               transform: 'translateY(-2px)',
-              boxShadow: '0 10px 0 black',
+              boxShadow: (theme) => `0 10px 0 ${theme.palette.text.primary}`,
             },
           }}
         >

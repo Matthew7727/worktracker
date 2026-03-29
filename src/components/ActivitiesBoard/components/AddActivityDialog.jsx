@@ -36,6 +36,15 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
       disableRestoreFocus
       maxWidth="xs"
       fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '24px',
+          border: '4px solid',
+          borderColor: 'text.primary',
+          boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
+          p: 2,
+        },
+      }}
     >
       <DialogTitle sx={{ fontWeight: 900 }}>New Activity</DialogTitle>
       <DialogContent>
@@ -63,10 +72,13 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
               value="PD"
               sx={{
                 fontWeight: 900,
+                border: '2px solid',
+                borderColor: 'divider',
                 '&.Mui-selected': {
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': { bgcolor: 'primary.dark' },
+                  borderColor: 'text.primary',
+                  bgcolor: '#ffd166',
+                  color: '#000000',
+                  '&:hover': { bgcolor: '#e6bd5c' },
                 },
               }}
             >
@@ -76,9 +88,12 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
               value="BD"
               sx={{
                 fontWeight: 900,
+                border: '2px solid',
+                borderColor: 'divider',
                 '&.Mui-selected': {
+                  borderColor: 'text.primary',
                   bgcolor: '#eb8449',
-                  color: '#fff',
+                  color: '#000000',
                   '&:hover': { bgcolor: '#d4733d' },
                 },
               }}
@@ -88,12 +103,44 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
           </ToggleButtonGroup>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
+      <DialogActions sx={{ mt: 2, px: 3, pb: 2 }}>
+        <Button
+          onClick={handleClose}
+          sx={{
+            fontWeight: 900,
+            color: 'text.secondary',
+            '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
+          }}
+        >
+          Cancel
+        </Button>
         <Button
           onClick={handleSubmit}
-          variant="outlined"
+          variant="contained"
           disabled={!title.trim()}
+          sx={{
+            fontWeight: 900,
+            px: 3,
+            py: 1,
+            borderRadius: '16px',
+            backgroundImage: 'none',
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            border: '3px solid',
+            borderColor: 'text.primary',
+            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
+            '&:hover': {
+              bgcolor: 'action.hover',
+              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
+              transform: 'translate(2px, 2px)',
+            },
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              boxShadow: 'none',
+              transform: 'none',
+              border: '3px solid #ccc',
+            },
+          }}
         >
           Add Activity
         </Button>

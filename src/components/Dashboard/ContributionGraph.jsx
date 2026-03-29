@@ -3,7 +3,7 @@ import { Tooltip, Box, Typography, Stack } from '@mui/material'
 
 const STREAM_COLORS = {
   clientWork: '#80b621',
-  practiceDevelopment: '#4a6b13',
+  practiceDevelopment: '#ffd166',
   businessDevelopment: '#eb8449',
   mixed: '#777',
   empty: '#f0f0f0',
@@ -151,7 +151,7 @@ const ContributionGraph = ({ entries }) => {
                         transform: 'scale(1.4)',
                         zIndex: 1,
                         boxShadow: date ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
-                        borderColor: 'black',
+                        borderColor: 'text.primary',
                       },
                     }}
                   />
@@ -179,7 +179,7 @@ const LegendItem = ({ color, label }) => (
         height: 12,
         borderRadius: '2px',
         bgcolor: color,
-        border: '1px solid black',
+        border: '1px solid', borderColor: 'text.primary',
       }}
     />
     <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.65rem' }}>

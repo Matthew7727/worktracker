@@ -50,11 +50,11 @@ const WeekDayPicker = ({ currentDate, onSelectDay, weekStatus }) => {
                 fontFamily: 'inherit',
                 fontWeight: 950,
                 fontSize: '1rem',
-                border: '4px solid black',
+                border: '4px solid', borderColor: 'text.primary',
                 borderRadius: '16px',
                 cursor: 'pointer',
-                bgcolor: 'white',
-                color: 'black',
+                bgcolor: 'background.paper',
+                color: 'text.primary',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -63,10 +63,10 @@ const WeekDayPicker = ({ currentDate, onSelectDay, weekStatus }) => {
                 overflow: 'hidden',
                 transition: 'all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 transform: isSelected ? 'translate(-2px, -2px)' : 'none',
-                boxShadow: isSelected ? '4px 4px 0px black' : 'none',
+                boxShadow: isSelected ? (theme) => `4px 4px 0px ${theme.palette.text.primary}` : 'none',
                 '&:hover': {
                   transform: 'translate(-2px, -2px)',
-                  boxShadow: '4px 4px 0px black',
+                  boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
                   ...(!isSelected && {
                     '& .shine-swipe': {
                       animation: `${shineLoop} 1.2s linear infinite`,
@@ -103,7 +103,8 @@ const WeekDayPicker = ({ currentDate, onSelectDay, weekStatus }) => {
                       height: 8,
                       borderRadius: '50%',
                       bgcolor: status[key] ? color : 'transparent',
-                      border: status[key] ? 'none' : '2px solid rgba(0,0,0,0.2)',
+                      border: status[key] ? 'none' : '2px solid',
+                      borderColor: status[key] ? 'transparent' : 'text.disabled',
                       position: 'relative',
                       zIndex: 2,
                     }}

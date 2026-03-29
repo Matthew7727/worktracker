@@ -9,7 +9,7 @@ const ACCENT = '#00d2ff'
 
 const STREAM_COLORS = {
   'client work': '#80b621',
-  'practice development': '#4a6b13',
+  'practice development': '#ffd166',
   'business development': '#eb8449',
 }
 
@@ -137,7 +137,7 @@ const EntryViewer = ({ entry, onClose }) => {
           },
           '& pre': {
             bgcolor: 'action.hover',
-            border: '2px solid black',
+            border: '2px solid', borderColor: 'text.primary',
             p: '12px',
             overflowX: 'auto',
             mb: '12px',
@@ -149,7 +149,7 @@ const EntryViewer = ({ entry, onClose }) => {
             marginLeft: 0,
             color: 'text.secondary',
           },
-          '& hr': { border: 'none', borderTop: '2px solid black', my: '16px' },
+          '& hr': { border: 'none', borderTop: '2px solid', borderColor: 'text.primary', my: '16px' },
           '& a': { color: ACCENT, textDecoration: 'underline' },
         }}
       >
