@@ -40,57 +40,54 @@ Your workspace will look like this:
 
 \`\`\`text
 /My_Workspace
-  ├── 2023-10-27.md          # Daily Log
-  ├── 2023-10-27-todos.md    # Daily Todo List
-  ├── 2023-10-28.md
-  └── 2023-10-28-todos.md
+  ├── 2024-03-28.md           # Daily Log
+  ├── 2024-03-28-todos.md     # Daily Todo List
+  ├── 2024-03-29.md
+  ├── 2024-03-29-todos.md
+  └── projects.json           # Client projects & activities metadata
 \`\`\`
 
 ### File Formats
 
 #### 1. Daily Logs (\`YYYY-MM-DD.md\`)
-Contains your journal entries for the day.
-- **Frontmatter**: Stores metadata like tags.
-- **Body**: Standard Markdown.
+Contains your journal entries for the day, one section per work stream.
+- **Frontmatter**: Stores metadata — tags, and the projects/activities you linked that day.
+- **Body**: Standard Markdown with three H1 sections (Client Work, Practice Development, Business Development).
+
+Example:
+\`\`\`markdown
+---
+tags: [dev, meeting]
+clientProjects: ["Acme Corp Website"]
+pdActivities: ["TypeScript Deep Dive"]
+bdActivities: []
+---
+
+# Client Work
+...
+
+# Practice Development
+...
+
+# Business Development
+...
+\`\`\`
 
 #### 2. Todo Lists (\`YYYY-MM-DD-todos.md\`)
 Contains your tasks for the day.
 - Can be edited manually in any text editor.
-- Format:
-  - \`# Lane Title\` creates a column.
-  - \`- [ ] Task\` creates an open task.
-  - \`- [x] Task\` creates a completed task.
+- \`# Lane Title\` creates a column.
+- \`- [ ] Task\` creates an open task.
+- \`- [x] Task\` creates a completed task.
+
+#### 3. Projects & Activities (\`projects.json\`)
+A single JSON file at the workspace root that stores all your client projects and activities.
+- Created automatically when you add your first project or activity.
+- Can be safely copied as part of your normal backup.
+- **Do not edit manually** unless you know what you're doing — the app manages this file.
 
 ### Backups
 To backup your data, simply **copy/paste the entire folder** to a USB drive or sync it with Google Drive/Dropbox. The app doesn't care; it just reads files.
-`,
-  },
-  {
-    id: 'dashboard-logic',
-    title: 'Dashboard Intelligence',
-    content: `
-# Dashboard Intelligence
-
-The Dashboard isn't just pretty charts; it's a calculated analysis of your work habits.
-
-### 1. The Persona System
-The app assigns you a "Productivity Persona" based on your recent activity.
-- **READY FOR ACTION**: You have 0 days logged. Start working!
-- **CONSISTENCY KING**: You have a **current streak of 7+ days**. You show up every day.
-- **ARCHIVE ARCHITECT**: You average **3+ logs per active day**. You are detailed and thorough.
-- **LEGACY BUILDER**: You have logged **30+ total days**. You are building a long-term body of work.
-- **PRODUCTIVITY SCOUT**: The default rank for active users.
-
-### 2. Streak Logic
-Streaks are calculated with strict precision.
-- A "Streak" is defined as consecutive days with at least one log entry.
-- **Missed a day?** The streak resets to 0.
-- **Weekends**: The system currently counts weekends. If you take Saturday off, your streak *will* reset. This is by design—consistency is a 24/7 mindset (for now).
-
-### 3. Tag Matrix
-The Heatmap/Matrix scans **every single file** in your history to find your top tags.
-- It aggregates tags defined in the editor (e.g., \`#feature\`).
-- It helps you visualize where your effort is actually going versus where you *think* it's going.
 `,
   },
   {
@@ -99,20 +96,32 @@ The Heatmap/Matrix scans **every single file** in your history to find your top 
     content: `
 # Daily Editor Deep Dive
 
-The Editor is your command center.
+The Editor is your daily command center. It guides you through a **structured three-step flow** — one step per work stream — so you build a complete picture of your day.
 
-### Smart Tagging
-Tags are the primary way to categorize work.
-- Type \`#\` followed by any text (e.g., \`#bugfix\`, \`#meeting\`).
-- The app automatically detects these specific patterns and saves them as metadata.
-- **Pro Tip**: Be consistent. \`#bug-fix\` and \`#bugfix\` are treated as different tags in reports.
+### The Three-Step Flow
+When you open the editor you'll see a start screen with your week laid out. Pick a day and click **Start** to begin.
+
+The editor walks you through three steps:
+1. **Client Work** — What did you do for clients today?
+2. **Practice Development** — What did you learn or improve?
+3. **Business Development** — What did you do to grow the business?
+
+A progress bar at the top shows where you are. Use **Next** and **Back** to navigate between steps, or jump directly between them. Hit **Save** on the final step to write the file.
+
+### Project & Activity Tagging
+At each step, colored chips appear representing your active projects and activities for that stream.
+
+- **Green chips** — Client projects (Client Work step)
+- **Yellow chips** — Practice Development activities (PD step)
+- **Orange chips** — Business Development activities (BD step)
+
+Click a chip to link that project/activity to today's entry. Click again to unlink. These selections are saved as frontmatter metadata so the Dashboard and Workspace Explorer can surface them later.
 
 ### Auto-Save Mechanics
-You never need to press "Save".
+You never need to press "Save" mid-session.
 - The editor listens to your keystrokes.
 - It waits for a **500ms pause** in your typing (debounce).
 - It then writes the file to disk instantly.
-- Look for the "Saved" indicator in the top right.
 
 ### Markdown Support
 The editor supports Github Flavored Markdown.
@@ -124,30 +133,95 @@ The editor supports Github Flavored Markdown.
 `,
   },
   {
-    id: 'todo-logic',
-    title: 'Todo System & Rollover',
+    id: 'activities-board',
+    title: 'Projects & Activities',
     content: `
-# Todo System & Rollover
+# Projects & Activities
 
-The Todo Board is more than a checklist; it's a daily workflow engine.
+The Activities Board is where you manage the ongoing work in your life — the things you tag in daily entries and track over time.
 
-### The Rollover Engine
-This is the app's most powerful hidden feature.
-When you open the Todo Board for a **new day** (e.g., you open the app on Tuesday morning):
-1. The system looks for the **most recent previous todo file** (e.g., Monday's list).
-2. It scans for any tasks that are **unchecked** \`- [ ]\`.
-3. It **automatically copies** those tasks to Tuesday's list.
-4. It marks them with a prefix: \`(Rollover)\`.
+### Two Types of Work
 
-*This ensures you never lose track of a task. If you didn't do it yesterday, it haunts you today.*
+#### Client Projects
+Discrete engagements you do for clients or external stakeholders.
+- Create a project with a name and it becomes available as a **green chip** in the Daily Editor.
+- Projects have three statuses: **Active**, **Archived**, **Completed**.
+- When you complete a project it appears in the Dashboard's *Recent Accomplishments* widget.
+- A **stale warning** appears if a project has been active for more than 30 days without being completed — a nudge to either wrap it up or archive it.
 
-### Lane Management
-- **Create**: Click "Add Category" to make a new lane (e.g., "Morning", "Afternoon", "Urgent").
-- **Rename**: Click the three dots top-right of a lane.
-- **Delete**: Deleting a lane *permanently* removes all tasks within it.
+#### Activities (PD & BD)
+Ongoing initiatives that don't have a defined end date.
+- **Practice Development (PD)** activities (yellow) — learning, upskilling, internal improvement.
+- **Business Development (BD)** activities (orange) — growth-focused, strategy work.
+- Activities follow the same Active / Archived / Completed lifecycle as client projects.
 
-### File Persistence
-Remember, these lanes are just H1 headers in a markdown file: \`# Morning\`. You can open the file in Notepad to mass-edit your tasks if needed.
+### Managing Status
+Click the three-dot menu on any card to:
+- **Archive** — remove from active lists without losing history.
+- **Complete** — mark as done and record a completion date.
+- Archived and completed items can be viewed by switching the filter tabs at the top.
+
+### How Projects Link to Entries
+Everything you tag in the Daily Editor flows back to \`projects.json\`. The frontmatter in each daily log records which projects and activities were active that day, giving the Dashboard and Workspace Explorer the data they need to surface trends and summaries.
+`,
+  },
+  {
+    id: 'workspace-explorer',
+    title: 'Workspace Explorer',
+    content: `
+# Workspace Explorer
+
+The Workspace Explorer gives you a read-only window into your entire work history — every entry, every day, all in one place.
+
+### How It Works
+Navigate to **Workspace** in the sidebar to open the explorer. It presents a split-pane view:
+- **Left pane** — A hierarchical directory tree of your workspace folder, organised by year and month.
+- **Right pane** — The content of the selected entry, rendered as formatted Markdown.
+
+### Reading Entries
+Click any file in the tree to open it in the viewer. The viewer shows:
+- The full Markdown content of the entry.
+- Any **project and activity chips** linked to that entry (pulled from frontmatter), displayed in their stream colors.
+- Entry date as a header.
+
+### What It's For
+- Reviewing what you worked on during a specific period.
+- Checking what was tagged to a particular project before archiving it.
+- Getting a feel for the density and consistency of your historical output.
+
+The explorer is **read-only** — use the Daily Editor to make or change entries.
+`,
+  },
+  {
+    id: 'dashboard-logic',
+    title: 'Dashboard Intelligence',
+    content: `
+# Dashboard Intelligence
+
+The Dashboard is a calculated analysis of your work habits, built from everything you've logged.
+
+### Hero Statement
+A narrative summary at the top of the dashboard that describes your current projects and recent focus areas in plain English. It updates automatically as you log work and tag projects.
+
+### Stream Alignment
+A visual balance indicator showing how your effort is split across the three work streams.
+- The **ideal balance** is an equal 33.3% across Client Work, Practice Development, and Business Development.
+- The balance score measures variance from that ideal — lower is better.
+- The **Weekly Intensity** chart below it shows day-by-day activity volume for the current week.
+
+### Streak & Consistency
+A "streak" is the number of consecutive days you've logged at least one entry.
+- **Missed a day?** The streak resets to 0.
+- Weekends count — consistency is a 24/7 mindset (for now).
+
+### The Contribution Graph
+A calendar-style heatmap of your entire logging history. Darker squares = more activity on that day. A quick visual of your long-term consistency.
+
+### Recent Accomplishments
+A timeline of recently completed client projects and activities. Completing something in the Activities Board adds it here automatically.
+
+### Current Priorities
+A live view of your active client projects and activities, with age indicators so you can spot what's been sitting too long.
 `,
   },
   {
@@ -158,22 +232,50 @@ Remember, these lanes are just H1 headers in a markdown file: \`# Morning\`. You
 
 Your data is yours. The Reports page helps you get it out.
 
-### Search Engine
-The Global Search (Ctrl+F) and Report Filter use a linear scan algorithm.
-- Because your data is local, we can scan thousands of files in milliseconds.
+### Search
+The Global Search (Ctrl+F / Cmd+F) and the Report Filter both use a linear scan across all your files.
+- Because your data is local, thousands of files can be scanned in milliseconds.
 - Search is **case-insensitive**.
+- Matches surface the full entry text, including any project and activity metadata stored in frontmatter.
 
 ### Export Formats
 
 #### Markdown Export (\`.md\`)
-- Compiles *all* your selected entries into one massive Master Document.
-- Organized chronologically.
-- Perfect for archiving a month of work into a single file for performance reviews.
+- Compiles all your selected entries into one chronological Master Document.
+- Perfect for archiving a period of work into a single file for performance reviews.
 - **Compatibility**: Copy-paste the result directly into Notion or Obsidian.
 
 #### JSON Export (\`.json\`)
-- Exports the raw data structure.
-- Useful for developers who want to write their own visualization scripts or migrate to other database systems.
+- Exports the raw data structure including frontmatter metadata (tags, linked projects, activities).
+- Useful for developers who want to write custom visualisation scripts or migrate to other systems.
+`,
+  },
+  {
+    id: 'settings',
+    title: 'Settings & Configuration',
+    content: `
+# Settings & Configuration
+
+### Utilisation Target
+Set a target percentage for how much of your logged work should be **Client Work**.
+- Default is **70%** — meaning 70% of your output should be billable client work.
+- The Dashboard's Stream Alignment widget uses this target to show whether you're on track.
+- Adjust it to reflect your own goals (e.g., a lower target if you're in a heavy learning phase).
+
+### Notifications
+Schedule a daily reminder to log your work.
+- Toggle notifications on and set a time (e.g., 17:00).
+- The reminder fires as a native system notification via Electron.
+- Requires the app to be running in the background.
+
+### Auto-Update
+Work Tracker can check for and install updates automatically.
+- Click **Check for Updates** to trigger a manual check.
+- If an update is available, a download will start and a progress bar will appear.
+- Once downloaded, the app will prompt you to restart to apply the update.
+
+### Workspace
+Your workspace path is shown at the top of the Settings page. Click **Change Workspace** to point the app at a different folder. All your data stays wherever you put it — the app just remembers the path in \`localStorage\`.
 `,
   },
 ]

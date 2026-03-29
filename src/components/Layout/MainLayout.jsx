@@ -15,9 +15,9 @@ import {
   Assessment,
   MenuBook as DocsIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
-  Checklist,
-  Brightness4,
-  Brightness7,
+  Bolt,
+  LightMode,
+  DarkMode,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { useThemeContext } from '../../context/ThemeContext'
@@ -56,21 +56,31 @@ function ScrollTop({ children }) {
 }
 
 const MainLayout = ({ children }) => {
-  const {
-    selectedDirectory,
-    setProjectDirectory,
-    notification,
-    hideNotification,
-  } = useAppContext()
+  const { selectedDirectory, notification, hideNotification } = useAppContext()
   const { mode, toggleTheme } = useThemeContext()
   const navigate = useNavigate()
   const location = useLocation()
 
   const navItems = [
-    { label: 'Dashboard', path: '/', icon: <Home /> },
-    { label: 'Entries', path: '/editor', icon: <Notes /> },
-    { label: 'To-Dos', path: '/todos', icon: <Checklist /> },
-    { label: 'Reports', path: '/reports', icon: <Assessment /> },
+    { label: 'Dashboard', path: '/', icon: <Home />, activeColor: '#80b621' },
+    {
+      label: 'Entries',
+      path: '/editor',
+      icon: <Notes />,
+      activeColor: '#eb8449',
+    },
+    {
+      label: 'Activities',
+      path: '/todos',
+      icon: <Bolt />,
+      activeColor: '#ffd166',
+    },
+    {
+      label: 'Workspace',
+      path: '/workspace',
+      icon: <FolderOpen />,
+      activeColor: '#00d2ff',
+    },
     { label: 'Settings', path: '/settings', icon: <Settings /> },
   ]
 
@@ -80,11 +90,6 @@ const MainLayout = ({ children }) => {
       icon: <DocsIcon />,
       onClick: () => navigate('/docs'),
       path: '/docs',
-    },
-    {
-      label: 'Workspace',
-      icon: <FolderOpen />,
-      onClick: () => setProjectDirectory(null),
     },
   ]
 
@@ -103,7 +108,7 @@ const MainLayout = ({ children }) => {
           left: 0,
           right: 0,
           zIndex: 1100,
-          height: '4rem',
+          height: '5rem',
           display: 'flex',
           alignItems: 'center',
           px: '4rem',
@@ -120,9 +125,14 @@ const MainLayout = ({ children }) => {
         >
           <IconButton
             onClick={toggleTheme}
-            sx={{ ...toolbarIconStyles, pointerEvents: 'auto' }}
+            size="small"
+            sx={{ ...toolbarIconStyles, pointerEvents: 'auto', p: 1 }}
           >
-            {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+            {mode === 'light' ? (
+              <DarkMode fontSize="small" />
+            ) : (
+              <LightMode fontSize="small" />
+            )}
           </IconButton>
         </Tooltip>
       </Box>
@@ -155,7 +165,9 @@ const MainLayout = ({ children }) => {
           aria-label="scroll back to top"
           sx={fabStyles}
         >
-          <KeyboardArrowUpIcon sx={{ fontSize: '2rem', color: 'white' }} />
+          <KeyboardArrowUpIcon
+            sx={{ fontSize: '2rem', color: 'background.paper' }}
+          />
         </Fab>
       </ScrollTop>
 

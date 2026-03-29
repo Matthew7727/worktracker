@@ -2,17 +2,67 @@ import React from 'react'
 import {
   Box,
   Typography,
-  Paper,
   Stack,
-  List,
-  ListItem,
   Chip,
   IconButton,
   Skeleton,
   Button,
-  Grid,
+  Tooltip,
 } from '@mui/material'
 import { Delete } from '@mui/icons-material'
+
+const STREAM_COLORS = {
+  clientWork: '#80b621',
+  practiceDevelopment: '#ffd166',
+  businessDevelopment: '#eb8449',
+}
+
+const STREAM_LABELS = {
+  clientWork: 'CW',
+  practiceDevelopment: 'PD',
+  businessDevelopment: 'BD',
+}
+
+const getDominantStream = (streamCounts) => {
+  return (
+    Object.entries(streamCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+  )
+}
+
+const StreamMiniBar = ({ streamCounts, totalWords }) => {
+  if (totalWords === 0) return null
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        height: 8,
+        borderRadius: 4,
+        overflow: 'hidden',
+        border: '2px solid',
+        borderColor: 'text.primary',
+        width: '100%',
+      }}
+    >
+      {Object.entries(streamCounts).map(([stream, count]) => {
+        if (count === 0) return null
+        return (
+          <Tooltip
+            key={stream}
+            title={`${STREAM_LABELS[stream]}: ${count} words`}
+            placement="top"
+          >
+            <Box
+              sx={{
+                flex: count,
+                bgcolor: STREAM_COLORS[stream],
+              }}
+            />
+          </Tooltip>
+        )
+      })}
+    </Box>
+  )
+}
 
 const RecentActivityContent = ({
   loading,
@@ -20,106 +70,163 @@ const RecentActivityContent = ({
   onEntryClick,
   onDeleteClick,
 }) => {
+  if (loading) {
+    return (
+      <Stack spacing={2}>
+        <Skeleton height={72} sx={{ borderRadius: 2 }} />
+        <Skeleton height={72} sx={{ borderRadius: 2 }} />
+        <Skeleton height={72} sx={{ borderRadius: 2 }} />
+      </Stack>
+    )
+  }
+
+  if (recentEntries.length === 0) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center', opacity: 0.5 }}>
+        <Typography sx={{ mb: 2, fontWeight: 700 }}>
+          No sessions logged yet.
+        </Typography>
+        <Button
+          variant="outlined"
+          sx={{
+            fontWeight: 700,
+            border: '2px solid',
+            borderColor: 'text.primary',
+            color: 'text.primary',
+          }}
+          onClick={() => onEntryClick(new Date().toISOString().split('T')[0])}
+        >
+          Start Today
+        </Button>
+      </Box>
+    )
+  }
+
   return (
-    <Box>
-      {loading ? (
-        <Stack spacing={2}>
-          <Skeleton height={80} />
-          <Skeleton height={80} />
-        </Stack>
-      ) : recentEntries.length > 0 ? (
-        <Grid container spacing={2}>
-          {recentEntries.map((entry) => (
-            <Grid item xs={12} key={entry.id}>
-              <ListItem
-                disablePadding
-                sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  bgcolor: 'rgba(0,0,0,0.02)',
-                  border: '2px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': { borderColor: 'black', bgcolor: 'white' },
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-                onClick={() => onEntryClick(entry.date)}
+    <Stack spacing={1.5}>
+      {recentEntries.map((entry) => {
+        const dominant = entry.streamCounts
+          ? getDominantStream(entry.streamCounts)
+          : null
+        const dominantColor = dominant ? STREAM_COLORS[dominant] : '#ccc'
+        const dayLabel = new Date(entry.date + 'T12:00:00').toLocaleDateString(
+          'en-US',
+          {
+            weekday: 'short',
+          }
+        )
+
+        return (
+          <Box
+            key={entry.id}
+            onClick={() => onEntryClick(entry.date)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              p: 2,
+              border: '2px solid',
+              borderColor: 'text.primary',
+              borderRadius: 2,
+              boxShadow: '3px 3px 0px #000',
+              borderLeft: `5px solid ${dominantColor}`,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              '&:hover': {
+                transform: 'translate(-1px, -1px)',
+                boxShadow: '4px 4px 0px #000',
+              },
+            }}
+          >
+            {/* Date */}
+            <Box sx={{ minWidth: 90 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 900, lineHeight: 1 }}
               >
-                <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                  <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                    <Typography
-                      variant="h6"
-                      sx={{ color: 'text.primary', fontWeight: 900 }}
-                    >
-                      {entry.date}
-                    </Typography>
-                    {entry.time && (
-                      <Chip
-                        label={entry.time}
-                        size="small"
-                        sx={{
-                          fontWeight: 900,
-                          bgcolor: 'secondary.light',
-                          color: 'secondary.main',
-                        }}
-                      />
+                {entry.date}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 700, opacity: 0.5 }}
+              >
+                {dayLabel}
+                {entry.time ? ` · ${entry.time}` : ''}
+              </Typography>
+            </Box>
+
+            {/* Stream bar + counts */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              {entry.streamCounts && entry.totalWords > 0 ? (
+                <>
+                  <StreamMiniBar
+                    streamCounts={entry.streamCounts}
+                    totalWords={entry.totalWords}
+                  />
+                  <Stack direction="row" spacing={1.5} sx={{ mt: 0.75 }}>
+                    {Object.entries(entry.streamCounts).map(
+                      ([stream, count]) =>
+                        count > 0 ? (
+                          <Typography
+                            key={stream}
+                            variant="caption"
+                            sx={{
+                              fontWeight: 800,
+                              color: STREAM_COLORS[stream],
+                            }}
+                          >
+                            {STREAM_LABELS[stream]} {count}
+                          </Typography>
+                        ) : null
                     )}
                   </Stack>
-                  <Typography
-                    variant="body2"
-                    noWrap
-                    sx={{ opacity: 0.7, fontStyle: 'italic', fontWeight: 600 }}
-                  >
-                    {entry.content || 'No content'}
-                  </Typography>
-                  <Stack direction="row" spacing={1} mt={1.5}>
-                    {entry.tags?.map((tag) => (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        size="small"
-                        sx={{ fontWeight: 900, border: '2px solid black' }}
-                      />
-                    ))}
-                  </Stack>
-                </Box>
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDeleteClick(entry)
-                  }}
-                  sx={{
-                    ml: 2,
-                    border: '2px solid black',
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      borderColor: 'error.main',
-                    },
-                  }}
+                </>
+              ) : (
+                <Typography
+                  variant="caption"
+                  sx={{ opacity: 0.4, fontStyle: 'italic' }}
                 >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </ListItem>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Box sx={{ p: 4, textAlign: 'center', opacity: 0.5 }}>
-          <Typography sx={{ mb: 2, fontWeight: 700 }}>
-            No entries found yet.
-          </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => onEntryClick(new Date().toISOString().split('T')[0])}
-          >
-            Log something
-          </Button>
-        </Box>
-      )}
-    </Box>
+                  Empty session
+                </Typography>
+              )}
+            </Box>
+
+            {/* Total words */}
+            <Box sx={{ textAlign: 'right', minWidth: 60 }}>
+              <Typography variant="body2" sx={{ fontWeight: 900 }}>
+                {entry.totalWords?.toLocaleString()}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 700, opacity: 0.5 }}
+              >
+                words
+              </Typography>
+            </Box>
+
+            {/* Delete */}
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteClick(entry)
+              }}
+              sx={{
+                border: '2px solid',
+                borderColor: 'text.primary',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'background.paper',
+                  borderColor: 'error.main',
+                },
+              }}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Box>
+        )
+      })}
+    </Stack>
   )
 }
 

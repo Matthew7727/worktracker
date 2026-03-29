@@ -26,7 +26,7 @@ const DateNavigator = ({
       <Stack direction="row" spacing={2} alignItems="center">
         <IconButton
           onClick={onPrevDay}
-          sx={{ border: '2px solid black' }}
+          sx={{ border: '2px solid', borderColor: 'text.primary' }}
           aria-label="Previous Day"
         >
           <ChevronLeft />
@@ -48,7 +48,8 @@ const DateNavigator = ({
           onClick={onNextDay}
           disabled={disableNext}
           sx={{
-            border: '2px solid black',
+            border: '2px solid',
+            borderColor: 'text.primary',
             opacity: disableNext ? 0.3 : 1,
             bgcolor: disableNext ? 'action.disabledBackground' : 'transparent',
             cursor: disableNext ? 'not-allowed' : 'pointer',

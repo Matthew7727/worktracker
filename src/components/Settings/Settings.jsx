@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Typography,
@@ -17,10 +18,13 @@ import {
   Schedule,
   BugReport,
   SystemUpdateAlt,
+  TrendingUp,
+  Assessment,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 
 const Settings = () => {
+  const navigate = useNavigate()
   const { selectedDirectory, setProjectDirectory, showNotification } =
     useAppContext()
 
@@ -28,6 +32,10 @@ const Settings = () => {
   const [notifEnabled, setNotifEnabled] = useState(false)
   const [notifTime, setNotifTime] = useState('17:00')
   const [isSaving, setIsSaving] = useState(false)
+
+  // Utilisation Target
+  const [utilisationTarget, setUtilisationTarget] = useState(70)
+  const [isUtilSaving, setIsUtilSaving] = useState(false)
 
   // Auto Update State
   const [appVersion, setAppVersion] = useState('')
@@ -80,18 +88,47 @@ const Settings = () => {
         const settings = await window.electronAPI.loadSettings()
         setNotifEnabled(settings.notificationsEnabled || false)
         setNotifTime(settings.notificationTime || '17:00')
+        if (settings.utilisationTarget !== undefined) {
+          setUtilisationTarget(settings.utilisationTarget)
+        }
       }
     }
     fetchSettings()
   }, [])
 
+  const handleSaveUtilisation = async (value) => {
+    const parsed = Math.min(100, Math.max(0, parseInt(value, 10) || 0))
+    setIsUtilSaving(true)
+    try {
+      const current = window.electronAPI?.loadSettings
+        ? await window.electronAPI.loadSettings()
+        : {}
+      const result = await window.electronAPI.saveSettings({
+        ...current,
+        utilisationTarget: parsed,
+      })
+      if (result.success) {
+        setUtilisationTarget(parsed)
+        showNotification('Utilisation target updated', 'success')
+      }
+    } catch {
+      showNotification('Failed to save utilisation target', 'error')
+    } finally {
+      setIsUtilSaving(false)
+    }
+  }
+
   const handleSaveSettings = async (enabled, time) => {
     setIsSaving(true)
     try {
+      const current = window.electronAPI?.loadSettings
+        ? await window.electronAPI.loadSettings()
+        : {}
       const result = await window.electronAPI.saveSettings({
+        ...current,
         notificationsEnabled: enabled,
         notificationTime: time,
-        selectedDirectory, // Keep existing
+        selectedDirectory,
       })
       if (result.success) {
         showNotification('Settings updated successfully', 'success')
@@ -142,8 +179,10 @@ const Settings = () => {
                 sx={{
                   p: 6,
                   borderRadius: '40px',
-                  border: '4px solid black',
-                  boxShadow: '10px 10px 0px black',
+                  border: '4px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: (theme) =>
+                    `10px 10px 0px ${theme.palette.text.primary}`,
                 }}
               >
                 <Stack
@@ -175,7 +214,8 @@ const Settings = () => {
                       p: 3,
                       bgcolor: 'action.hover',
                       borderRadius: '20px',
-                      border: '3px solid black',
+                      border: '3px solid',
+                      borderColor: 'text.primary',
                     }}
                   >
                     <Box>
@@ -210,7 +250,8 @@ const Settings = () => {
                       p: 3,
                       bgcolor: 'action.hover',
                       borderRadius: '20px',
-                      border: '3px solid black',
+                      border: '3px solid',
+                      borderColor: 'text.primary',
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -238,7 +279,8 @@ const Settings = () => {
                             fontWeight: 900,
                             fontSize: '1.2rem',
                             borderRadius: '12px',
-                            border: '2px solid black',
+                            border: '2px solid',
+                            borderColor: 'text.primary',
                           },
                         }}
                       />
@@ -252,13 +294,16 @@ const Settings = () => {
                           fontWeight: 900,
                           px: 3,
                           backgroundImage: 'none',
-                          bgcolor: 'white',
-                          color: 'black',
-                          border: '2px solid black',
-                          boxShadow: '4px 4px 0px black',
+                          bgcolor: 'background.paper',
+                          color: 'text.primary',
+                          border: '2px solid',
+                          borderColor: 'text.primary',
+                          boxShadow: (theme) =>
+                            `4px 4px 0px ${theme.palette.text.primary}`,
                           '&:hover': {
                             bgcolor: '#f0f0f0',
-                            boxShadow: '2px 2px 0px black',
+                            boxShadow: (theme) =>
+                              `2px 2px 0px ${theme.palette.text.primary}`,
                             transform: 'translate(2px, 2px)',
                           },
                           '&.Mui-disabled': {
@@ -277,13 +322,123 @@ const Settings = () => {
                 </Stack>
               </Paper>
 
+              {/* Utilisation Target Section */}
+              <Paper
+                sx={{
+                  p: 6,
+                  borderRadius: '40px',
+                  border: '4px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: (theme) =>
+                    `10px 10px 0px ${theme.palette.text.primary}`,
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={2}
+                  sx={{ mb: 4 }}
+                >
+                  <TrendingUp sx={{ fontSize: '2.5rem' }} />
+                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                    Utilisation Target
+                  </Typography>
+                </Stack>
+
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
+                >
+                  Set the percentage of your total logged work that should be
+                  Client Work. This will be tracked on your dashboard.
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    p: 3,
+                    bgcolor: 'action.hover',
+                    borderRadius: '20px',
+                    border: '3px solid',
+                    borderColor: 'text.primary',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                      Client Work Target
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, opacity: 0.7 }}
+                    >
+                      What % of your time should be billable?
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <TextField
+                      type="number"
+                      value={utilisationTarget}
+                      onChange={(e) => setUtilisationTarget(e.target.value)}
+                      inputProps={{ min: 0, max: 100, step: 5 }}
+                      sx={{
+                        width: 100,
+                        '& .MuiInputBase-root': {
+                          fontWeight: 900,
+                          fontSize: '1.2rem',
+                          borderRadius: '12px',
+                          border: '2px solid',
+                          borderColor: 'text.primary',
+                        },
+                      }}
+                    />
+                    <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                      %
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      onClick={() => handleSaveUtilisation(utilisationTarget)}
+                      disabled={isUtilSaving}
+                      sx={{
+                        fontWeight: 900,
+                        px: 3,
+                        backgroundImage: 'none',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
+                        '&:hover': {
+                          bgcolor: '#f0f0f0',
+                          boxShadow: (theme) =>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
+                          transform: 'translate(2px, 2px)',
+                        },
+                        '&.Mui-disabled': {
+                          opacity: 0.5,
+                          boxShadow: 'none',
+                          border: '2px solid #999',
+                          bgcolor: '#f0f0f0',
+                        },
+                      }}
+                    >
+                      SAVE
+                    </Button>
+                  </Stack>
+                </Box>
+              </Paper>
+
               {/* Workspace Section */}
               <Paper
                 sx={{
                   p: 6,
                   borderRadius: '40px',
-                  border: '4px solid black',
-                  boxShadow: '10px 10px 0px rgba(0,0,0,0.1)',
+                  border: '4px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: (theme) =>
+                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
                 }}
               >
                 <Typography variant="h4" sx={{ mb: 4, fontWeight: 950 }}>
@@ -296,7 +451,8 @@ const Settings = () => {
                     bgcolor: 'rgba(0,0,0,0.04)',
                     p: 3,
                     borderRadius: '16px',
-                    border: '2px solid black',
+                    border: '2px solid',
+                    borderColor: 'text.primary',
                     wordBreak: 'break-all',
                     fontWeight: 800,
                     fontSize: '1.1rem',
@@ -314,12 +470,15 @@ const Settings = () => {
                       fontWeight: 900,
                       backgroundImage: 'none',
                       bgcolor: '#f44336',
-                      color: 'white',
-                      border: '2px solid black',
-                      boxShadow: '4px 4px 0px black',
+                      color: 'background.paper',
+                      border: '2px solid',
+                      borderColor: 'text.primary',
+                      boxShadow: (theme) =>
+                        `4px 4px 0px ${theme.palette.text.primary}`,
                       '&:hover': {
                         bgcolor: '#d32f2f',
-                        boxShadow: '2px 2px 0px black',
+                        boxShadow: (theme) =>
+                          `2px 2px 0px ${theme.palette.text.primary}`,
                         transform: 'translate(2px, 2px)',
                       },
                     }}
@@ -329,13 +488,73 @@ const Settings = () => {
                 </Box>
               </Paper>
 
+              {/* Reports Shortcut Section */}
+              <Paper
+                sx={{
+                  p: 6,
+                  borderRadius: '40px',
+                  border: '4px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: (theme) =>
+                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={2}
+                  sx={{ mb: 4 }}
+                >
+                  <Assessment sx={{ fontSize: '2.5rem' }} />
+                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                    Reports & Analytics
+                  </Typography>
+                </Stack>
+                <Typography
+                  variant="body1"
+                  sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
+                >
+                  View deep insights of where your time has been spent, across
+                  Client Work, Practice & Business Development over an extended
+                  period.
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate('/reports')}
+                    sx={{
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 900,
+                      backgroundImage: 'none',
+                      bgcolor: 'background.paper',
+                      color: 'text.primary',
+                      border: '2px solid',
+                      borderColor: 'text.primary',
+                      boxShadow: (theme) =>
+                        `4px 4px 0px ${theme.palette.text.primary}`,
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        boxShadow: (theme) =>
+                          `2px 2px 0px ${theme.palette.text.primary}`,
+                        transform: 'translate(2px, 2px)',
+                      },
+                    }}
+                  >
+                    OPEN REPORTS DASHBOARD
+                  </Button>
+                </Box>
+              </Paper>
+
               {/* App Updates Section */}
               <Paper
                 sx={{
                   p: 6,
                   borderRadius: '40px',
-                  border: '4px solid black',
-                  boxShadow: '10px 10px 0px rgba(0,0,0,0.1)',
+                  border: '4px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: (theme) =>
+                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
                 }}
               >
                 <Stack
@@ -359,7 +578,8 @@ const Settings = () => {
                     p: 4,
                     bgcolor: 'action.hover',
                     borderRadius: '20px',
-                    border: '3px solid black',
+                    border: '3px solid',
+                    borderColor: 'text.primary',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -391,13 +611,16 @@ const Settings = () => {
                         py: 1.5,
                         fontSize: '1.1rem',
                         backgroundImage: 'none',
-                        bgcolor: 'white',
-                        color: 'black',
-                        border: '2px solid black',
-                        boxShadow: '4px 4px 0px black',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
                         '&:hover': {
                           bgcolor: '#f0f0f0',
-                          boxShadow: '2px 2px 0px black',
+                          boxShadow: (theme) =>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
                           transform: 'translate(2px, 2px)',
                         },
                       }}
@@ -417,8 +640,9 @@ const Settings = () => {
                         fontSize: '1.1rem',
                         backgroundImage: 'none',
                         bgcolor: '#e0e0e0',
-                        color: 'black',
-                        border: '2px solid black',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
                         boxShadow: 'none',
                         opacity: 0.7,
                       }}
@@ -442,8 +666,9 @@ const Settings = () => {
                         sx={{
                           height: 16,
                           borderRadius: 8,
-                          border: '3px solid black',
-                          bgcolor: 'white',
+                          border: '3px solid',
+                          borderColor: 'text.primary',
+                          bgcolor: 'background.paper',
                           '& .MuiLinearProgress-bar': { bgcolor: '#4caf50' },
                         }}
                       />
@@ -463,11 +688,14 @@ const Settings = () => {
                         backgroundImage: 'none',
                         bgcolor: '#4caf50',
                         color: '#fff',
-                        border: '2px solid black',
-                        boxShadow: '4px 4px 0px black',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
                         '&:hover': {
                           bgcolor: '#388e3c',
-                          boxShadow: '2px 2px 0px black',
+                          boxShadow: (theme) =>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
                           transform: 'translate(2px, 2px)',
                         },
                       }}
@@ -493,13 +721,16 @@ const Settings = () => {
                           px: 4,
                           py: 1.5,
                           backgroundImage: 'none',
-                          bgcolor: 'white',
-                          color: 'black',
-                          border: '2px solid black',
-                          boxShadow: '4px 4px 0px black',
+                          bgcolor: 'background.paper',
+                          color: 'text.primary',
+                          border: '2px solid',
+                          borderColor: 'text.primary',
+                          boxShadow: (theme) =>
+                            `4px 4px 0px ${theme.palette.text.primary}`,
                           '&:hover': {
                             bgcolor: '#f0f0f0',
-                            boxShadow: '2px 2px 0px black',
+                            boxShadow: (theme) =>
+                              `2px 2px 0px ${theme.palette.text.primary}`,
                             transform: 'translate(2px, 2px)',
                           },
                         }}
@@ -516,7 +747,8 @@ const Settings = () => {
                 sx={{
                   p: 6,
                   borderRadius: '24px',
-                  border: '4px dashed black',
+                  border: '4px dashed',
+                  borderColor: 'text.primary',
                   bgcolor: 'transparent',
                 }}
               >
@@ -540,8 +772,10 @@ const Settings = () => {
                   sx={{
                     p: 6,
                     borderRadius: '40px',
-                    border: '4px solid black',
-                    boxShadow: '10px 10px 0px rgba(0,0,0,0.1)',
+                    border: '4px solid',
+                    borderColor: 'text.primary',
+                    boxShadow: (theme) =>
+                      `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
                   }}
                 >
                   <Stack
@@ -587,13 +821,16 @@ const Settings = () => {
                         px: 4,
                         py: 1.5,
                         backgroundImage: 'none',
-                        bgcolor: 'white',
-                        color: 'black',
-                        border: '2px solid black',
-                        boxShadow: '4px 4px 0px black',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
                         '&:hover': {
                           bgcolor: '#f0f0f0',
-                          boxShadow: '2px 2px 0px black',
+                          boxShadow: (theme) =>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
                           transform: 'translate(2px, 2px)',
                         },
                       }}
@@ -615,13 +852,16 @@ const Settings = () => {
                         px: 4,
                         py: 1.5,
                         backgroundImage: 'none',
-                        bgcolor: 'white',
-                        color: 'black',
-                        border: '2px solid black',
-                        boxShadow: '4px 4px 0px black',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
                         '&:hover': {
                           bgcolor: '#f0f0f0',
-                          boxShadow: '2px 2px 0px black',
+                          boxShadow: (theme) =>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
                           transform: 'translate(2px, 2px)',
                         },
                       }}

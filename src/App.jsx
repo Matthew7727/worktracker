@@ -10,12 +10,13 @@ import { useAppContext } from './context/AppContext'
 import WelcomeScreen from './components/Onboarding/WelcomeScreen'
 import MainLayout from './components/Layout/MainLayout'
 import DailyEditor from './components/DailyEditor/DailyEditor'
-import TodoBoard from './components/TodoBoard/TodoBoard'
+import ActivitiesBoard from './components/ActivitiesBoard/ActivitiesBoard'
 import Dashboard from './components/Dashboard/Dashboard'
 import Reports from './components/Reports/Reports'
 import Settings from './components/Settings/Settings'
 import Documentation from './components/Documentation/Documentation'
 import TrayWidget from './components/Widget/TrayWidget'
+import WorkspaceExplorer from './components/Workspace/WorkspaceExplorer'
 import './App.css'
 
 function App() {
@@ -49,11 +50,12 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/editor" element={<DailyEditor />} />
-        <Route path="/todos" element={<TodoBoard />} />
+        <Route path="/todos" element={<ActivitiesBoard />} />
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/docs" element={<Documentation />} />
+        <Route path="/workspace" element={<WorkspaceExplorer />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </MainLayout>
