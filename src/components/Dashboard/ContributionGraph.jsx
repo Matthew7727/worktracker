@@ -9,18 +9,6 @@ const STREAM_COLORS = {
   empty: '#f0f0f0',
 }
 
-const DAY_STATUS_COLORS = {
-  pto: '#4dabf7',
-  sick: '#ff6b6b',
-  volunteering: '#9c6ade',
-}
-
-const DAY_STATUS_LABELS = {
-  pto: 'PTO',
-  sick: 'Sick',
-  volunteering: 'Volunteering',
-}
-
 const ContributionGraph = ({ entries }) => {
   // 1. Generate last 365 days
   const today = new Date()
@@ -69,14 +57,6 @@ const ContributionGraph = ({ entries }) => {
 
     if (!entry)
       return { color: STREAM_COLORS.empty, title: `${dateStr}: No logs` }
-
-    const dayStatus = entry.metadata?.dayStatus
-    if (dayStatus && dayStatus !== 'working') {
-      return {
-        color: DAY_STATUS_COLORS[dayStatus] || STREAM_COLORS.mixed,
-        title: `${dateStr}: ${DAY_STATUS_LABELS[dayStatus] || dayStatus}`,
-      }
-    }
 
     const { clientWork, practiceDevelopment, businessDevelopment } =
       entry.streamCounts
@@ -186,9 +166,6 @@ const ContributionGraph = ({ entries }) => {
         <LegendItem color={STREAM_COLORS.practiceDevelopment} label="PD" />
         <LegendItem color={STREAM_COLORS.businessDevelopment} label="BD" />
         <LegendItem color={STREAM_COLORS.mixed} label="Mixed" />
-        <LegendItem color={DAY_STATUS_COLORS.pto} label="PTO" />
-        <LegendItem color={DAY_STATUS_COLORS.sick} label="Sick" />
-        <LegendItem color={DAY_STATUS_COLORS.volunteering} label="Vol." />
       </Stack>
     </Box>
   )

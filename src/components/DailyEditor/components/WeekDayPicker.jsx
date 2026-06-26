@@ -1,9 +1,7 @@
-import React, { useState } from 'react'
-import { Box, Stack, Typography, Menu, MenuItem } from '@mui/material'
-import { MoreHoriz } from '@mui/icons-material'
+import React from 'react'
+import { Box, Stack, Typography } from '@mui/material'
 import { keyframes } from '@emotion/react'
 import { getWeekDays } from '../utils/weekDays'
-import { DAY_STATUSES } from '../constants'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
@@ -26,63 +24,7 @@ const formatDate = (date) =>
     day: 'numeric',
   })
 
-const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
-  const [anchorEl, setAnchorEl] = useState(null)
-
-  return (
-    <>
-      <Box
-        component="span"
-        onClick={(e) => {
-          e.stopPropagation()
-          setAnchorEl(e.currentTarget)
-        }}
-        sx={{
-          position: 'absolute',
-          top: 2,
-          right: 2,
-          zIndex: 3,
-          display: 'flex',
-          p: 0.25,
-          borderRadius: '50%',
-          color: 'text.disabled',
-          '&:hover': { color: 'text.primary' },
-        }}
-      >
-        <MoreHoriz sx={{ fontSize: '0.9rem' }} />
-      </Box>
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={(e) => {
-          e?.stopPropagation?.()
-          setAnchorEl(null)
-        }}
-      >
-        {DAY_STATUSES.map((status) => (
-          <MenuItem
-            key={status.id}
-            selected={status.id === currentStatus}
-            onClick={(e) => {
-              e.stopPropagation()
-              setAnchorEl(null)
-              onSetStatus(day, status.id)
-            }}
-          >
-            {status.label}
-          </MenuItem>
-        ))}
-      </Menu>
-    </>
-  )
-}
-
-const WeekDayPicker = ({
-  currentDate,
-  onSelectDay,
-  weekStatus,
-  onQuickSetDayStatus,
-}) => {
+const WeekDayPicker = ({ currentDate, onSelectDay, weekStatus }) => {
   const weekDays = getWeekDays(new Date())
 
   return (
@@ -96,9 +38,6 @@ const WeekDayPicker = ({
           const isSelected = day.toDateString() === currentDate.toDateString()
           const dateKey = day.toISOString().split('T')[0]
           const status = weekStatus[dateKey] || {}
-          const dayStatus = status.dayStatus || 'working'
-          const isNonWorking = dayStatus !== 'working'
-          const statusConfig = DAY_STATUSES.find((s) => s.id === dayStatus)
 
           return (
             <Box
@@ -115,9 +54,7 @@ const WeekDayPicker = ({
                 borderColor: 'text.primary',
                 borderRadius: '16px',
                 cursor: 'pointer',
-                bgcolor: isNonWorking
-                  ? `${statusConfig.color}33`
-                  : 'background.paper',
+                bgcolor: 'background.paper',
                 color: 'text.primary',
                 display: 'flex',
                 flexDirection: 'column',
@@ -160,48 +97,26 @@ const WeekDayPicker = ({
                 }}
               />
 
-              {onQuickSetDayStatus && (
-                <DayStatusMenu
-                  day={day}
-                  currentStatus={dayStatus}
-                  onSetStatus={onQuickSetDayStatus}
-                />
-              )}
-
               {DAY_LABELS[i]}
-
-              {isNonWorking ? (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 900,
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {statusConfig.label.toUpperCase()}
-                </Typography>
-              ) : (
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  {STREAM_DOTS.map(({ key, color }) => (
-                    <Box
-                      key={key}
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        bgcolor: status[key] ? color : 'transparent',
-                        border: status[key] ? 'none' : '2px solid',
-                        borderColor: status[key]
-                          ? 'transparent'
-                          : 'text.disabled',
-                        position: 'relative',
-                        zIndex: 2,
-                      }}
-                    />
-                  ))}
-                </Stack>
-              )}
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                {STREAM_DOTS.map(({ key, color }) => (
+                  <Box
+                    key={key}
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: status[key] ? color : 'transparent',
+                      border: status[key] ? 'none' : '2px solid',
+                      borderColor: status[key]
+                        ? 'transparent'
+                        : 'text.disabled',
+                      position: 'relative',
+                      zIndex: 2,
+                    }}
+                  />
+                ))}
+              </Stack>
             </Box>
           )
         })}
