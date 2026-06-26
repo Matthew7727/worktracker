@@ -29,9 +29,20 @@ jobs:
           TAG="v${VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version "$VERSION" --no-git-tag-version
-          git add package.json package-lock.json
-          git commit -m "chore: bump version to ${VERSION}"
-          git push origin HEAD:main
-          git tag "$TAG"
-          git push origin "$TAG"
+
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+            git add package.json package-lock.json
+            git commit -m "chore: bump version to ${VERSION}"
+            git push origin HEAD:main
+          else
+            echo "package.json already at ${VERSION}, skipping bump commit"
+          fi
+
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "$TAG"; then
+            echo "Tag ${TAG} already exists, skipping"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
