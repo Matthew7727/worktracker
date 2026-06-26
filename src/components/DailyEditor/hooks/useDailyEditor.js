@@ -37,6 +37,8 @@ export const useDailyEditor = () => {
   const [weekStatus, setWeekStatus] = useState({})
   const [streams, setStreams] = useState(EMPTY_STREAMS)
   const [taggedItems, setTaggedItems] = useState(EMPTY_TAGGED_ITEMS)
+  const [dayStatus, setDayStatus] = useState('working')
+  const [dayNote, setDayNote] = useState('')
   const [availableProjects, setAvailableProjects] = useState({
     clientWork: [],
     practiceDevelopment: [],
@@ -86,7 +88,7 @@ export const useDailyEditor = () => {
         const filePath = getDailyFilePath(selectedDirectory, day)
         const result = await window.electronAPI.readFile(filePath)
         if (result.success) {
-          const { body } = parseMarkdown(result.data)
+          const { frontmatter, body } = parseMarkdown(result.data)
           const parsed = parseStreams(body)
           status[key] = {
             clientWork: !!(parsed.clientWork && parsed.clientWork.trim()),
@@ -96,12 +98,14 @@ export const useDailyEditor = () => {
             businessDevelopment: !!(
               parsed.businessDevelopment && parsed.businessDevelopment.trim()
             ),
+            dayStatus: frontmatter.dayStatus || 'working',
           }
         } else {
           status[key] = {
             clientWork: false,
             practiceDevelopment: false,
             businessDevelopment: false,
+            dayStatus: 'working',
           }
         }
       })
@@ -131,16 +135,23 @@ export const useDailyEditor = () => {
             practiceDevelopment: frontmatter.pdActivities || [],
             businessDevelopment: frontmatter.bdActivities || [],
           })
+          setDayStatus(frontmatter.dayStatus || 'working')
+          setDayNote(frontmatter.dayNote || '')
 
-          const hasData = Object.values(parsedStreams).some(
-            (val) => val && val.trim().length > 0
-          )
+          const hasData =
+            frontmatter.dayStatus && frontmatter.dayStatus !== 'working'
+              ? true
+              : Object.values(parsedStreams).some(
+                  (val) => val && val.trim().length > 0
+                )
           if (!location.state?.autoStartFlow) {
             setViewMode(hasData ? 'summary' : 'start')
           }
         } else {
           setStreams(EMPTY_STREAMS)
           setTaggedItems(EMPTY_TAGGED_ITEMS)
+          setDayStatus('working')
+          setDayNote('')
           if (!location.state?.autoStartFlow) {
             setViewMode('start')
           }
@@ -166,12 +177,15 @@ export const useDailyEditor = () => {
         clientProjects: taggedItems.clientWork,
         pdActivities: taggedItems.practiceDevelopment,
         bdActivities: taggedItems.businessDevelopment,
+        dayStatus: 'working',
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
       const result = await window.electronAPI.writeFile(filePath, fileContent)
 
       if (result.success) {
+        setDayStatus('working')
+        setDayNote('')
         showNotification('Day archived successfully', 'success')
         setViewMode('summary')
         loadWeekStatus()
@@ -183,6 +197,82 @@ export const useDailyEditor = () => {
       showNotification('Failed to save to system', 'error')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  // Saves a non-working day (PTO/Sick/Volunteering) — skips the stream steps entirely
+  const handleSaveNonWorkingDay = async (status, note) => {
+    if (!selectedDirectory) return
+    setIsSaving(true)
+    try {
+      const filePath = getDailyFilePath(selectedDirectory, currentDate)
+      const body = stringifyStreams(EMPTY_STREAMS)
+      const frontmatter = {
+        date: currentDate.toISOString().split('T')[0],
+        lastModified: new Date().toISOString(),
+        clientProjects: [],
+        pdActivities: [],
+        bdActivities: [],
+        dayStatus: status,
+        dayNote: note,
+      }
+
+      const fileContent = stringifyMarkdown(body, frontmatter)
+      const result = await window.electronAPI.writeFile(filePath, fileContent)
+
+      if (result.success) {
+        setStreams(EMPTY_STREAMS)
+        setTaggedItems(EMPTY_TAGGED_ITEMS)
+        setDayStatus(status)
+        setDayNote(note)
+        showNotification('Day logged', 'success')
+        setViewMode('summary')
+        loadWeekStatus()
+      } else {
+        showNotification(`Save Error: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Failed to save day:', error)
+      showNotification('Failed to save to system', 'error')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Quickly sets a day's status from the week picker without opening the full flow
+  const quickSetDayStatus = async (date, status) => {
+    if (!selectedDirectory) return
+    const filePath = getDailyFilePath(selectedDirectory, date)
+    const existing = await window.electronAPI.readFile(filePath)
+
+    let frontmatter = {
+      date: date.toISOString().split('T')[0],
+      clientProjects: [],
+      pdActivities: [],
+      bdActivities: [],
+    }
+    let body = stringifyStreams(EMPTY_STREAMS)
+
+    if (existing.success) {
+      const parsed = parseMarkdown(existing.data)
+      frontmatter = { ...parsed.frontmatter }
+      body = parsed.body
+    }
+
+    frontmatter.dayStatus = status
+    frontmatter.lastModified = new Date().toISOString()
+    if (status === 'working') delete frontmatter.dayNote
+
+    const fileContent = stringifyMarkdown(body, frontmatter)
+    const result = await window.electronAPI.writeFile(filePath, fileContent)
+
+    if (result.success) {
+      loadWeekStatus()
+      if (date.toDateString() === currentDate.toDateString()) {
+        setDayStatus(status)
+      }
+    } else {
+      showNotification(`Save Error: ${result.error}`, 'error')
     }
   }
 
@@ -216,5 +306,9 @@ export const useDailyEditor = () => {
     isLoading,
     isSaving,
     handleSaveDay,
+    dayStatus,
+    dayNote,
+    handleSaveNonWorkingDay,
+    quickSetDayStatus,
   }
 }
