@@ -36,6 +36,7 @@ export const createClientProject = (title) => ({
   id: generateId(),
   title,
   status: 'active',
+  tasks: [],
   createdAt: new Date().toISOString().split('T')[0],
   completedAt: null,
 })
@@ -44,4 +45,5 @@ export const createTask = (text) => ({
   id: generateId(),
   text,
   completed: false,
+  subtasks: [],
 })
