@@ -3,8 +3,10 @@ import { Box, CircularProgress } from '@mui/material'
 import { useDailyEditor } from './hooks/useDailyEditor'
 import WeekDayPicker from './components/WeekDayPicker'
 import StartView from './components/StartView'
+import DayTypeView from './components/DayTypeView'
 import FlowView from './components/FlowView'
 import SummaryView from './components/SummaryView'
+import DayOffSummary from './components/DayOffSummary'
 
 const DailyEditor = () => {
   const {
@@ -22,6 +24,10 @@ const DailyEditor = () => {
     setCurrentStep,
     isLoading,
     handleSaveDay,
+    dayStatus,
+    dayNote,
+    handleSaveNonWorkingDay,
+    quickSetDayStatus,
   } = useDailyEditor()
 
   if (isLoading) {
@@ -45,14 +51,23 @@ const DailyEditor = () => {
         currentDate={currentDate}
         onSelectDay={setCurrentDate}
         weekStatus={weekStatus}
+        onQuickSetDayStatus={quickSetDayStatus}
       />
 
       {viewMode === 'start' && (
-        <StartView
-          onStart={() => {
+        <StartView onStart={() => setViewMode('dayType')} />
+      )}
+
+      {viewMode === 'dayType' && (
+        <DayTypeView
+          initialStatus={dayStatus}
+          initialNote={dayNote}
+          onCancel={() => setViewMode('start')}
+          onContinueWorking={() => {
             setCurrentStep(0)
             setViewMode('flow')
           }}
+          onSaveNonWorking={handleSaveNonWorkingDay}
         />
       )}
 
@@ -70,7 +85,15 @@ const DailyEditor = () => {
         />
       )}
 
-      {viewMode === 'summary' && (
+      {viewMode === 'summary' && dayStatus !== 'working' && (
+        <DayOffSummary
+          dayStatus={dayStatus}
+          dayNote={dayNote}
+          onEdit={() => setViewMode('dayType')}
+        />
+      )}
+
+      {viewMode === 'summary' && dayStatus === 'working' && (
         <SummaryView
           streams={streams}
           onEdit={() => {

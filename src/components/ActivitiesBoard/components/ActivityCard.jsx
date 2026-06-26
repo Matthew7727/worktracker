@@ -6,21 +6,19 @@ import {
   Chip,
   IconButton,
   TextField,
-  Stack,
-  Checkbox,
   Menu,
   MenuItem,
   Divider,
 } from '@mui/material'
 import {
   MoreVert,
-  Add,
   Delete,
   Edit,
   CheckCircleOutline,
   CheckCircle,
 } from '@mui/icons-material'
 import ConfirmDialog from './ConfirmDialog'
+import TaskList from './TaskList'
 
 const EMPTY_CONFIRM = {
   open: false,
@@ -120,31 +118,7 @@ const ArchivedCard = ({ activity, onDelete }) => {
 
       {/* Tasks — all shown as done */}
       {activity.tasks.length > 0 && (
-        <Stack spacing={0.75}>
-          {activity.tasks.map((task) => (
-            <Box
-              key={task.id}
-              sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.5 }}
-            >
-              <Checkbox
-                size="small"
-                checked
-                disabled
-                sx={{ p: 0.5, color: 'text.disabled' }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  flex: 1,
-                  textDecoration: 'line-through',
-                  color: 'text.disabled',
-                }}
-              >
-                {task.text}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
+        <TaskList tasks={activity.tasks} readOnly />
       )}
 
       {/* Completion footer */}
@@ -180,11 +154,13 @@ const ActiveCard = ({
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
   onFinish,
   onRename,
   onDelete,
 }) => {
-  const [newTaskText, setNewTaskText] = useState('')
   const [anchorEl, setAnchorEl] = useState(null)
   const [isRenaming, setIsRenaming] = useState(false)
   const [renameText, setRenameText] = useState(activity.title)
@@ -192,12 +168,6 @@ const ActiveCard = ({
 
   const isBD = activity.type === 'BD'
   const accentColor = isBD ? '#eb8449' : '#ffd166'
-
-  const handleAddTask = () => {
-    if (!newTaskText.trim()) return
-    onAddTask(newTaskText.trim())
-    setNewTaskText('')
-  }
 
   const saveRename = () => {
     if (renameText.trim() && renameText !== activity.title) {
@@ -328,82 +298,16 @@ const ActiveCard = ({
       </Box>
 
       {/* Task list */}
-      {totalCount > 0 && (
-        <Stack spacing={1}>
-          {activity.tasks.map((task) => (
-            <Box
-              key={task.id}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 0.5,
-                '&:hover .task-delete': { opacity: 1 },
-              }}
-            >
-              <Checkbox
-                size="small"
-                checked={task.completed}
-                onChange={() => onToggleTask(task.id)}
-                sx={{
-                  p: 0.5,
-                  color: 'text.secondary',
-                  '&.Mui-checked': { color: accentColor },
-                }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  flex: 1,
-                  textDecoration: task.completed ? 'line-through' : 'none',
-                  color: task.completed ? 'text.secondary' : 'text.primary',
-                  fontWeight: task.completed ? 400 : 600,
-                }}
-              >
-                {task.text}
-              </Typography>
-              <IconButton
-                size="small"
-                className="task-delete"
-                onClick={() => onDeleteTask(task.id)}
-                sx={{ opacity: 0, transition: 'opacity 0.15s', p: 0.25 }}
-              >
-                <Delete sx={{ fontSize: '0.9rem' }} />
-              </IconButton>
-            </Box>
-          ))}
-        </Stack>
-      )}
-
-      {/* Add task row */}
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Add a task..."
-          value={newTaskText}
-          onChange={(e) => setNewTaskText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-          sx={{ '& .MuiInputBase-root': { borderRadius: '10px' } }}
-          autoComplete="off"
-        />
-        <IconButton
-          size="small"
-          onClick={handleAddTask}
-          disabled={!newTaskText.trim()}
-          sx={{
-            border: '2px solid',
-            borderColor: 'divider',
-            borderRadius: '10px',
-            width: 38,
-            height: 38,
-            flexShrink: 0,
-            '&:hover': { borderColor: 'text.primary' },
-          }}
-        >
-          <Add fontSize="small" />
-        </IconButton>
-      </Box>
+      <TaskList
+        tasks={activity.tasks}
+        accentColor={accentColor}
+        onAddTask={onAddTask}
+        onToggleTask={onToggleTask}
+        onDeleteTask={onDeleteTask}
+        onAddSubtask={onAddSubtask}
+        onToggleSubtask={onToggleSubtask}
+        onDeleteSubtask={onDeleteSubtask}
+      />
 
       {/* Progress footer */}
       {totalCount > 0 && (

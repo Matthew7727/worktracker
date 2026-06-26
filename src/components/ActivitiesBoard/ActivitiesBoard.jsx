@@ -120,50 +120,75 @@ const ActivitiesBoard = () => {
     saveProjects(selectedDirectory, newData)
   }
 
+  // ── Generic task/subtask handlers (shared by activities & clientProjects) ──
+
+  const updateTasks = (listKey, itemId, updateFn) => {
+    save({
+      ...data,
+      [listKey]: data[listKey].map((item) =>
+        item.id === itemId
+          ? { ...item, tasks: updateFn(item.tasks || []) }
+          : item
+      ),
+    })
+  }
+
+  const makeTaskHandlers = (listKey) => ({
+    onAddTask: (itemId, text) =>
+      updateTasks(listKey, itemId, (tasks) => [...tasks, createTask(text)]),
+    onToggleTask: (itemId, taskId) =>
+      updateTasks(listKey, itemId, (tasks) =>
+        tasks.map((t) =>
+          t.id === taskId ? { ...t, completed: !t.completed } : t
+        )
+      ),
+    onDeleteTask: (itemId, taskId) =>
+      updateTasks(listKey, itemId, (tasks) =>
+        tasks.filter((t) => t.id !== taskId)
+      ),
+    onAddSubtask: (itemId, taskId, text) =>
+      updateTasks(listKey, itemId, (tasks) =>
+        tasks.map((t) =>
+          t.id === taskId
+            ? { ...t, subtasks: [...(t.subtasks || []), createTask(text)] }
+            : t
+        )
+      ),
+    onToggleSubtask: (itemId, taskId, subtaskId) =>
+      updateTasks(listKey, itemId, (tasks) =>
+        tasks.map((t) =>
+          t.id === taskId
+            ? {
+                ...t,
+                subtasks: (t.subtasks || []).map((s) =>
+                  s.id === subtaskId ? { ...s, completed: !s.completed } : s
+                ),
+              }
+            : t
+        )
+      ),
+    onDeleteSubtask: (itemId, taskId, subtaskId) =>
+      updateTasks(listKey, itemId, (tasks) =>
+        tasks.map((t) =>
+          t.id === taskId
+            ? {
+                ...t,
+                subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
+              }
+            : t
+        )
+      ),
+  })
+
+  const activityTaskHandlers = makeTaskHandlers('activities')
+  const clientProjectTaskHandlers = makeTaskHandlers('clientProjects')
+
   // ── Activity handlers ──────────────────────────────────────────────────
 
   const handleAddActivity = (title, type) => {
     save({
       ...data,
       activities: [...data.activities, createActivity(title, type)],
-    })
-  }
-
-  const handleAddTask = (activityId, text) => {
-    save({
-      ...data,
-      activities: data.activities.map((a) =>
-        a.id === activityId
-          ? { ...a, tasks: [...a.tasks, createTask(text)] }
-          : a
-      ),
-    })
-  }
-
-  const handleToggleTask = (activityId, taskId) => {
-    save({
-      ...data,
-      activities: data.activities.map((a) =>
-        a.id === activityId
-          ? {
-              ...a,
-              tasks: a.tasks.map((t) =>
-                t.id === taskId ? { ...t, completed: !t.completed } : t
-              ),
-            }
-          : a
-      ),
-    })
-  }
-
-  const handleDeleteTask = (activityId, taskId) => {
-    save({
-      ...data,
-      activities: data.activities.map((a) =>
-        a.id === activityId
-          ? { ...a, tasks: a.tasks.filter((t) => t.id !== taskId) }
-          : a
-      ),
     })
   }
 
@@ -274,6 +299,7 @@ const ActivitiesBoard = () => {
           onToggleStatus={handleToggleClientProjectStatus}
           onDelete={handleDeleteClientProject}
           onRename={handleRenameClientProject}
+          taskHandlers={clientProjectTaskHandlers}
         />
       </Box>
 
@@ -348,12 +374,35 @@ const ActivitiesBoard = () => {
                   <ActivityCard
                     key={activity.id}
                     activity={activity}
-                    onAddTask={(text) => handleAddTask(activity.id, text)}
+                    onAddTask={(text) =>
+                      activityTaskHandlers.onAddTask(activity.id, text)
+                    }
                     onToggleTask={(taskId) =>
-                      handleToggleTask(activity.id, taskId)
+                      activityTaskHandlers.onToggleTask(activity.id, taskId)
                     }
                     onDeleteTask={(taskId) =>
-                      handleDeleteTask(activity.id, taskId)
+                      activityTaskHandlers.onDeleteTask(activity.id, taskId)
+                    }
+                    onAddSubtask={(taskId, text) =>
+                      activityTaskHandlers.onAddSubtask(
+                        activity.id,
+                        taskId,
+                        text
+                      )
+                    }
+                    onToggleSubtask={(taskId, subtaskId) =>
+                      activityTaskHandlers.onToggleSubtask(
+                        activity.id,
+                        taskId,
+                        subtaskId
+                      )
+                    }
+                    onDeleteSubtask={(taskId, subtaskId) =>
+                      activityTaskHandlers.onDeleteSubtask(
+                        activity.id,
+                        taskId,
+                        subtaskId
+                      )
                     }
                     onFinish={() => handleFinishActivity(activity.id)}
                     onRename={(title) =>
