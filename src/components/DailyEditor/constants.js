@@ -5,6 +5,19 @@ export const DAY_STATUSES = [
   { id: 'volunteering', label: 'Volunteering', color: '#9c6ade' },
 ]
 
+export const PROJECT_TYPE_COLORS = {
+  client: 'primary.main',
+  pd: '#ffd166',
+  bd: '#eb8449',
+}
+
+export const PROJECT_TYPE_LABELS = {
+  client: 'CLIENT WORK',
+  pd: 'PRACTICE DEVELOPMENT',
+  bd: 'BUSINESS DEVELOPMENT',
+}
+
+// Kept for legacy SummaryView rendering of old-format files
 export const STEPS = [
   {
     id: 'clientWork',

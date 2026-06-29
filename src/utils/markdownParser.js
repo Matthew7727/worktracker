@@ -86,3 +86,63 @@ export const stringifyStreams = (streams) => {
   }
   return body.trim()
 }
+
+/**
+ * Converts per-project entries into a stream-grouped markdown body.
+ * Each project becomes a ## subheading within its stream section.
+ * @param {Array} projectEntries - [{ title, type: 'client'|'pd'|'bd', content }]
+ * @returns {string} The formatted markdown body
+ */
+export const stringifyProjectEntries = (projectEntries) => {
+  const client = projectEntries.filter(
+    (p) => p.type === 'client' && p.content?.trim()
+  )
+  const pd = projectEntries.filter((p) => p.type === 'pd' && p.content?.trim())
+  const bd = projectEntries.filter((p) => p.type === 'bd' && p.content?.trim())
+
+  let body = ''
+  if (client.length > 0) {
+    body += '# Client Work\n'
+    client.forEach((p) => {
+      body += `## ${p.title}\n${p.content.trim()}\n\n`
+    })
+  }
+  if (pd.length > 0) {
+    body += '# Practice Development\n'
+    pd.forEach((p) => {
+      body += `## ${p.title}\n${p.content.trim()}\n\n`
+    })
+  }
+  if (bd.length > 0) {
+    body += '# Business Development\n'
+    bd.forEach((p) => {
+      body += `## ${p.title}\n${p.content.trim()}\n\n`
+    })
+  }
+  return body.trim()
+}
+
+/**
+ * Parses ## subheadings within a stream section back to project entries.
+ * Returns null if no ## subheadings are found (indicates legacy format).
+ * @param {string} streamContent - Content from a single stream section
+ * @returns {Array|null} [{ title, content }] or null for legacy format
+ */
+export const parseStreamProjects = (streamContent) => {
+  if (!streamContent) return []
+  const lines = streamContent.split('\n')
+  if (!lines.some((l) => l.startsWith('## '))) return null
+
+  const entries = []
+  let current = null
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      if (current) entries.push(current)
+      current = { title: line.slice(3).trim(), content: '' }
+    } else if (current) {
+      current.content += (current.content ? '\n' : '') + line
+    }
+  }
+  if (current) entries.push(current)
+  return entries.map((e) => ({ ...e, content: e.content.trim() }))
+}

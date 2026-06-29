@@ -7,20 +7,18 @@ import {
   parseMarkdown,
   parseStreams,
   stringifyStreams,
+  stringifyProjectEntries,
+  parseStreamProjects,
 } from '../../../utils/markdownParser'
 import { loadProjects } from '../../../utils/projectsManager'
+import { loadDailyTodos } from '../../../utils/todoManager'
 import { getWeekDays, getDefaultDate } from '../utils/weekDays'
+import { PROJECT_TYPE_COLORS } from '../constants'
 
 const EMPTY_STREAMS = {
   clientWork: '',
   practiceDevelopment: '',
   businessDevelopment: '',
-}
-
-const EMPTY_TAGGED_ITEMS = {
-  clientWork: [],
-  practiceDevelopment: [],
-  businessDevelopment: [],
 }
 
 export const useDailyEditor = () => {
@@ -36,30 +34,33 @@ export const useDailyEditor = () => {
 
   const [weekStatus, setWeekStatus] = useState({})
   const [streams, setStreams] = useState(EMPTY_STREAMS)
-  const [taggedItems, setTaggedItems] = useState(EMPTY_TAGGED_ITEMS)
   const [dayStatus, setDayStatus] = useState('working')
   const [dayNote, setDayNote] = useState('')
+
+  // Project-centric flow state
+  const [projectDrafts, setProjectDrafts] = useState({})
+  const [selectedFlowProjects, setSelectedFlowProjects] = useState([])
+  const [todayTodos, setTodayTodos] = useState([])
+
   const [availableProjects, setAvailableProjects] = useState({
     clientWork: [],
     practiceDevelopment: [],
     businessDevelopment: [],
   })
-  const [viewMode, setViewMode] = useState(() =>
-    location.state?.autoStartFlow ? 'flow' : 'start'
-  )
+  const [viewMode, setViewMode] = useState('start')
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Handle navigation to editor with autoStartFlow flag
+  // Handle navigation to editor with autoStartFlow flag (from tray widget)
   useEffect(() => {
     if (location.state?.autoStartFlow) {
-      setViewMode('flow')
+      setViewMode('start')
       setCurrentStep(0)
     }
   }, [location.state])
 
-  // Load active projects and activities for tagging chips
+  // Load active projects and activities for selection chips
   useEffect(() => {
     if (!selectedDirectory) return
     loadProjects(selectedDirectory).then((data) => {
@@ -76,6 +77,30 @@ export const useDailyEditor = () => {
       })
     })
   }, [selectedDirectory])
+
+  // Flat list of all available projects with type and color metadata
+  const allAvailableProjects = [
+    ...availableProjects.clientWork.map((title) => ({
+      title,
+      type: 'client',
+      color: PROJECT_TYPE_COLORS.client,
+    })),
+    ...availableProjects.practiceDevelopment.map((title) => ({
+      title,
+      type: 'pd',
+      color: PROJECT_TYPE_COLORS.pd,
+    })),
+    ...availableProjects.businessDevelopment.map((title) => ({
+      title,
+      type: 'bd',
+      color: PROJECT_TYPE_COLORS.bd,
+    })),
+  ]
+
+  // Per-project entries for the summary view (new format)
+  const projectEntries = selectedFlowProjects
+    .map((p) => ({ ...p, content: projectDrafts[p.title] || '' }))
+    .filter((p) => p.content.trim())
 
   // Load completion status for each day of the current week
   const loadWeekStatus = async () => {
@@ -130,13 +155,51 @@ export const useDailyEditor = () => {
           const { frontmatter, body } = parseMarkdown(fileResult.data)
           const parsedStreams = parseStreams(body)
           setStreams(parsedStreams)
-          setTaggedItems({
-            clientWork: frontmatter.clientProjects || [],
-            practiceDevelopment: frontmatter.pdActivities || [],
-            businessDevelopment: frontmatter.bdActivities || [],
-          })
           setDayStatus(frontmatter.dayStatus || 'working')
           setDayNote(frontmatter.dayNote || '')
+
+          // Populate selectedFlowProjects from frontmatter tags
+          const flowProjects = [
+            ...(frontmatter.clientProjects || []).map((t) => ({
+              title: t,
+              type: 'client',
+              color: PROJECT_TYPE_COLORS.client,
+            })),
+            ...(frontmatter.pdActivities || []).map((t) => ({
+              title: t,
+              type: 'pd',
+              color: PROJECT_TYPE_COLORS.pd,
+            })),
+            ...(frontmatter.bdActivities || []).map((t) => ({
+              title: t,
+              type: 'bd',
+              color: PROJECT_TYPE_COLORS.bd,
+            })),
+          ]
+          setSelectedFlowProjects(flowProjects)
+
+          // Try to parse per-project drafts from ## subheadings (new format)
+          const drafts = {}
+          const clientProjects = parseStreamProjects(parsedStreams.clientWork)
+          if (clientProjects)
+            clientProjects.forEach((p) => {
+              drafts[p.title] = p.content
+            })
+          const pdProjects = parseStreamProjects(
+            parsedStreams.practiceDevelopment
+          )
+          if (pdProjects)
+            pdProjects.forEach((p) => {
+              drafts[p.title] = p.content
+            })
+          const bdProjects = parseStreamProjects(
+            parsedStreams.businessDevelopment
+          )
+          if (bdProjects)
+            bdProjects.forEach((p) => {
+              drafts[p.title] = p.content
+            })
+          setProjectDrafts(drafts)
 
           const hasData =
             frontmatter.dayStatus && frontmatter.dayStatus !== 'working'
@@ -149,13 +212,16 @@ export const useDailyEditor = () => {
           }
         } else {
           setStreams(EMPTY_STREAMS)
-          setTaggedItems(EMPTY_TAGGED_ITEMS)
+          setSelectedFlowProjects([])
+          setProjectDrafts({})
           setDayStatus('working')
           setDayNote('')
           if (!location.state?.autoStartFlow) {
             setViewMode('start')
           }
         }
+        // Load todos for this date as flow reminders
+        loadDailyTodos(selectedDirectory, currentDate).then(setTodayTodos)
       } catch (error) {
         console.error('Failed to load daily data:', error)
       } finally {
@@ -170,13 +236,28 @@ export const useDailyEditor = () => {
     setIsSaving(true)
     try {
       const filePath = getDailyFilePath(selectedDirectory, currentDate)
-      const body = stringifyStreams(streams)
+
+      const projectList = selectedFlowProjects.map((p) => ({
+        ...p,
+        content: projectDrafts[p.title] || '',
+      }))
+      const body = stringifyProjectEntries(projectList)
+
+      // Update streams so weekStatus and legacy summary stay in sync
+      setStreams(parseStreams(body || ''))
+
       const frontmatter = {
         date: currentDate.toISOString().split('T')[0],
         lastModified: new Date().toISOString(),
-        clientProjects: taggedItems.clientWork,
-        pdActivities: taggedItems.practiceDevelopment,
-        bdActivities: taggedItems.businessDevelopment,
+        clientProjects: selectedFlowProjects
+          .filter((p) => p.type === 'client')
+          .map((p) => p.title),
+        pdActivities: selectedFlowProjects
+          .filter((p) => p.type === 'pd')
+          .map((p) => p.title),
+        bdActivities: selectedFlowProjects
+          .filter((p) => p.type === 'bd')
+          .map((p) => p.title),
         dayStatus: 'working',
       }
 
@@ -200,7 +281,7 @@ export const useDailyEditor = () => {
     }
   }
 
-  // Saves a non-working day (PTO/Sick/Volunteering) — skips the stream steps entirely
+  // Saves a non-working day (PTO/Sick/Volunteering)
   const handleSaveNonWorkingDay = async (status, note) => {
     if (!selectedDirectory) return
     setIsSaving(true)
@@ -222,7 +303,8 @@ export const useDailyEditor = () => {
 
       if (result.success) {
         setStreams(EMPTY_STREAMS)
-        setTaggedItems(EMPTY_TAGGED_ITEMS)
+        setSelectedFlowProjects([])
+        setProjectDrafts({})
         setDayStatus(status)
         setDayNote(note)
         showNotification('Day logged', 'success')
@@ -276,17 +358,15 @@ export const useDailyEditor = () => {
     }
   }
 
-  const updateStream = (streamId, content) => {
-    setStreams((prev) => ({ ...prev, [streamId]: content }))
+  const updateProjectDraft = (title, content) => {
+    setProjectDrafts((prev) => ({ ...prev, [title]: content }))
   }
 
-  const updateTaggedItems = (streamId, title) => {
-    setTaggedItems((prev) => {
-      const current = prev[streamId]
-      const next = current.includes(title)
-        ? current.filter((t) => t !== title)
-        : [...current, title]
-      return { ...prev, [streamId]: next }
+  const toggleFlowProject = (project) => {
+    setSelectedFlowProjects((prev) => {
+      const exists = prev.find((p) => p.title === project.title)
+      if (exists) return prev.filter((p) => p.title !== project.title)
+      return [...prev, project]
     })
   }
 
@@ -295,10 +375,16 @@ export const useDailyEditor = () => {
     setCurrentDate,
     weekStatus,
     streams,
-    updateStream,
-    taggedItems,
-    updateTaggedItems,
-    availableProjects,
+    dayStatus,
+    setDayStatus,
+    dayNote,
+    setDayNote,
+    projectDrafts,
+    updateProjectDraft,
+    selectedFlowProjects,
+    toggleFlowProject,
+    allAvailableProjects,
+    projectEntries,
     viewMode,
     setViewMode,
     currentStep,
@@ -306,9 +392,8 @@ export const useDailyEditor = () => {
     isLoading,
     isSaving,
     handleSaveDay,
-    dayStatus,
-    dayNote,
     handleSaveNonWorkingDay,
     quickSetDayStatus,
+    todayTodos,
   }
 }

@@ -1,45 +1,88 @@
 import React from 'react'
-import {
-  Box,
-  Typography,
-  Fade,
-  Button,
-  Stack,
-  LinearProgress,
-  Chip,
-} from '@mui/material'
+import { Box, Typography, Fade, Stack, LinearProgress } from '@mui/material'
 import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material'
-import { STEPS } from '../constants'
+import { PROJECT_TYPE_LABELS } from '../constants'
 import { flowStyles } from '../DailyEditor.styles'
 import EntryCard from './EntryCard'
+import TodoReminder from './TodoReminder'
 
 const FlowView = ({
-  streams,
+  selectedFlowProjects,
+  projectDrafts,
+  updateProjectDraft,
   currentStep,
   setCurrentStep,
-  onCancel,
+  onBackToSelect,
   onSave,
-  updateStream,
-  taggedItems,
-  updateTaggedItems,
-  availableProjects,
+  todayTodos = [],
 }) => {
-  const step = STEPS[currentStep]
-  const isLastStep = currentStep === STEPS.length - 1
+  if (selectedFlowProjects.length === 0) {
+    return (
+      <Box
+        sx={{
+          maxWidth: '900px',
+          mx: 'auto',
+          width: '100%',
+          mt: 4,
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ mb: 4, fontWeight: 900, color: 'text.secondary' }}
+        >
+          No projects selected — nothing to log.
+        </Typography>
+        <Stack direction="row" justifyContent="center" gap={2}>
+          <Box
+            component="button"
+            onClick={onBackToSelect}
+            sx={{ ...flowStyles.flowButton, px: 4, bgcolor: 'transparent' }}
+          >
+            <ArrowBack sx={{ fontSize: '1.2rem' }} />
+            BACK
+            <Box className="shine-layer" sx={flowStyles.shineLayer} />
+          </Box>
+          <Box
+            component="button"
+            onClick={onSave}
+            sx={{
+              ...flowStyles.flowButton,
+              px: 4,
+              bgcolor: 'primary.main',
+              '&:hover': {
+                ...flowStyles.flowButton['&:hover'],
+                bgcolor: 'primary.main',
+              },
+            }}
+          >
+            SAVE DAY
+            <CheckCircle sx={{ fontSize: '1.2rem' }} />
+            <Box className="shine-layer" sx={flowStyles.shineLayer} />
+          </Box>
+        </Stack>
+      </Box>
+    )
+  }
+
+  const project = selectedFlowProjects[currentStep]
+  const isLastStep = currentStep === selectedFlowProjects.length - 1
+  const color = project.color || 'primary.main'
+  const typeLabel = PROJECT_TYPE_LABELS[project.type] || ''
 
   return (
     <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
       <Box sx={{ mb: 4 }}>
         <LinearProgress
           variant="determinate"
-          value={((currentStep + 1) / STEPS.length) * 100}
+          value={((currentStep + 1) / selectedFlowProjects.length) * 100}
           sx={{
             height: 16,
             borderRadius: 8,
             border: '4px solid',
             borderColor: 'text.primary',
             bgcolor: 'background.paper',
-            '& .MuiLinearProgress-bar': { bgcolor: step.color },
+            '& .MuiLinearProgress-bar': { bgcolor: color },
           }}
         />
         <Typography
@@ -50,73 +93,39 @@ const FlowView = ({
             fontSize: '1.1rem',
           }}
         >
-          STEP {currentStep + 1} OF {STEPS.length}
+          STEP {currentStep + 1} OF {selectedFlowProjects.length}
         </Typography>
       </Box>
 
       <Fade in={true} key={currentStep}>
         <Box>
-          <Typography
-            variant="h3"
-            sx={{
-              mb: step.description ? 1 : 4,
-              fontWeight: 950,
-              color: step.color,
-            }}
-          >
-            {step.question}
-          </Typography>
-
-          {step.description && (
+          {typeLabel && (
             <Typography
-              sx={{ mb: 4, fontSize: '1.1rem', color: 'text.secondary' }}
+              sx={{
+                mb: 0.5,
+                fontWeight: 900,
+                fontSize: '0.8rem',
+                letterSpacing: '2px',
+                color,
+              }}
             >
-              {step.description}
+              {typeLabel}
             </Typography>
           )}
 
-          {availableProjects[step.id]?.length > 0 && (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1,
-                mb: 2,
-              }}
-            >
-              {availableProjects[step.id].map((title) => {
-                const isActive = taggedItems[step.id]?.includes(title)
-                return (
-                  <Chip
-                    key={title}
-                    label={title}
-                    onClick={() => updateTaggedItems(step.id, title)}
-                    sx={{
-                      fontWeight: 800,
-                      fontSize: '0.75rem',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      borderRadius: 0,
-                      bgcolor: isActive ? step.color : 'transparent',
-                      color: isActive ? 'text.primary' : 'text.secondary',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        bgcolor: step.color,
-                        color: 'text.primary',
-                        opacity: 0.85,
-                      },
-                    }}
-                  />
-                )
-              })}
-            </Box>
-          )}
+          <Typography variant="h3" sx={{ mb: 4, fontWeight: 950, color }}>
+            What did you do on {project.title} today?
+          </Typography>
+
+          {todayTodos.length > 0 && <TodoReminder lanes={todayTodos} />}
 
           <EntryCard
-            entry={{ content: streams[step.id], tags: [] }}
-            onUpdateContent={(_id, content) => updateStream(step.id, content)}
+            entry={{ content: projectDrafts[project.title] || '', tags: [] }}
+            onUpdateContent={(_id, content) =>
+              updateProjectDraft(project.title, content)
+            }
             isStreamMode
-            borderColor={step.color}
+            borderColor={color}
           />
 
           <Stack direction="row" justifyContent="space-between" sx={{ mt: 6 }}>
@@ -124,17 +133,13 @@ const FlowView = ({
               component="button"
               onClick={() =>
                 currentStep === 0
-                  ? onCancel()
+                  ? onBackToSelect()
                   : setCurrentStep((prev) => prev - 1)
               }
-              sx={{
-                ...flowStyles.flowButton,
-                px: 4,
-                bgcolor: 'transparent',
-              }}
+              sx={{ ...flowStyles.flowButton, px: 4, bgcolor: 'transparent' }}
             >
               <ArrowBack sx={{ fontSize: '1.2rem' }} />
-              {currentStep === 0 ? 'CANCEL' : 'BACK'}
+              BACK
               <Box className="shine-layer" sx={flowStyles.shineLayer} />
             </Box>
 
@@ -146,10 +151,10 @@ const FlowView = ({
               sx={{
                 ...flowStyles.flowButton,
                 px: 4,
-                bgcolor: step.color,
+                bgcolor: color,
                 '&:hover': {
                   ...flowStyles.flowButton['&:hover'],
-                  bgcolor: step.color,
+                  bgcolor: color,
                 },
               }}
             >
