@@ -2,8 +2,7 @@ import React from 'react'
 import { Box, CircularProgress } from '@mui/material'
 import { useDailyEditor } from './hooks/useDailyEditor'
 import WeekDayPicker from './components/WeekDayPicker'
-import StartView from './components/StartView'
-import DayTypeView from './components/DayTypeView'
+import ProjectSelectionView from './components/ProjectSelectionView'
 import FlowView from './components/FlowView'
 import SummaryView from './components/SummaryView'
 import DayOffSummary from './components/DayOffSummary'
@@ -14,20 +13,25 @@ const DailyEditor = () => {
     setCurrentDate,
     weekStatus,
     streams,
-    updateStream,
-    taggedItems,
-    updateTaggedItems,
-    availableProjects,
+    dayStatus,
+    setDayStatus,
+    dayNote,
+    setDayNote,
+    projectDrafts,
+    updateProjectDraft,
+    selectedFlowProjects,
+    toggleFlowProject,
+    allAvailableProjects,
+    projectEntries,
     viewMode,
     setViewMode,
     currentStep,
     setCurrentStep,
     isLoading,
     handleSaveDay,
-    dayStatus,
-    dayNote,
     handleSaveNonWorkingDay,
     quickSetDayStatus,
+    todayTodos,
   } = useDailyEditor()
 
   if (isLoading) {
@@ -55,15 +59,15 @@ const DailyEditor = () => {
       />
 
       {viewMode === 'start' && (
-        <StartView onStart={() => setViewMode('dayType')} />
-      )}
-
-      {viewMode === 'dayType' && (
-        <DayTypeView
-          initialStatus={dayStatus}
-          initialNote={dayNote}
-          onCancel={() => setViewMode('start')}
-          onContinueWorking={() => {
+        <ProjectSelectionView
+          dayStatus={dayStatus}
+          onStatusChange={setDayStatus}
+          dayNote={dayNote}
+          onNoteChange={setDayNote}
+          allAvailableProjects={allAvailableProjects}
+          selectedFlowProjects={selectedFlowProjects}
+          onToggleProject={toggleFlowProject}
+          onStart={() => {
             setCurrentStep(0)
             setViewMode('flow')
           }}
@@ -73,15 +77,14 @@ const DailyEditor = () => {
 
       {viewMode === 'flow' && (
         <FlowView
-          streams={streams}
+          selectedFlowProjects={selectedFlowProjects}
+          projectDrafts={projectDrafts}
+          updateProjectDraft={updateProjectDraft}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          onCancel={() => setViewMode('start')}
+          onBackToSelect={() => setViewMode('start')}
           onSave={handleSaveDay}
-          updateStream={updateStream}
-          taggedItems={taggedItems}
-          updateTaggedItems={updateTaggedItems}
-          availableProjects={availableProjects}
+          todayTodos={todayTodos}
         />
       )}
 
@@ -89,16 +92,17 @@ const DailyEditor = () => {
         <DayOffSummary
           dayStatus={dayStatus}
           dayNote={dayNote}
-          onEdit={() => setViewMode('dayType')}
+          onEdit={() => setViewMode('start')}
         />
       )}
 
       {viewMode === 'summary' && dayStatus === 'working' && (
         <SummaryView
           streams={streams}
+          projectEntries={projectEntries}
           onEdit={() => {
             setCurrentStep(0)
-            setViewMode('flow')
+            setViewMode('start')
           }}
         />
       )}
