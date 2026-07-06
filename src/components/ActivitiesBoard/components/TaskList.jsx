@@ -122,12 +122,7 @@ const TaskRow = ({
             flex: 1,
             textDecoration: task.completed ? 'line-through' : 'none',
             color: task.completed ? 'text.secondary' : 'text.primary',
-            fontWeight:
-              task.completed || !task.important
-                ? task.completed
-                  ? 400
-                  : 600
-                : 800,
+            fontWeight: task.completed ? 400 : task.important ? 800 : 600,
           }}
         >
           {task.text}
