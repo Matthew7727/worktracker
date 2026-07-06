@@ -1,12 +1,7 @@
 import React from 'react'
 import { Box, Typography, Stack, LinearProgress, Skeleton } from '@mui/material'
 import WeeklyChart from '../WeeklyChart'
-
-const STREAM_COLORS = {
-  clientWork: '#80b621',
-  practiceDevelopment: '#ffd166',
-  businessDevelopment: '#eb8449',
-}
+import { useAppContext } from '../../../context/AppContext'
 
 const StreamBar = ({ label, value, total, color, targetPct }) => {
   const percentage = total > 0 ? (value / total) * 100 : 0
@@ -72,75 +67,73 @@ const sectionLabel = {
   opacity: 0.7,
 }
 
-const StreamAlignment = ({ entries, stats, utilisationTarget, loading }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      gap: 6,
-      flexDirection: { xs: 'column', md: 'row' },
-      alignItems: 'flex-start',
-    }}
-  >
-    {/* Weekly Intensity */}
-    <Box sx={{ flex: 2, width: '100%' }}>
-      <Typography variant="h6" sx={sectionLabel}>
-        Weekly Intensity
-      </Typography>
-      <Box sx={{ minHeight: 250 }}>
-        {loading ? (
-          <Skeleton
-            variant="rectangular"
-            height={250}
-            sx={{ borderRadius: 4 }}
-          />
-        ) : (
-          <WeeklyChart entries={entries} />
-        )}
-      </Box>
-    </Box>
+const StreamAlignment = ({ entries, stats, utilisationTarget, loading }) => {
+  const { streamConfig, streams, mainFocusStream } = useAppContext()
+  const utilisationEnabled = !!streamConfig?.features?.utilisation
 
-    {/* Stream Alignment */}
-    <Box sx={{ flex: 1, width: '100%' }}>
-      <Typography variant="h6" sx={sectionLabel}>
-        Stream Alignment
-      </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {loading ? (
-          <Skeleton
-            variant="rectangular"
-            height={150}
-            sx={{ borderRadius: 2 }}
-          />
-        ) : stats.totalWords === 0 ? (
-          <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
-            No entries logged yet.
-          </Typography>
-        ) : (
-          <>
-            <StreamBar
-              label="Client Work"
-              value={stats.streamBreakdown.clientWork}
-              total={stats.totalWords}
-              color={STREAM_COLORS.clientWork}
-              targetPct={utilisationTarget}
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 6,
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'flex-start',
+      }}
+    >
+      {/* Weekly Intensity */}
+      <Box sx={{ flex: 2, width: '100%' }}>
+        <Typography variant="h6" sx={sectionLabel}>
+          Weekly Intensity
+        </Typography>
+        <Box sx={{ minHeight: 250 }}>
+          {loading ? (
+            <Skeleton
+              variant="rectangular"
+              height={250}
+              sx={{ borderRadius: 4 }}
             />
-            <StreamBar
-              label="Practice Dev"
-              value={stats.streamBreakdown.practiceDevelopment}
-              total={stats.totalWords}
-              color={STREAM_COLORS.practiceDevelopment}
+          ) : (
+            <WeeklyChart entries={entries} streams={streams} />
+          )}
+        </Box>
+      </Box>
+
+      {/* Stream Alignment */}
+      <Box sx={{ flex: 1, width: '100%' }}>
+        <Typography variant="h6" sx={sectionLabel}>
+          Stream Alignment
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {loading ? (
+            <Skeleton
+              variant="rectangular"
+              height={150}
+              sx={{ borderRadius: 2 }}
             />
-            <StreamBar
-              label="Business Dev"
-              value={stats.streamBreakdown.businessDevelopment}
-              total={stats.totalWords}
-              color={STREAM_COLORS.businessDevelopment}
-            />
-          </>
-        )}
+          ) : stats.totalWords === 0 ? (
+            <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
+              No entries logged yet.
+            </Typography>
+          ) : (
+            streams.map((stream) => (
+              <StreamBar
+                key={stream.id}
+                label={stream.name}
+                value={stats.streamBreakdown[stream.id] || 0}
+                total={stats.totalWords}
+                color={stream.color}
+                targetPct={
+                  utilisationEnabled && stream.id === mainFocusStream?.id
+                    ? utilisationTarget
+                    : null
+                }
+              />
+            ))
+          )}
+        </Box>
       </Box>
     </Box>
-  </Box>
-)
+  )
+}
 
 export default StreamAlignment

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Box, Typography, Fade, Stack, LinearProgress } from '@mui/material'
 import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material'
-import { PROJECT_TYPE_LABELS } from '../constants'
 import { flowStyles } from '../DailyEditor.styles'
 import EntryCard from './EntryCard'
 import TodoReminder from './TodoReminder'
@@ -68,7 +67,7 @@ const FlowView = ({
   const project = selectedFlowProjects[currentStep]
   const isLastStep = currentStep === selectedFlowProjects.length - 1
   const color = project.color || 'primary.main'
-  const typeLabel = PROJECT_TYPE_LABELS[project.type] || ''
+  const typeLabel = project.streamName ? project.streamName.toUpperCase() : ''
 
   return (
     <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>

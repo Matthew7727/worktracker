@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppContext } from '../../../context/AppContext'
 import { loadAllEntries } from '../../../utils/DataManager'
 import { loadProjects } from '../../../utils/projectsManager'
+import { getTodoStats } from '../../../utils/todoManager'
 
 const calculateStreaks = (uniqueDates) => {
   if (uniqueDates.length === 0) return 0
@@ -20,18 +21,16 @@ const calculateStreaks = (uniqueDates) => {
 }
 
 const useDashboardData = () => {
-  const { selectedDirectory, refreshTrigger } = useAppContext()
+  const { selectedDirectory, refreshTrigger, streamConfig, streams } =
+    useAppContext()
 
   const [stats, setStats] = useState({
     totalDays: 0,
     totalWords: 0,
     currentStreak: 0,
     balanceScore: 0,
-    streamBreakdown: {
-      clientWork: 0,
-      practiceDevelopment: 0,
-      businessDevelopment: 0,
-    },
+    streamBreakdown: {},
+    todosCompletedAllTime: 0,
   })
   const [projects, setProjects] = useState({
     activities: [],
@@ -43,16 +42,19 @@ const useDashboardData = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!selectedDirectory) return
+      if (!selectedDirectory || !streamConfig) return
       setLoading(true)
       try {
-        const [resolvedEntries, projectsData, settings] = await Promise.all([
-          loadAllEntries(selectedDirectory),
-          loadProjects(selectedDirectory),
-          window.electronAPI?.loadSettings
-            ? window.electronAPI.loadSettings()
-            : Promise.resolve({}),
-        ])
+        const allStreams = streamConfig.streams
+        const [resolvedEntries, projectsData, settings, todoStats] =
+          await Promise.all([
+            loadAllEntries(selectedDirectory, allStreams),
+            loadProjects(selectedDirectory),
+            window.electronAPI?.loadSettings
+              ? window.electronAPI.loadSettings()
+              : Promise.resolve({}),
+            getTodoStats(selectedDirectory),
+          ])
 
         if (settings.utilisationTarget !== undefined) {
           setUtilisationTarget(settings.utilisationTarget)
@@ -64,34 +66,38 @@ const useDashboardData = () => {
         const uniqueDates = Array.from(
           new Set(resolvedEntries.map((e) => e.date))
         )
-        const streamBreakdown = {
-          clientWork: 0,
-          practiceDevelopment: 0,
-          businessDevelopment: 0,
-        }
+        const streamBreakdown = {}
+        allStreams.forEach((s) => {
+          streamBreakdown[s.id] = 0
+        })
         let totalWords = 0
 
         resolvedEntries.forEach((entry) => {
           if (entry.streamCounts) {
-            streamBreakdown.clientWork += entry.streamCounts.clientWork
-            streamBreakdown.practiceDevelopment +=
-              entry.streamCounts.practiceDevelopment
-            streamBreakdown.businessDevelopment +=
-              entry.streamCounts.businessDevelopment
+            allStreams.forEach((s) => {
+              streamBreakdown[s.id] += entry.streamCounts[s.id] || 0
+            })
             totalWords += entry.totalWords
           }
         })
 
-        const counts = Object.values(streamBreakdown)
-        const sum = counts.reduce((a, b) => a + b, 0)
+        // Balance score: how close the ACTIVE streams are to an even split
+        const activeCounts = streams.map((s) => streamBreakdown[s.id] || 0)
+        const sum = activeCounts.reduce((a, b) => a + b, 0)
         let balanceScore = 0
-        if (sum > 0) {
-          const percentages = counts.map((c) => (c / sum) * 100)
+        if (sum > 0 && streams.length > 0) {
+          const ideal = 100 / streams.length
+          const percentages = activeCounts.map((c) => (c / sum) * 100)
           const variance = percentages.reduce(
-            (acc, p) => acc + Math.abs(p - 33.33),
+            (acc, p) => acc + Math.abs(p - ideal),
             0
           )
-          balanceScore = Math.max(0, Math.round(100 - variance / 1.33))
+          // Max possible deviation is 2 * (100 - ideal)
+          const maxVariance = 2 * (100 - ideal)
+          balanceScore = Math.max(
+            0,
+            Math.round(100 - (variance / maxVariance) * 100)
+          )
         }
 
         setStats({
@@ -100,6 +106,7 @@ const useDashboardData = () => {
           currentStreak: calculateStreaks(uniqueDates),
           balanceScore,
           streamBreakdown,
+          todosCompletedAllTime: todoStats.allTimeCompleted || 0,
         })
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
@@ -108,7 +115,7 @@ const useDashboardData = () => {
       }
     }
     fetchData()
-  }, [selectedDirectory, refreshTrigger])
+  }, [selectedDirectory, refreshTrigger, streamConfig]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { stats, projects, allEntries, utilisationTarget, loading }
 }

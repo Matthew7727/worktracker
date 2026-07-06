@@ -1,10 +1,8 @@
 import React from 'react'
 import { Tooltip, Box, Typography, Stack } from '@mui/material'
+import { getStreamAbbrev } from '../../utils/streamConfig'
 
-const STREAM_COLORS = {
-  clientWork: '#80b621',
-  practiceDevelopment: '#ffd166',
-  businessDevelopment: '#eb8449',
+const NEUTRAL_COLORS = {
   mixed: '#777',
   empty: '#f0f0f0',
 }
@@ -21,7 +19,7 @@ const DAY_STATUS_LABELS = {
   volunteering: 'Volunteering',
 }
 
-const ContributionGraph = ({ entries }) => {
+const ContributionGraph = ({ entries, streams = [] }) => {
   // 1. Generate last 365 days
   const today = new Date()
   const days = []
@@ -68,43 +66,31 @@ const ContributionGraph = ({ entries }) => {
     const entry = entryMap.get(dateStr)
 
     if (!entry)
-      return { color: STREAM_COLORS.empty, title: `${dateStr}: No logs` }
+      return { color: NEUTRAL_COLORS.empty, title: `${dateStr}: No logs` }
 
     const dayStatus = entry.metadata?.dayStatus
     if (dayStatus && dayStatus !== 'working') {
       return {
-        color: DAY_STATUS_COLORS[dayStatus] || STREAM_COLORS.mixed,
+        color: DAY_STATUS_COLORS[dayStatus] || NEUTRAL_COLORS.mixed,
         title: `${dateStr}: ${DAY_STATUS_LABELS[dayStatus] || dayStatus}`,
       }
     }
 
-    const { clientWork, practiceDevelopment, businessDevelopment } =
-      entry.streamCounts
-    const total = clientWork + practiceDevelopment + businessDevelopment
+    const counts = streams.map((s) => entry.streamCounts?.[s.id] || 0)
+    const total = counts.reduce((a, b) => a + b, 0)
 
     if (total === 0)
-      return { color: STREAM_COLORS.empty, title: `${dateStr}: Empty log` }
+      return { color: NEUTRAL_COLORS.empty, title: `${dateStr}: Empty log` }
 
-    // Determine dominant stream
-    let color = STREAM_COLORS.mixed
+    // Determine dominant stream (strictly greater than all others)
+    let color = NEUTRAL_COLORS.mixed
     let dominant = 'Mixed Activity'
-
-    if (clientWork > practiceDevelopment && clientWork > businessDevelopment) {
-      color = STREAM_COLORS.clientWork
-      dominant = 'Client Work Focused'
-    } else if (
-      practiceDevelopment > clientWork &&
-      practiceDevelopment > businessDevelopment
-    ) {
-      color = STREAM_COLORS.practiceDevelopment
-      dominant = 'Practice Dev Focused'
-    } else if (
-      businessDevelopment > clientWork &&
-      businessDevelopment > practiceDevelopment
-    ) {
-      color = STREAM_COLORS.businessDevelopment
-      dominant = 'Business Dev Focused'
-    }
+    streams.forEach((s, i) => {
+      if (counts[i] > 0 && counts.every((c, j) => j === i || counts[i] > c)) {
+        color = s.color
+        dominant = `${s.name} Focused`
+      }
+    })
 
     return {
       color,
@@ -181,11 +167,17 @@ const ContributionGraph = ({ entries }) => {
           </Box>
         ))}
       </Box>
-      <Stack direction="row" spacing={2} sx={{ mt: 3, opacity: 0.8 }}>
-        <LegendItem color={STREAM_COLORS.clientWork} label="CW" />
-        <LegendItem color={STREAM_COLORS.practiceDevelopment} label="PD" />
-        <LegendItem color={STREAM_COLORS.businessDevelopment} label="BD" />
-        <LegendItem color={STREAM_COLORS.mixed} label="Mixed" />
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ mt: 3, opacity: 0.8 }}
+        flexWrap="wrap"
+        useFlexGap
+      >
+        {streams.map((s) => (
+          <LegendItem key={s.id} color={s.color} label={getStreamAbbrev(s)} />
+        ))}
+        <LegendItem color={NEUTRAL_COLORS.mixed} label="Mixed" />
         <LegendItem color={DAY_STATUS_COLORS.pto} label="PTO" />
         <LegendItem color={DAY_STATUS_COLORS.sick} label="Sick" />
         <LegendItem color={DAY_STATUS_COLORS.volunteering} label="Vol." />

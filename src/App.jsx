@@ -6,11 +6,14 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
+import { Box, CircularProgress } from '@mui/material'
 import { useAppContext } from './context/AppContext'
 import WelcomeScreen from './components/Onboarding/WelcomeScreen'
+import StreamSetup from './components/Onboarding/StreamSetup'
 import MainLayout from './components/Layout/MainLayout'
 import DailyEditor from './components/DailyEditor/DailyEditor'
 import ActivitiesBoard from './components/ActivitiesBoard/ActivitiesBoard'
+import TodoBoard from './components/TodoBoard/TodoBoard'
 import Dashboard from './components/Dashboard/Dashboard'
 import Reports from './components/Reports/Reports'
 import Settings from './components/Settings/Settings'
@@ -20,7 +23,8 @@ import WorkspaceExplorer from './components/Workspace/WorkspaceExplorer'
 import './App.css'
 
 function App() {
-  const { selectedDirectory } = useAppContext()
+  const { selectedDirectory, streamConfigLoading, needsStreamSetup } =
+    useAppContext()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -45,12 +49,32 @@ function App() {
     return <WelcomeScreen />
   }
 
+  if (streamConfigLoading) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (needsStreamSetup) {
+    return <StreamSetup />
+  }
+
   return (
     <MainLayout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/editor" element={<DailyEditor />} />
         <Route path="/todos" element={<ActivitiesBoard />} />
+        <Route path="/tasks" element={<TodoBoard />} />
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />

@@ -1,11 +1,42 @@
 import { parseMarkdown, parseStreams } from './markdownParser'
+import { LEGACY_STREAMS } from './streamConfig'
+
+// Legacy frontmatter keys map to the original stream ids
+const LEGACY_FRONTMATTER_KEYS = {
+  clientProjects: 'clientWork',
+  pdActivities: 'practiceDevelopment',
+  bdActivities: 'businessDevelopment',
+}
+
+/**
+ * Reads the per-stream project titles from an entry's frontmatter,
+ * supporting both the generic `projects` map and the legacy keys.
+ */
+export const getProjectsByStream = (frontmatter) => {
+  const byStream = {}
+  if (frontmatter.projects && typeof frontmatter.projects === 'object') {
+    Object.entries(frontmatter.projects).forEach(([streamId, titles]) => {
+      if (Array.isArray(titles) && titles.length > 0)
+        byStream[streamId] = titles
+    })
+  }
+  Object.entries(LEGACY_FRONTMATTER_KEYS).forEach(([key, streamId]) => {
+    if (Array.isArray(frontmatter[key]) && frontmatter[key].length > 0) {
+      byStream[streamId] = [
+        ...new Set([...(byStream[streamId] || []), ...frontmatter[key]]),
+      ]
+    }
+  })
+  return byStream
+}
 
 /**
  * loads all daily entries from the project directory.
  * @param {string} rootDir
- * @returns {Promise<Array>} Array of entry objects { date, tags, content, path, streams, wordCount }
+ * @param {Array} streams - Stream definitions from the workspace config
+ * @returns {Promise<Array>} Array of entry objects { date, tags, content, path, streams, streamCounts, totalWords }
  */
-export const loadAllEntries = async (rootDir) => {
+export const loadAllEntries = async (rootDir, streams = LEGACY_STREAMS) => {
   if (!window.electronAPI || !rootDir) return []
 
   try {
@@ -41,7 +72,7 @@ export const loadAllEntries = async (rootDir) => {
 
       // Parse content
       const { frontmatter, body } = parseMarkdown(fileResult.data)
-      const streams = parseStreams(body)
+      const parsedStreams = parseStreams(body, streams)
 
       // Calculate word counts for each stream
       const getWordCount = (text) =>
@@ -52,16 +83,12 @@ export const loadAllEntries = async (rootDir) => {
               .filter((w) => w.length > 0).length
           : 0
 
-      const streamCounts = {
-        clientWork: getWordCount(streams.clientWork),
-        practiceDevelopment: getWordCount(streams.practiceDevelopment),
-        businessDevelopment: getWordCount(streams.businessDevelopment),
-      }
-
-      const totalWords =
-        streamCounts.clientWork +
-        streamCounts.practiceDevelopment +
-        streamCounts.businessDevelopment
+      const streamCounts = {}
+      let totalWords = 0
+      streams.forEach((s) => {
+        streamCounts[s.id] = getWordCount(parsedStreams[s.id])
+        totalWords += streamCounts[s.id]
+      })
 
       return {
         id: fileName.replace('.md', ''),
@@ -72,10 +99,8 @@ export const loadAllEntries = async (rootDir) => {
         content: body,
         path: filePath,
         metadata: frontmatter,
-        clientProjects: frontmatter.clientProjects || [],
-        pdActivities: frontmatter.pdActivities || [],
-        bdActivities: frontmatter.bdActivities || [],
-        streams,
+        projectsByStream: getProjectsByStream(frontmatter),
+        streams: parsedStreams,
         streamCounts,
         totalWords,
       }

@@ -14,10 +14,20 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material'
-import { Add, Delete, CheckCircle, MoreVert, Edit } from '@mui/icons-material'
+import {
+  Add,
+  Delete,
+  CheckCircle,
+  MoreVert,
+  Edit,
+  Star,
+  StarBorder,
+} from '@mui/icons-material'
+import { Tooltip } from '@mui/material'
 import { loadDailyTodos, saveDailyTodos } from '../../utils/todoManager'
 import { useAppContext } from '../../context/AppContext'
 import DateNavigator from './components/DateNavigator'
+import TodoAgeChip from '../shared/TodoAgeChip'
 
 const Lane = ({
   title,
@@ -25,18 +35,21 @@ const Lane = ({
   onAddItem,
   onDeleteItem,
   onToggleItem,
+  onToggleImportant,
   onRenameLane,
   onDeleteLane,
 }) => {
   const [newItemText, setNewItemText] = useState('')
+  const [newItemImportant, setNewItemImportant] = useState(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const [isRenaming, setIsRenaming] = useState(false)
   const [renameText, setRenameText] = useState(title)
 
   const handleAdd = () => {
     if (newItemText.trim()) {
-      onAddItem(title, newItemText)
+      onAddItem(title, newItemText, newItemImportant)
       setNewItemText('')
+      setNewItemImportant(false)
     }
   }
 
@@ -128,7 +141,12 @@ const Lane = ({
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              borderColor: item.completed ? 'success.main' : 'divider',
+              borderColor: item.completed
+                ? 'success.main'
+                : item.important
+                  ? 'text.primary'
+                  : 'divider',
+              borderWidth: item.important && !item.completed ? '2px' : '1px',
               bgcolor: item.completed ? 'action.selected' : 'background.paper',
               transition: 'all 0.2s',
             }}
@@ -146,11 +164,23 @@ const Lane = ({
                 flex: 1,
                 textDecoration: item.completed ? 'line-through' : 'none',
                 color: item.completed ? 'text.secondary' : 'text.primary',
-                fontWeight: 600,
+                fontWeight: item.important && !item.completed ? 800 : 600,
               }}
             >
               {item.text}
             </Typography>
+            {!item.completed && <TodoAgeChip item={item} />}
+            <IconButton
+              size="small"
+              onClick={() => onToggleImportant(title, index)}
+              sx={{ color: item.important ? '#f59e0b' : 'text.disabled' }}
+            >
+              {item.important ? (
+                <Star fontSize="small" />
+              ) : (
+                <StarBorder fontSize="small" />
+              )}
+            </IconButton>
             <IconButton size="small" onClick={() => onDeleteItem(title, index)}>
               <Delete fontSize="small" />
             </IconButton>
@@ -179,6 +209,15 @@ const Lane = ({
           sx={{ bgcolor: 'background.paper', borderRadius: '8px' }}
           autoComplete="off"
         />
+        <Tooltip title="Mark as important" placement="top">
+          <IconButton
+            onClick={() => setNewItemImportant((v) => !v)}
+            onMouseDown={(e) => e.stopPropagation()}
+            sx={{ color: newItemImportant ? '#f59e0b' : 'text.disabled' }}
+          >
+            {newItemImportant ? <Star /> : <StarBorder />}
+          </IconButton>
+        </Tooltip>
         <Button
           variant="contained"
           sx={{ minWidth: '40px', px: 0 }}
@@ -236,12 +275,25 @@ const TodoBoard = () => {
 
   // ... (Item handlers remain unchanged)
 
-  const handleAddItem = (laneTitle, text) => {
+  // Important items stay pinned to the top of their lane. We reorder the
+  // stored array (not just the render) so index-based handlers stay valid.
+  const pinImportant = (items) => [
+    ...items.filter((i) => i.important),
+    ...items.filter((i) => !i.important),
+  ]
+
+  const handleAddItem = (laneTitle, text, important = false) => {
+    const newItem = {
+      text,
+      completed: false,
+      important,
+      createdAt: currentDate.toISOString().split('T')[0],
+    }
     const newLanes = lanes.map((lane) => {
       if (lane.title === laneTitle) {
         return {
           ...lane,
-          items: [...lane.items, { text, completed: false }],
+          items: pinImportant([...lane.items, newItem]),
         }
       }
       return lane
@@ -255,6 +307,19 @@ const TodoBoard = () => {
         const newItems = [...lane.items]
         newItems[index].completed = !newItems[index].completed
         return { ...lane, items: newItems }
+      }
+      return lane
+    })
+    saveData(newLanes)
+  }
+
+  const handleToggleImportant = (laneTitle, index) => {
+    const newLanes = lanes.map((lane) => {
+      if (lane.title === laneTitle) {
+        const newItems = lane.items.map((item, i) =>
+          i === index ? { ...item, important: !item.important } : item
+        )
+        return { ...lane, items: pinImportant(newItems) }
       }
       return lane
     })
@@ -355,6 +420,7 @@ const TodoBoard = () => {
             items={lane.items}
             onAddItem={handleAddItem}
             onToggleItem={handleToggleItem}
+            onToggleImportant={handleToggleImportant}
             onDeleteItem={handleDeleteItem}
             onRenameLane={handleRenameLane}
             onDeleteLane={handleDeleteLane}

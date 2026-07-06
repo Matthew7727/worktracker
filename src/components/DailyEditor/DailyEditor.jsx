@@ -13,6 +13,7 @@ const DailyEditor = () => {
     setCurrentDate,
     weekStatus,
     streams,
+    streamDefs,
     dayStatus,
     setDayStatus,
     dayNote,
@@ -55,6 +56,7 @@ const DailyEditor = () => {
         currentDate={currentDate}
         onSelectDay={setCurrentDate}
         weekStatus={weekStatus}
+        streams={streamDefs}
         onQuickSetDayStatus={quickSetDayStatus}
       />
 
@@ -99,6 +101,7 @@ const DailyEditor = () => {
       {viewMode === 'summary' && dayStatus === 'working' && (
         <SummaryView
           streams={streams}
+          streamDefs={streamDefs}
           projectEntries={projectEntries}
           onEdit={() => {
             setCurrentStep(0)

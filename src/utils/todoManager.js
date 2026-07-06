@@ -6,7 +6,8 @@ import { getDailyFilePath } from './fileHelpers'
  * @property {string} id - Unique ID (timestamp + random)
  * @property {string} text - Task content
  * @property {boolean} completed - Is checked
- * @property {string} originalLine - Original markdown line for preservation (optional)
+ * @property {string|null} createdAt - ISO date the todo was created (survives rollover)
+ * @property {boolean} important - Flagged as important
  */
 
 /**
@@ -15,6 +16,28 @@ import { getDailyFilePath } from './fileHelpers'
  * @property {string} title - Lane header (e.g. "To Do")
  * @property {TodoItem[]} items - List of tasks
  */
+
+export const AGE_WARN_DAYS = 3
+export const AGE_URGENT_DAYS = 7
+
+/** Days since the todo was created (0 for today, null when unknown). */
+export const getTodoAge = (item, now = new Date()) => {
+  if (!item.createdAt) return null
+  const created = new Date(item.createdAt)
+  if (isNaN(created.getTime())) return null
+  const diff = Math.floor(
+    (new Date(now.toISOString().split('T')[0]) - new Date(item.createdAt)) /
+      86400000
+  )
+  return Math.max(0, diff)
+}
+
+export const getAgeSeverity = (age) => {
+  if (age === null) return 'none'
+  if (age >= AGE_URGENT_DAYS) return 'urgent'
+  if (age >= AGE_WARN_DAYS) return 'warn'
+  return 'fresh'
+}
 
 /**
  * Generates the specific path for todo files: YYYY-MM-DD-todos.md
@@ -43,6 +66,11 @@ export const loadDailyTodos = async (rootDir, date) => {
   return await checkForRollover(rootDir, date)
 }
 
+const getDateFromTodoPath = (path) => {
+  const basename = path.split(/[\\/]/).pop()
+  return basename.replace('-todos.md', '')
+}
+
 const checkForRollover = async (rootDir, date) => {
   // 1. List all todo files
   const result = await window.electronAPI.listAllFiles(rootDir)
@@ -53,15 +81,9 @@ const checkForRollover = async (rootDir, date) => {
 
   if (todoFiles.length === 0) return getDefaultLanes()
 
-  // 3. Find the most recent file before today
+  // 3. Find the most recent file before today (ISO dates sort lexicographically)
   const todayPath = getTodoFilePath(rootDir, date)
-  // Sort descending
   todoFiles.sort().reverse()
-
-  // Find the first file that is "less than" today's path (lexicographical sort works for YYYY-MM-DD)
-  // Note: We need to be careful with paths. Let's simplify and just look for the first file that isn't today.
-  // Since we filtered for *-todos.md and sorted desc, the first one that isn't today is likely the most recent previous.
-  // Ideally we parse dates, but string comparison is robust for ISO dates.
 
   const previousFile = todoFiles.find((f) => f < todayPath)
 
@@ -72,17 +94,12 @@ const checkForRollover = async (rootDir, date) => {
   if (!prevResult.success) return getDefaultLanes()
 
   const prevLanes = parseTodoMarkdown(prevResult.data)
+  const prevFileDate = getDateFromTodoPath(previousFile)
 
-  // 5. Migrate incomplete tasks
-  // We want to preserve the lane titles.
-  // If a lane exists in the previous file and has incomplete tasks, we create it in the new file.
-
-  // Start with default "General" or empty?
-  // Let's start empty to only carry over relevant lanes, but if nothing carries over we want at least "General".
-  let newLanesMap = new Map() // title -> items array
-
-  // Initialize with default lanes if we want to ensure "General" always exists?
-  // Let's just use the default lanes as a base, then merge.
+  // 5. Migrate incomplete tasks, preserving lane titles and metadata.
+  // Items with no created date inherit the source file's date so their age
+  // is tracked from the last day we know they existed.
+  const newLanesMap = new Map() // title -> items array
   const defaults = getDefaultLanes()
   defaults.forEach((l) => newLanesMap.set(l.title, [...l.items]))
 
@@ -90,7 +107,6 @@ const checkForRollover = async (rootDir, date) => {
   prevLanes.forEach((lane) => {
     const incompleteItems = lane.items.filter((i) => !i.completed)
     if (incompleteItems.length > 0) {
-      // Get or create lane in new map
       if (!newLanesMap.has(lane.title)) {
         newLanesMap.set(lane.title, [])
       }
@@ -99,7 +115,7 @@ const checkForRollover = async (rootDir, date) => {
       incompleteItems.forEach((item) => {
         existingItems.push({
           ...item,
-          text: `(Rollover) ${item.text}`,
+          createdAt: item.createdAt || prevFileDate,
         })
         rolloverCount++
       })
@@ -134,13 +150,46 @@ export const saveDailyTodos = async (rootDir, date, lanes) => {
 const getDefaultLanes = () => [{ title: 'General', items: [] }]
 
 /**
+ * Extracts `{created:YYYY-MM-DD !important}` metadata from a todo line.
+ * The braces block stays human-readable in the raw markdown.
+ */
+export const parseTodoText = (raw) => {
+  let text = raw
+  let createdAt = null
+  let important = false
+
+  const metaMatch = text.match(/\s*\{([^{}]*)\}\s*$/)
+  if (metaMatch) {
+    const meta = metaMatch[1]
+    const createdMatch = meta.match(/created:(\d{4}-\d{2}-\d{2})/)
+    if (createdMatch) createdAt = createdMatch[1]
+    important = /!important/.test(meta)
+    if (createdMatch || important) {
+      text = text.slice(0, metaMatch.index).trim()
+    }
+  }
+
+  // Old rollovers prefixed the text; the age chip replaces that now
+  text = text.replace(/^(\(Rollover\)\s*)+/, '')
+
+  return { text, createdAt, important }
+}
+
+export const serializeTodoText = (item) => {
+  const meta = []
+  if (item.createdAt) meta.push(`created:${item.createdAt}`)
+  if (item.important) meta.push('!important')
+  return meta.length > 0 ? `${item.text} {${meta.join(' ')}}` : item.text
+}
+
+/**
  * Parses markdown into lanes.
  * Format:
  * # Lane Title
- * - [ ] Task
+ * - [ ] Task {created:2026-07-06 !important}
  * - [x] Completed Task
  */
-const parseTodoMarkdown = (content) => {
+export const parseTodoMarkdown = (content) => {
   const lines = content.split('\n')
   const lanes = []
   let currentLane = null
@@ -158,11 +207,15 @@ const parseTodoMarkdown = (content) => {
     } else if (trimmed.startsWith('- [') && currentLane) {
       // Task Item
       const isCompleted = trimmed.startsWith('- [x]')
-      const text = trimmed.substring(5).trim()
+      const { text, createdAt, important } = parseTodoText(
+        trimmed.substring(5).trim()
+      )
       currentLane.items.push({
         id: Date.now().toString(36) + Math.random().toString(36).substr(2),
         text,
         completed: isCompleted,
+        createdAt,
+        important,
       })
     }
   })
@@ -190,6 +243,7 @@ export const getTodoStats = async (rootDir) => {
     today: { total: 0, completed: 0, byCategory: [] },
     month: { completed: 0 },
     year: { completed: 0 },
+    allTimeCompleted: 0,
   }
 
   const now = new Date()
@@ -204,9 +258,6 @@ export const getTodoStats = async (rootDir) => {
     return new Date(datePart)
   }
 
-  // Parallel-ish loading (limited by electron bridge, but we can try Promise.all)
-  // For performance, we might want to limit this or only read recent files.
-  // For now, let's read all. If it gets slow, we optimize.
   const filePromises = todoFiles.map(async (filePath) => {
     const fileRes = await window.electronAPI.readFile(filePath)
     if (!fileRes.success) return null
@@ -237,6 +288,7 @@ export const getTodoStats = async (rootDir) => {
       })
     }
 
+    stats.allTimeCompleted += fileCompleted
     if (date.getFullYear() === currentYear) {
       stats.year.completed += fileCompleted
       if (date.getMonth() === currentMonth) {
@@ -256,7 +308,7 @@ const serializeTodoMarkdown = (lanes) => {
       const header = `# ${lane.title}`
       const items = lane.items
         .map((item) => {
-          return `- [${item.completed ? 'x' : ' '}] ${item.text}`
+          return `- [${item.completed ? 'x' : ' '}] ${serializeTodoText(item)}`
         })
         .join('\n')
       return `${header}\n${items}`

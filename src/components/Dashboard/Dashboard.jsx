@@ -1,12 +1,22 @@
 import React from 'react'
-import { Box, Skeleton, Fade, Divider } from '@mui/material'
+import { Box, Skeleton, Fade, Divider, Typography } from '@mui/material'
 import useDashboardData from './hooks/useDashboardData'
+import { useAppContext } from '../../context/AppContext'
 import HeroStatement from './components/HeroStatement'
 import StreamAlignment from './components/StreamAlignment'
 import ContributionGraph from './ContributionGraph'
 import RecentAccomplishments from './components/RecentAccomplishments'
 import ProjectsSummary from './components/ProjectsSummary'
-import { Typography } from '@mui/material'
+import NeedsAttention from './components/NeedsAttention'
+import MomentumTrends from './components/MomentumTrends'
+import LockedTile from './components/LockedTile'
+
+// The dashboard grows with the workspace: widgets unlock as more days are
+// logged, so a fresh workspace stays simple and a mature one gets richer.
+const UNLOCKS = {
+  journey: 7, // contribution graph
+  momentum: 14, // 8-week trends + comparison
+}
 
 const SectionLabel = ({ children }) => (
   <Typography
@@ -23,9 +33,18 @@ const SectionLabel = ({ children }) => (
   </Typography>
 )
 
+const SectionDivider = () => (
+  <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
+)
+
 const Dashboard = () => {
   const { stats, projects, allEntries, utilisationTarget, loading } =
     useDashboardData()
+  const { streamConfig } = useAppContext()
+
+  const days = stats.totalDays
+  const journeyUnlocked = days >= UNLOCKS.journey
+  const momentumUnlocked = days >= UNLOCKS.momentum
 
   return (
     <Fade in={true} timeout={600}>
@@ -59,7 +78,10 @@ const Dashboard = () => {
           )}
         </Box>
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
+        <SectionDivider />
+
+        {/* ── Needs Attention (important + ageing todos) ── */}
+        <NeedsAttention />
 
         {/* ── Weekly Intensity + Stream Alignment ── */}
         <StreamAlignment
@@ -69,9 +91,26 @@ const Dashboard = () => {
           loading={loading}
         />
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
+        <SectionDivider />
 
-        {/* ── The Journey ── */}
+        {/* ── Momentum (unlocks at 14 logged days) ── */}
+        {!loading && (
+          <>
+            {momentumUnlocked ? (
+              <MomentumTrends entries={allEntries} />
+            ) : (
+              <LockedTile
+                title="Momentum Trends"
+                requirement={`Log ${UNLOCKS.momentum - days} more day${UNLOCKS.momentum - days === 1 ? '' : 's'} to unlock your 8-week momentum view.`}
+                current={days}
+                target={UNLOCKS.momentum}
+              />
+            )}
+            <SectionDivider />
+          </>
+        )}
+
+        {/* ── The Journey (unlocks at 7 logged days) ── */}
         <Box>
           <SectionLabel>The Journey</SectionLabel>
           {loading ? (
@@ -80,12 +119,22 @@ const Dashboard = () => {
               height={150}
               sx={{ borderRadius: 4 }}
             />
+          ) : journeyUnlocked ? (
+            <ContributionGraph
+              entries={allEntries}
+              streams={streamConfig?.streams || []}
+            />
           ) : (
-            <ContributionGraph entries={allEntries} />
+            <LockedTile
+              title="The Journey"
+              requirement={`Log ${UNLOCKS.journey - days} more day${UNLOCKS.journey - days === 1 ? '' : 's'} to unlock your year-at-a-glance map.`}
+              current={days}
+              target={UNLOCKS.journey}
+            />
           )}
         </Box>
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
+        <SectionDivider />
 
         {/* ── Recent Accomplishments ── */}
         <Box>
@@ -100,7 +149,7 @@ const Dashboard = () => {
           )}
         </Box>
 
-        <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
+        <SectionDivider />
 
         {/* ── Current Priorities ── */}
         <Box>

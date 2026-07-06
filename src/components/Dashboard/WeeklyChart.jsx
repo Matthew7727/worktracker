@@ -1,11 +1,6 @@
 import React from 'react'
 import { Box, Typography, Stack, Tooltip } from '@mui/material'
-
-const STREAM_COLORS = {
-  clientWork: '#80b621',
-  practiceDevelopment: '#ffd166',
-  businessDevelopment: '#eb8449',
-}
+import { getStreamAbbrev } from '../../utils/streamConfig'
 
 const getCurrentWeekDays = () => {
   const today = new Date()
@@ -26,29 +21,29 @@ const getCurrentWeekDays = () => {
   })
 }
 
-const WeeklyChart = ({ entries }) => {
+const WeeklyChart = ({ entries, streams = [] }) => {
   const weekDays = getCurrentWeekDays()
   const dateMap = new Map(weekDays.map((d, i) => [d.dateStr, i]))
 
-  const streamTally = weekDays.map(() => ({
-    clientWork: 0,
-    practiceDevelopment: 0,
-    businessDevelopment: 0,
-  }))
+  const streamTally = weekDays.map(() => {
+    const tally = {}
+    streams.forEach((s) => {
+      tally[s.id] = 0
+    })
+    return tally
+  })
 
   entries.forEach((entry) => {
     if (dateMap.has(entry.date) && entry.streamCounts) {
       const index = dateMap.get(entry.date)
-      streamTally[index].clientWork += entry.streamCounts.clientWork
-      streamTally[index].practiceDevelopment +=
-        entry.streamCounts.practiceDevelopment
-      streamTally[index].businessDevelopment +=
-        entry.streamCounts.businessDevelopment
+      streams.forEach((s) => {
+        streamTally[index][s.id] += entry.streamCounts[s.id] || 0
+      })
     }
   })
 
-  const dailyTotals = streamTally.map(
-    (s) => s.clientWork + s.practiceDevelopment + s.businessDevelopment
+  const dailyTotals = streamTally.map((tally) =>
+    Object.values(tally).reduce((a, b) => a + b, 0)
   )
   const maxTotal = Math.max(...dailyTotals, 1)
   const hasAnyData = dailyTotals.some((t) => t > 0)
@@ -73,6 +68,10 @@ const WeeklyChart = ({ entries }) => {
     )
   }
 
+  // Render stacked segments bottom-up in stream order (reversed so the
+  // first stream sits at the bottom of the bar)
+  const stackedStreams = [...streams].reverse()
+
   return (
     <Box
       sx={{
@@ -85,7 +84,7 @@ const WeeklyChart = ({ entries }) => {
         pt: 2,
       }}
     >
-      {streamTally.map((streams, index) => (
+      {streamTally.map((tally, index) => (
         <Stack
           key={index}
           spacing={1}
@@ -98,24 +97,15 @@ const WeeklyChart = ({ entries }) => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
                   {weekDays[index].label}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: STREAM_COLORS.clientWork }}
-                >
-                  CW: {streams.clientWork} words
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: STREAM_COLORS.practiceDevelopment }}
-                >
-                  PD: {streams.practiceDevelopment} words
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: STREAM_COLORS.businessDevelopment }}
-                >
-                  BD: {streams.businessDevelopment} words
-                </Typography>
+                {streams.map((s) => (
+                  <Typography
+                    key={s.id}
+                    variant="body2"
+                    sx={{ color: s.color }}
+                  >
+                    {getStreamAbbrev(s)}: {tally[s.id]} words
+                  </Typography>
+                ))}
               </Box>
             }
             arrow
@@ -143,24 +133,9 @@ const WeeklyChart = ({ entries }) => {
                 },
               }}
             >
-              <Box
-                sx={{
-                  flex: streams.businessDevelopment,
-                  bgcolor: STREAM_COLORS.businessDevelopment,
-                }}
-              />
-              <Box
-                sx={{
-                  flex: streams.practiceDevelopment,
-                  bgcolor: STREAM_COLORS.practiceDevelopment,
-                }}
-              />
-              <Box
-                sx={{
-                  flex: streams.clientWork,
-                  bgcolor: STREAM_COLORS.clientWork,
-                }}
-              />
+              {stackedStreams.map((s) => (
+                <Box key={s.id} sx={{ flex: tally[s.id], bgcolor: s.color }} />
+              ))}
             </Box>
           </Tooltip>
           <Typography

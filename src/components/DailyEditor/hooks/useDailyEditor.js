@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAppContext } from '../../../context/AppContext'
 import { getDailyFilePath } from '../../../utils/fileHelpers'
@@ -10,20 +10,42 @@ import {
   stringifyProjectEntries,
   parseStreamProjects,
 } from '../../../utils/markdownParser'
-import { loadProjects } from '../../../utils/projectsManager'
+import {
+  loadProjects,
+  groupProjectsByStream,
+} from '../../../utils/projectsManager'
+import { getProjectsByStream } from '../../../utils/DataManager'
 import { loadDailyTodos } from '../../../utils/todoManager'
 import { getWeekDays, getDefaultDate } from '../utils/weekDays'
-import { PROJECT_TYPE_COLORS } from '../constants'
 
-const EMPTY_STREAMS = {
-  clientWork: '',
-  practiceDevelopment: '',
-  businessDevelopment: '',
+// Legacy stream ids that older app versions understand via dedicated
+// frontmatter keys. We keep writing those keys alongside the generic
+// `projects` map so a not-yet-updated install reading the same synced
+// folder stays compatible.
+const LEGACY_FRONTMATTER_STREAMS = {
+  clientWork: 'clientProjects',
+  practiceDevelopment: 'pdActivities',
+  businessDevelopment: 'bdActivities',
 }
 
 export const useDailyEditor = () => {
-  const { selectedDirectory, showNotification } = useAppContext()
+  const { selectedDirectory, showNotification, streamConfig, streams } =
+    useAppContext()
   const location = useLocation()
+
+  // All configured streams (including archived) — used when parsing history
+  const allStreams = useMemo(
+    () => streamConfig?.streams || streams,
+    [streamConfig, streams]
+  )
+
+  const emptyStreams = useMemo(() => {
+    const obj = {}
+    allStreams.forEach((s) => {
+      obj[s.id] = ''
+    })
+    return obj
+  }, [allStreams])
 
   const [currentDate, setCurrentDate] = useState(() => {
     if (location.state?.initialDate) {
@@ -33,7 +55,7 @@ export const useDailyEditor = () => {
   })
 
   const [weekStatus, setWeekStatus] = useState({})
-  const [streams, setStreams] = useState(EMPTY_STREAMS)
+  const [streamContents, setStreamContents] = useState(emptyStreams)
   const [dayStatus, setDayStatus] = useState('working')
   const [dayNote, setDayNote] = useState('')
 
@@ -42,15 +64,19 @@ export const useDailyEditor = () => {
   const [selectedFlowProjects, setSelectedFlowProjects] = useState([])
   const [todayTodos, setTodayTodos] = useState([])
 
-  const [availableProjects, setAvailableProjects] = useState({
-    clientWork: [],
-    practiceDevelopment: [],
-    businessDevelopment: [],
-  })
+  const [availableByStream, setAvailableByStream] = useState({})
   const [viewMode, setViewMode] = useState('start')
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  const streamById = useMemo(() => {
+    const map = {}
+    allStreams.forEach((s) => {
+      map[s.id] = s
+    })
+    return map
+  }, [allStreams])
 
   // Handle navigation to editor with autoStartFlow flag (from tray widget)
   useEffect(() => {
@@ -62,40 +88,28 @@ export const useDailyEditor = () => {
 
   // Load active projects and activities for selection chips
   useEffect(() => {
-    if (!selectedDirectory) return
+    if (!selectedDirectory || !streamConfig) return
     loadProjects(selectedDirectory).then((data) => {
-      setAvailableProjects({
-        clientWork: (data.clientProjects || [])
+      const { byStream } = groupProjectsByStream(data, streamConfig)
+      const active = {}
+      Object.entries(byStream).forEach(([streamId, projects]) => {
+        active[streamId] = projects
           .filter((p) => p.status === 'active')
-          .map((p) => p.title),
-        practiceDevelopment: (data.activities || [])
-          .filter((a) => a.type === 'PD' && a.status === 'active')
-          .map((a) => a.title),
-        businessDevelopment: (data.activities || [])
-          .filter((a) => a.type === 'BD' && a.status === 'active')
-          .map((a) => a.title),
+          .map((p) => p.title)
       })
+      setAvailableByStream(active)
     })
-  }, [selectedDirectory])
+  }, [selectedDirectory, streamConfig])
 
-  // Flat list of all available projects with type and color metadata
-  const allAvailableProjects = [
-    ...availableProjects.clientWork.map((title) => ({
+  // Flat list of all available projects with stream metadata
+  const allAvailableProjects = streams.flatMap((stream) =>
+    (availableByStream[stream.id] || []).map((title) => ({
       title,
-      type: 'client',
-      color: PROJECT_TYPE_COLORS.client,
-    })),
-    ...availableProjects.practiceDevelopment.map((title) => ({
-      title,
-      type: 'pd',
-      color: PROJECT_TYPE_COLORS.pd,
-    })),
-    ...availableProjects.businessDevelopment.map((title) => ({
-      title,
-      type: 'bd',
-      color: PROJECT_TYPE_COLORS.bd,
-    })),
-  ]
+      streamId: stream.id,
+      streamName: stream.name,
+      color: stream.color,
+    }))
+  )
 
   // Per-project entries for the summary view (new format)
   const projectEntries = selectedFlowProjects
@@ -112,26 +126,22 @@ export const useDailyEditor = () => {
         const key = day.toISOString().split('T')[0]
         const filePath = getDailyFilePath(selectedDirectory, day)
         const result = await window.electronAPI.readFile(filePath)
+        const filled = {}
+        allStreams.forEach((s) => {
+          filled[s.id] = false
+        })
         if (result.success) {
           const { frontmatter, body } = parseMarkdown(result.data)
-          const parsed = parseStreams(body)
+          const parsed = parseStreams(body, allStreams)
+          allStreams.forEach((s) => {
+            filled[s.id] = !!(parsed[s.id] && parsed[s.id].trim())
+          })
           status[key] = {
-            clientWork: !!(parsed.clientWork && parsed.clientWork.trim()),
-            practiceDevelopment: !!(
-              parsed.practiceDevelopment && parsed.practiceDevelopment.trim()
-            ),
-            businessDevelopment: !!(
-              parsed.businessDevelopment && parsed.businessDevelopment.trim()
-            ),
+            filled,
             dayStatus: frontmatter.dayStatus || 'working',
           }
         } else {
-          status[key] = {
-            clientWork: false,
-            practiceDevelopment: false,
-            businessDevelopment: false,
-            dayStatus: 'working',
-          }
+          status[key] = { filled, dayStatus: 'working' }
         }
       })
     )
@@ -140,12 +150,12 @@ export const useDailyEditor = () => {
 
   useEffect(() => {
     loadWeekStatus()
-  }, [selectedDirectory]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDirectory, streamConfig]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load entry data for the selected date
   useEffect(() => {
     const loadDailyData = async () => {
-      if (!selectedDirectory) return
+      if (!selectedDirectory || !streamConfig) return
       setIsLoading(true)
       try {
         const filePath = getDailyFilePath(selectedDirectory, currentDate)
@@ -153,52 +163,37 @@ export const useDailyEditor = () => {
 
         if (fileResult.success) {
           const { frontmatter, body } = parseMarkdown(fileResult.data)
-          const parsedStreams = parseStreams(body)
-          setStreams(parsedStreams)
+          const parsedStreams = parseStreams(body, allStreams)
+          setStreamContents(parsedStreams)
           setDayStatus(frontmatter.dayStatus || 'working')
           setDayNote(frontmatter.dayNote || '')
 
-          // Populate selectedFlowProjects from frontmatter tags
-          const flowProjects = [
-            ...(frontmatter.clientProjects || []).map((t) => ({
-              title: t,
-              type: 'client',
-              color: PROJECT_TYPE_COLORS.client,
-            })),
-            ...(frontmatter.pdActivities || []).map((t) => ({
-              title: t,
-              type: 'pd',
-              color: PROJECT_TYPE_COLORS.pd,
-            })),
-            ...(frontmatter.bdActivities || []).map((t) => ({
-              title: t,
-              type: 'bd',
-              color: PROJECT_TYPE_COLORS.bd,
-            })),
-          ]
+          // Populate selectedFlowProjects from frontmatter (generic map
+          // with legacy-key fallback)
+          const byStream = getProjectsByStream(frontmatter)
+          const flowProjects = Object.entries(byStream).flatMap(
+            ([streamId, titles]) => {
+              const stream = streamById[streamId]
+              if (!stream) return []
+              return titles.map((title) => ({
+                title,
+                streamId,
+                streamName: stream.name,
+                color: stream.color,
+              }))
+            }
+          )
           setSelectedFlowProjects(flowProjects)
 
           // Try to parse per-project drafts from ## subheadings (new format)
           const drafts = {}
-          const clientProjects = parseStreamProjects(parsedStreams.clientWork)
-          if (clientProjects)
-            clientProjects.forEach((p) => {
-              drafts[p.title] = p.content
-            })
-          const pdProjects = parseStreamProjects(
-            parsedStreams.practiceDevelopment
-          )
-          if (pdProjects)
-            pdProjects.forEach((p) => {
-              drafts[p.title] = p.content
-            })
-          const bdProjects = parseStreamProjects(
-            parsedStreams.businessDevelopment
-          )
-          if (bdProjects)
-            bdProjects.forEach((p) => {
-              drafts[p.title] = p.content
-            })
+          allStreams.forEach((s) => {
+            const projects = parseStreamProjects(parsedStreams[s.id])
+            if (projects)
+              projects.forEach((p) => {
+                drafts[p.title] = p.content
+              })
+          })
           setProjectDrafts(drafts)
 
           const hasData =
@@ -211,7 +206,7 @@ export const useDailyEditor = () => {
             setViewMode(hasData ? 'summary' : 'start')
           }
         } else {
-          setStreams(EMPTY_STREAMS)
+          setStreamContents(emptyStreams)
           setSelectedFlowProjects([])
           setProjectDrafts({})
           setDayStatus('working')
@@ -229,7 +224,27 @@ export const useDailyEditor = () => {
       }
     }
     loadDailyData()
-  }, [currentDate, selectedDirectory, location.state?.autoStartFlow])
+  }, [
+    currentDate,
+    selectedDirectory,
+    streamConfig,
+    location.state?.autoStartFlow,
+  ])
+
+  const buildProjectsFrontmatter = (flowProjects) => {
+    const projects = {}
+    flowProjects.forEach((p) => {
+      if (!projects[p.streamId]) projects[p.streamId] = []
+      projects[p.streamId].push(p.title)
+    })
+    const frontmatter = { projects }
+    Object.entries(LEGACY_FRONTMATTER_STREAMS).forEach(([streamId, key]) => {
+      if (streamById[streamId]) {
+        frontmatter[key] = projects[streamId] || []
+      }
+    })
+    return frontmatter
+  }
 
   const handleSaveDay = async () => {
     if (!selectedDirectory) return
@@ -241,23 +256,15 @@ export const useDailyEditor = () => {
         ...p,
         content: projectDrafts[p.title] || '',
       }))
-      const body = stringifyProjectEntries(projectList)
+      const body = stringifyProjectEntries(projectList, allStreams)
 
       // Update streams so weekStatus and legacy summary stay in sync
-      setStreams(parseStreams(body || ''))
+      setStreamContents(parseStreams(body || '', allStreams))
 
       const frontmatter = {
         date: currentDate.toISOString().split('T')[0],
         lastModified: new Date().toISOString(),
-        clientProjects: selectedFlowProjects
-          .filter((p) => p.type === 'client')
-          .map((p) => p.title),
-        pdActivities: selectedFlowProjects
-          .filter((p) => p.type === 'pd')
-          .map((p) => p.title),
-        bdActivities: selectedFlowProjects
-          .filter((p) => p.type === 'bd')
-          .map((p) => p.title),
+        ...buildProjectsFrontmatter(selectedFlowProjects),
         dayStatus: 'working',
       }
 
@@ -287,13 +294,11 @@ export const useDailyEditor = () => {
     setIsSaving(true)
     try {
       const filePath = getDailyFilePath(selectedDirectory, currentDate)
-      const body = stringifyStreams(EMPTY_STREAMS)
+      const body = stringifyStreams(emptyStreams, allStreams)
       const frontmatter = {
         date: currentDate.toISOString().split('T')[0],
         lastModified: new Date().toISOString(),
-        clientProjects: [],
-        pdActivities: [],
-        bdActivities: [],
+        ...buildProjectsFrontmatter([]),
         dayStatus: status,
         dayNote: note,
       }
@@ -302,7 +307,7 @@ export const useDailyEditor = () => {
       const result = await window.electronAPI.writeFile(filePath, fileContent)
 
       if (result.success) {
-        setStreams(EMPTY_STREAMS)
+        setStreamContents(emptyStreams)
         setSelectedFlowProjects([])
         setProjectDrafts({})
         setDayStatus(status)
@@ -329,11 +334,9 @@ export const useDailyEditor = () => {
 
     let frontmatter = {
       date: date.toISOString().split('T')[0],
-      clientProjects: [],
-      pdActivities: [],
-      bdActivities: [],
+      ...buildProjectsFrontmatter([]),
     }
-    let body = stringifyStreams(EMPTY_STREAMS)
+    let body = ''
 
     if (existing.success) {
       const parsed = parseMarkdown(existing.data)
@@ -374,7 +377,9 @@ export const useDailyEditor = () => {
     currentDate,
     setCurrentDate,
     weekStatus,
-    streams,
+    streams: streamContents,
+    streamDefs: allStreams,
+    activeStreams: streams,
     dayStatus,
     setDayStatus,
     dayNote,

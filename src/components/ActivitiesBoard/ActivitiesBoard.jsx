@@ -8,14 +8,14 @@ import {
   createActivity,
   createClientProject,
   createTask,
+  getActivityStreamId,
 } from '../../utils/projectsManager'
+import { getStreamAbbrev } from '../../utils/streamConfig'
 import ActivityCard from './components/ActivityCard'
 import ClientProjectsList from './components/ClientProjectsList'
 import AddActivityDialog from './components/AddActivityDialog'
 import AddClientProjectDialog from './components/AddClientProjectDialog'
 import { sectionHeaderStyles, filterTabStyles } from './ActivitiesBoard.styles'
-
-const ACTIVITY_FILTERS = ['ALL', 'PD', 'BD']
 
 // ── Local shared components ───────────────────────────────────────────────────
 
@@ -104,11 +104,27 @@ const ActivityGrid = ({ children }) => (
 // ── Board ─────────────────────────────────────────────────────────────────────
 
 const ActivitiesBoard = () => {
-  const { selectedDirectory } = useAppContext()
+  const { selectedDirectory, streamConfig, streams, mainFocusStream } =
+    useAppContext()
   const [data, setData] = useState({ activities: [], clientProjects: [] })
   const [activityFilter, setActivityFilter] = useState('ALL')
   const [addActivityOpen, setAddActivityOpen] = useState(false)
   const [addProjectOpen, setAddProjectOpen] = useState(false)
+
+  const projectHierarchy = !!streamConfig?.features?.projectHierarchy
+
+  // Streams whose work is tracked as activities (everything except the
+  // main focus when it has its own project pipeline)
+  const activityStreams = streams.filter(
+    (s) => !(projectHierarchy && s.id === mainFocusStream?.id)
+  )
+  const streamById = Object.fromEntries(
+    (streamConfig?.streams || []).map((s) => [
+      s.id,
+      { ...s, abbrev: getStreamAbbrev(s) },
+    ])
+  )
+  const getStreamFor = (activity) => streamById[getActivityStreamId(activity)]
 
   useEffect(() => {
     if (!selectedDirectory) return
@@ -266,7 +282,8 @@ const ActivitiesBoard = () => {
 
   // ── Derived ────────────────────────────────────────────────────────────
 
-  const typeMatch = (a) => activityFilter === 'ALL' || a.type === activityFilter
+  const typeMatch = (a) =>
+    activityFilter === 'ALL' || getActivityStreamId(a) === activityFilter
   const activeActivities = data.activities.filter(
     (a) => a.status === 'active' && typeMatch(a)
   )
@@ -282,28 +299,32 @@ const ActivitiesBoard = () => {
         Projects & Activities
       </Typography>
 
-      {/* ── Client Projects ── */}
-      <Box sx={{ mb: 5 }}>
-        <SectionHeader
-          title="Client Projects"
-          subtitle="Track what client work you're doing and have done."
-        >
-          <AddButton
-            label="Add Project"
-            onClick={() => setAddProjectOpen(true)}
-          />
-        </SectionHeader>
+      {/* ── Main focus project pipeline ── */}
+      {projectHierarchy && (
+        <>
+          <Box sx={{ mb: 5 }}>
+            <SectionHeader
+              title={`${mainFocusStream?.name || 'Main Focus'} Projects`}
+              subtitle={`Track what ${mainFocusStream?.name || 'main focus'} you're doing and have done.`}
+            >
+              <AddButton
+                label="Add Project"
+                onClick={() => setAddProjectOpen(true)}
+              />
+            </SectionHeader>
 
-        <ClientProjectsList
-          projects={data.clientProjects}
-          onToggleStatus={handleToggleClientProjectStatus}
-          onDelete={handleDeleteClientProject}
-          onRename={handleRenameClientProject}
-          taskHandlers={clientProjectTaskHandlers}
-        />
-      </Box>
+            <ClientProjectsList
+              projects={data.clientProjects}
+              onToggleStatus={handleToggleClientProjectStatus}
+              onDelete={handleDeleteClientProject}
+              onRename={handleRenameClientProject}
+              taskHandlers={clientProjectTaskHandlers}
+            />
+          </Box>
 
-      <Divider sx={{ mb: 5 }} />
+          <Divider sx={{ mb: 5 }} />
+        </>
+      )}
 
       {/* ── Activities ── */}
       <Box sx={{ mb: 5 }}>
@@ -315,29 +336,28 @@ const ActivitiesBoard = () => {
         </SectionHeader>
 
         {/* Filter tabs */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-          {ACTIVITY_FILTERS.map((f) => {
-            const config = {
-              ALL: { bg: 'text.primary', fg: 'background.default' },
-              PD: { bg: '#ffd166', fg: '#000000' },
-              BD: { bg: '#eb8449', fg: '#000000' },
-            }[f]
-
-            return (
-              <Box
-                key={f}
-                component="button"
-                onClick={() => setActivityFilter(f)}
-                sx={filterTabStyles(activityFilter === f, config.bg, config.fg)}
-              >
-                {f === 'ALL'
-                  ? 'All'
-                  : f === 'PD'
-                    ? 'Practice Dev'
-                    : 'Business Dev'}
-              </Box>
-            )
-          })}
+        <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+          <Box
+            component="button"
+            onClick={() => setActivityFilter('ALL')}
+            sx={filterTabStyles(
+              activityFilter === 'ALL',
+              'text.primary',
+              'background.default'
+            )}
+          >
+            All
+          </Box>
+          {activityStreams.map((s) => (
+            <Box
+              key={s.id}
+              component="button"
+              onClick={() => setActivityFilter(s.id)}
+              sx={filterTabStyles(activityFilter === s.id, s.color, '#000000')}
+            >
+              {s.name}
+            </Box>
+          ))}
         </Box>
 
         {activeActivities.length === 0 && archivedActivities.length === 0 ? (
@@ -374,6 +394,7 @@ const ActivitiesBoard = () => {
                   <ActivityCard
                     key={activity.id}
                     activity={activity}
+                    stream={getStreamFor(activity)}
                     onAddTask={(text) =>
                       activityTaskHandlers.onAddTask(activity.id, text)
                     }
@@ -444,6 +465,7 @@ const ActivitiesBoard = () => {
                     <ActivityCard
                       key={activity.id}
                       activity={activity}
+                      stream={getStreamFor(activity)}
                       onDelete={() => handleDeleteActivity(activity.id)}
                     />
                   ))}
@@ -458,6 +480,7 @@ const ActivitiesBoard = () => {
         open={addActivityOpen}
         onClose={() => setAddActivityOpen(false)}
         onAdd={handleAddActivity}
+        streams={activityStreams}
       />
       <AddClientProjectDialog
         open={addProjectOpen}
