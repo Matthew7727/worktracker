@@ -14,7 +14,6 @@ import {
   FolderOpen,
   Assessment,
   MenuBook as DocsIcon,
-  Checklist as ChecklistIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
   Bolt,
   LightMode,
@@ -75,12 +74,6 @@ const MainLayout = ({ children }) => {
       path: '/todos',
       icon: <Bolt />,
       activeColor: '#ffd166',
-    },
-    {
-      label: 'Tasks',
-      path: '/tasks',
-      icon: <ChecklistIcon />,
-      activeColor: '#9c6ade',
     },
     {
       label: 'Workspace',

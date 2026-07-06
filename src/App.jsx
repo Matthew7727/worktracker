@@ -13,7 +13,6 @@ import StreamSetup from './components/Onboarding/StreamSetup'
 import MainLayout from './components/Layout/MainLayout'
 import DailyEditor from './components/DailyEditor/DailyEditor'
 import ActivitiesBoard from './components/ActivitiesBoard/ActivitiesBoard'
-import TodoBoard from './components/TodoBoard/TodoBoard'
 import Dashboard from './components/Dashboard/Dashboard'
 import Reports from './components/Reports/Reports'
 import Settings from './components/Settings/Settings'
@@ -74,7 +73,6 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/editor" element={<DailyEditor />} />
         <Route path="/todos" element={<ActivitiesBoard />} />
-        <Route path="/tasks" element={<TodoBoard />} />
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />

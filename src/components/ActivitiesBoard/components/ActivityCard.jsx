@@ -154,6 +154,7 @@ const ActiveCard = ({
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onToggleTaskImportant,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -304,6 +305,7 @@ const ActiveCard = ({
         onAddTask={onAddTask}
         onToggleTask={onToggleTask}
         onDeleteTask={onDeleteTask}
+        onToggleTaskImportant={onToggleTaskImportant}
         onAddSubtask={onAddSubtask}
         onToggleSubtask={onToggleSubtask}
         onDeleteSubtask={onDeleteSubtask}
@@ -316,7 +318,7 @@ const ActiveCard = ({
             variant="caption"
             sx={{ color: 'text.secondary', fontWeight: 700 }}
           >
-            {completedCount}/{totalCount} tasks complete
+            {completedCount}/{totalCount} todos complete
           </Typography>
         </Box>
       )}

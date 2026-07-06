@@ -15,7 +15,6 @@ import {
   groupProjectsByStream,
 } from '../../../utils/projectsManager'
 import { getProjectsByStream } from '../../../utils/DataManager'
-import { loadDailyTodos } from '../../../utils/todoManager'
 import { getWeekDays, getDefaultDate } from '../utils/weekDays'
 
 // Legacy stream ids that older app versions understand via dedicated
@@ -62,7 +61,6 @@ export const useDailyEditor = () => {
   // Project-centric flow state
   const [projectDrafts, setProjectDrafts] = useState({})
   const [selectedFlowProjects, setSelectedFlowProjects] = useState([])
-  const [todayTodos, setTodayTodos] = useState([])
 
   const [availableByStream, setAvailableByStream] = useState({})
   const [viewMode, setViewMode] = useState('start')
@@ -215,8 +213,6 @@ export const useDailyEditor = () => {
             setViewMode('start')
           }
         }
-        // Load todos for this date as flow reminders
-        loadDailyTodos(selectedDirectory, currentDate).then(setTodayTodos)
       } catch (error) {
         console.error('Failed to load daily data:', error)
       } finally {
@@ -399,6 +395,5 @@ export const useDailyEditor = () => {
     handleSaveDay,
     handleSaveNonWorkingDay,
     quickSetDayStatus,
-    todayTodos,
   }
 }

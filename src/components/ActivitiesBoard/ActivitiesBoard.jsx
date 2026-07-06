@@ -162,6 +162,12 @@ const ActivitiesBoard = () => {
       updateTasks(listKey, itemId, (tasks) =>
         tasks.filter((t) => t.id !== taskId)
       ),
+    onToggleTaskImportant: (itemId, taskId) =>
+      updateTasks(listKey, itemId, (tasks) =>
+        tasks.map((t) =>
+          t.id === taskId ? { ...t, important: !t.important } : t
+        )
+      ),
     onAddSubtask: (itemId, taskId, text) =>
       updateTasks(listKey, itemId, (tasks) =>
         tasks.map((t) =>
@@ -403,6 +409,12 @@ const ActivitiesBoard = () => {
                     }
                     onDeleteTask={(taskId) =>
                       activityTaskHandlers.onDeleteTask(activity.id, taskId)
+                    }
+                    onToggleTaskImportant={(taskId) =>
+                      activityTaskHandlers.onToggleTaskImportant(
+                        activity.id,
+                        taskId
+                      )
                     }
                     onAddSubtask={(taskId, text) =>
                       activityTaskHandlers.onAddSubtask(

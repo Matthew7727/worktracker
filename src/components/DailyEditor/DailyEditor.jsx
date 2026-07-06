@@ -32,7 +32,6 @@ const DailyEditor = () => {
     handleSaveDay,
     handleSaveNonWorkingDay,
     quickSetDayStatus,
-    todayTodos,
   } = useDailyEditor()
 
   if (isLoading) {
@@ -86,7 +85,6 @@ const DailyEditor = () => {
           setCurrentStep={setCurrentStep}
           onBackToSelect={() => setViewMode('start')}
           onSave={handleSaveDay}
-          todayTodos={todayTodos}
         />
       )}
 

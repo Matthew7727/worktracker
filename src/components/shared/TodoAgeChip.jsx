@@ -1,6 +1,6 @@
 import React from 'react'
 import { Chip, Tooltip } from '@mui/material'
-import { getTodoAge, getAgeSeverity } from '../../utils/todoManager'
+import { getItemAge, getAgeSeverity } from '../../utils/ageUtils'
 
 const SEVERITY_STYLES = {
   urgent: { bgcolor: '#d32f2f', color: '#fff' },
@@ -10,7 +10,7 @@ const SEVERITY_STYLES = {
 
 /** Small "how long has this been open" chip: grey <3d, amber 3-6d, red 7d+. */
 const TodoAgeChip = ({ item }) => {
-  const age = getTodoAge(item)
+  const age = getItemAge(item)
   if (age === null) return null
   const severity = getAgeSeverity(age)
   return (

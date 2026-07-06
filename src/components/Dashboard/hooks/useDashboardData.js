@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAppContext } from '../../../context/AppContext'
 import { loadAllEntries } from '../../../utils/DataManager'
 import { loadProjects } from '../../../utils/projectsManager'
-import { getTodoStats } from '../../../utils/todoManager'
 
 const calculateStreaks = (uniqueDates) => {
   if (uniqueDates.length === 0) return 0
@@ -30,7 +29,6 @@ const useDashboardData = () => {
     currentStreak: 0,
     balanceScore: 0,
     streamBreakdown: {},
-    todosCompletedAllTime: 0,
   })
   const [projects, setProjects] = useState({
     activities: [],
@@ -46,15 +44,13 @@ const useDashboardData = () => {
       setLoading(true)
       try {
         const allStreams = streamConfig.streams
-        const [resolvedEntries, projectsData, settings, todoStats] =
-          await Promise.all([
-            loadAllEntries(selectedDirectory, allStreams),
-            loadProjects(selectedDirectory),
-            window.electronAPI?.loadSettings
-              ? window.electronAPI.loadSettings()
-              : Promise.resolve({}),
-            getTodoStats(selectedDirectory),
-          ])
+        const [resolvedEntries, projectsData, settings] = await Promise.all([
+          loadAllEntries(selectedDirectory, allStreams),
+          loadProjects(selectedDirectory),
+          window.electronAPI?.loadSettings
+            ? window.electronAPI.loadSettings()
+            : Promise.resolve({}),
+        ])
 
         if (settings.utilisationTarget !== undefined) {
           setUtilisationTarget(settings.utilisationTarget)
@@ -106,7 +102,6 @@ const useDashboardData = () => {
           currentStreak: calculateStreaks(uniqueDates),
           balanceScore,
           streamBreakdown,
-          todosCompletedAllTime: todoStats.allTimeCompleted || 0,
         })
       } catch (error) {
         console.error('Failed to load dashboard data:', error)

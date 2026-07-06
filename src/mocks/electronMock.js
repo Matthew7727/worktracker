@@ -232,29 +232,9 @@ ${bd}
     mockFiles[`${MOCK_ROOT}/${year}/${month}/${dateStr}.md`] = content
   })
 
-  // ─── Todos ────────────────────────────────────────────────────────────────
+  // ─── Projects & Activities ────────────────────────────────────────────────
 
   const todayParts = fmt(today)
-  const daysAgo = (n) => {
-    const d = new Date(today)
-    d.setDate(d.getDate() - n)
-    return fmt(d).dateStr
-  }
-  mockFiles[
-    `${MOCK_ROOT}/${todayParts.year}/${todayParts.month}/${todayParts.dateStr}-todos.md`
-  ] = `# To Do
-- [ ] Finish the mock implementation {created:${daysAgo(10)} !important}
-- [ ] Verify browser load {created:${daysAgo(4)}}
-- [ ] Send follow-up email {created:${todayParts.dateStr}}
-
-# In Progress
-- [x] Analyse requirements {created:${daysAgo(2)}}
-
-# Done
-- [x] Create plan
-`
-
-  // ─── Projects & Activities ────────────────────────────────────────────────
 
   mockFiles[`${MOCK_ROOT}/projects.json`] = JSON.stringify(
     {

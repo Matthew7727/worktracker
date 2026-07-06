@@ -3,12 +3,13 @@ import { Box, Typography, Stack, Skeleton } from '@mui/material'
 import { Star, NotificationsActive } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../../../context/AppContext'
-import { loadDailyTodos, getTodoAge } from '../../../utils/todoManager'
+import { loadProjects } from '../../../utils/projectsManager'
+import { getItemAge } from '../../../utils/ageUtils'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 
 /**
- * Shows the open todos that most need eyes: important ones first,
- * then the ones that have been hanging around longest.
+ * Shows the open todos (activity tasks) that most need eyes:
+ * important ones first, then the ones that have been hanging around longest.
  */
 const NeedsAttention = () => {
   const { selectedDirectory, refreshTrigger } = useAppContext()
@@ -18,17 +19,19 @@ const NeedsAttention = () => {
   useEffect(() => {
     const load = async () => {
       if (!selectedDirectory) return
-      const lanes = await loadDailyTodos(selectedDirectory, new Date())
-      const open = lanes.flatMap((lane) =>
-        lane.items
-          .filter((i) => !i.completed)
-          .map((i) => ({ ...i, lane: lane.title }))
-      )
-      open.sort((a, b) => {
+      const data = await loadProjects(selectedDirectory)
+      const allTasks = (data.activities || [])
+        .filter((a) => a.status === 'active')
+        .flatMap((a) =>
+          (a.tasks || [])
+            .filter((t) => !t.completed)
+            .map((t) => ({ ...t, activityTitle: a.title }))
+        )
+      allTasks.sort((a, b) => {
         if (a.important !== b.important) return a.important ? -1 : 1
-        return (getTodoAge(b) ?? -1) - (getTodoAge(a) ?? -1)
+        return (getItemAge(b) ?? -1) - (getItemAge(a) ?? -1)
       })
-      setItems(open.slice(0, 6))
+      setItems(allTasks.slice(0, 6))
     }
     load()
   }, [selectedDirectory, refreshTrigger])
@@ -59,7 +62,7 @@ const NeedsAttention = () => {
         {items.map((item) => (
           <Box
             key={item.id}
-            onClick={() => navigate('/tasks')}
+            onClick={() => navigate('/todos')}
             sx={{
               p: 1.5,
               display: 'flex',
@@ -87,7 +90,7 @@ const NeedsAttention = () => {
               variant="caption"
               sx={{ fontWeight: 700, opacity: 0.4, flexShrink: 0 }}
             >
-              {item.lane}
+              {item.activityTitle}
             </Typography>
             <TodoAgeChip item={item} />
           </Box>

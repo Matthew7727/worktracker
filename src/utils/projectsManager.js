@@ -90,5 +90,7 @@ export const createTask = (text) => ({
   id: generateId(),
   text,
   completed: false,
+  important: false,
+  createdAt: new Date().toISOString().split('T')[0],
   subtasks: [],
 })
