@@ -7,12 +7,6 @@ import { DAY_STATUSES } from '../constants'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
-const STREAM_DOTS = [
-  { key: 'clientWork', color: 'primary.main' },
-  { key: 'practiceDevelopment', color: 'secondary.main' },
-  { key: 'businessDevelopment', color: '#eb8449' },
-]
-
 const shineLoop = keyframes`
   0%   { transform: translateX(-150%) skewX(-15deg); }
   100% { transform: translateX(250%) skewX(-15deg); }
@@ -81,6 +75,7 @@ const WeekDayPicker = ({
   currentDate,
   onSelectDay,
   weekStatus,
+  streams = [],
   onQuickSetDayStatus,
 }) => {
   const weekDays = getWeekDays(new Date())
@@ -183,23 +178,28 @@ const WeekDayPicker = ({
                 </Typography>
               ) : (
                 <Stack direction="row" spacing={0.5} alignItems="center">
-                  {STREAM_DOTS.map(({ key, color }) => (
-                    <Box
-                      key={key}
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        bgcolor: status[key] ? color : 'transparent',
-                        border: status[key] ? 'none' : '2px solid',
-                        borderColor: status[key]
-                          ? 'transparent'
-                          : 'text.disabled',
-                        position: 'relative',
-                        zIndex: 2,
-                      }}
-                    />
-                  ))}
+                  {streams
+                    .filter((s) => !s.archived)
+                    .map((stream) => {
+                      const isFilled = status.filled?.[stream.id]
+                      return (
+                        <Box
+                          key={stream.id}
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            bgcolor: isFilled ? stream.color : 'transparent',
+                            border: isFilled ? 'none' : '2px solid',
+                            borderColor: isFilled
+                              ? 'transparent'
+                              : 'text.disabled',
+                            position: 'relative',
+                            zIndex: 2,
+                          }}
+                        />
+                      )
+                    })}
                 </Stack>
               )}
             </Box>

@@ -1,10 +1,8 @@
 import React from 'react'
 import { Box, Typography, Fade, Stack, LinearProgress } from '@mui/material'
 import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material'
-import { PROJECT_TYPE_LABELS } from '../constants'
 import { flowStyles } from '../DailyEditor.styles'
 import EntryCard from './EntryCard'
-import TodoReminder from './TodoReminder'
 
 const FlowView = ({
   selectedFlowProjects,
@@ -14,7 +12,6 @@ const FlowView = ({
   setCurrentStep,
   onBackToSelect,
   onSave,
-  todayTodos = [],
 }) => {
   if (selectedFlowProjects.length === 0) {
     return (
@@ -68,7 +65,7 @@ const FlowView = ({
   const project = selectedFlowProjects[currentStep]
   const isLastStep = currentStep === selectedFlowProjects.length - 1
   const color = project.color || 'primary.main'
-  const typeLabel = PROJECT_TYPE_LABELS[project.type] || ''
+  const typeLabel = project.streamName ? project.streamName.toUpperCase() : ''
 
   return (
     <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
@@ -116,8 +113,6 @@ const FlowView = ({
           <Typography variant="h3" sx={{ mb: 4, fontWeight: 950, color }}>
             What did you do on {project.title} today?
           </Typography>
-
-          {todayTodos.length > 0 && <TodoReminder lanes={todayTodos} />}
 
           <EntryCard
             entry={{ content: projectDrafts[project.title] || '', tags: [] }}

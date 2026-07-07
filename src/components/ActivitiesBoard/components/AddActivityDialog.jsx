@@ -12,19 +12,24 @@ import {
   Box,
 } from '@mui/material'
 
-const AddActivityDialog = ({ open, onClose, onAdd }) => {
+const AddActivityDialog = ({ open, onClose, onAdd, streams = [] }) => {
   const [title, setTitle] = useState('')
-  const [type, setType] = useState('PD')
+  const [selectedId, setSelectedId] = useState(null)
+
+  // Fall back to the first stream when nothing valid is selected
+  const streamId = streams.some((s) => s.id === selectedId)
+    ? selectedId
+    : streams[0]?.id || ''
 
   const handleClose = () => {
     setTitle('')
-    setType('PD')
+    setSelectedId(null)
     onClose()
   }
 
   const handleSubmit = () => {
-    if (!title.trim()) return
-    onAdd(title.trim(), type)
+    if (!title.trim() || !streamId) return
+    onAdd(title.trim(), streamId)
     handleClose()
   }
 
@@ -61,46 +66,34 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
         />
         <Box>
           <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
-            Type
+            Stream
           </Typography>
           <ToggleButtonGroup
-            value={type}
+            value={streamId}
             exclusive
-            onChange={(_, val) => val && setType(val)}
+            onChange={(_, val) => val && setSelectedId(val)}
             size="small"
+            sx={{ flexWrap: 'wrap' }}
           >
-            <ToggleButton
-              value="PD"
-              sx={{
-                fontWeight: 900,
-                border: '2px solid',
-                borderColor: 'divider',
-                '&.Mui-selected': {
-                  borderColor: 'text.primary',
-                  bgcolor: '#ffd166',
-                  color: '#000000',
-                  '&:hover': { bgcolor: '#e6bd5c' },
-                },
-              }}
-            >
-              Practice Development
-            </ToggleButton>
-            <ToggleButton
-              value="BD"
-              sx={{
-                fontWeight: 900,
-                border: '2px solid',
-                borderColor: 'divider',
-                '&.Mui-selected': {
-                  borderColor: 'text.primary',
-                  bgcolor: '#eb8449',
-                  color: '#000000',
-                  '&:hover': { bgcolor: '#d4733d' },
-                },
-              }}
-            >
-              Business Development
-            </ToggleButton>
+            {streams.map((s) => (
+              <ToggleButton
+                key={s.id}
+                value={s.id}
+                sx={{
+                  fontWeight: 900,
+                  border: '2px solid',
+                  borderColor: 'divider',
+                  '&.Mui-selected': {
+                    borderColor: 'text.primary',
+                    bgcolor: s.color,
+                    color: '#000000',
+                    '&:hover': { bgcolor: s.color, opacity: 0.85 },
+                  },
+                }}
+              >
+                {s.name}
+              </ToggleButton>
+            ))}
           </ToggleButtonGroup>
         </Box>
       </DialogContent>
@@ -118,7 +111,7 @@ const AddActivityDialog = ({ open, onClose, onAdd }) => {
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={!title.trim()}
+          disabled={!title.trim() || !streamId}
           sx={{
             fontWeight: 900,
             px: 3,

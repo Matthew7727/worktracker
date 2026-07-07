@@ -1,4 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import {
+  loadStreamConfig,
+  saveStreamConfig,
+  getActiveStreams,
+  getMainFocusStream,
+} from '../utils/streamConfig'
 
 const AppContext = createContext()
 
@@ -14,6 +20,46 @@ export const AppProvider = ({ children }) => {
   })
 
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Workspace stream configuration
+  const [streamConfig, setStreamConfig] = useState(null)
+  const [streamConfigLoading, setStreamConfigLoading] = useState(false)
+  const [needsStreamSetup, setNeedsStreamSetup] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      if (!selectedDirectory) {
+        setStreamConfig(null)
+        setNeedsStreamSetup(false)
+        return
+      }
+      setStreamConfigLoading(true)
+      try {
+        const config = await loadStreamConfig(selectedDirectory)
+        if (cancelled) return
+        setStreamConfig(config)
+        setNeedsStreamSetup(!config)
+      } catch (e) {
+        console.error('Failed to load stream config:', e)
+      } finally {
+        if (!cancelled) setStreamConfigLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDirectory])
+
+  // Persists a new/updated stream config and updates app state
+  const updateStreamConfig = async (config) => {
+    setStreamConfig(config)
+    setNeedsStreamSetup(false)
+    if (selectedDirectory) {
+      await saveStreamConfig(selectedDirectory, config)
+    }
+  }
 
   // Watch for external file changes
   useEffect(() => {
@@ -51,6 +97,9 @@ export const AppProvider = ({ children }) => {
     setNotification((prev) => ({ ...prev, open: false }))
   }
 
+  const streams = getActiveStreams(streamConfig)
+  const mainFocusStream = getMainFocusStream(streamConfig)
+
   const value = {
     selectedDirectory,
     setProjectDirectory,
@@ -58,6 +107,12 @@ export const AppProvider = ({ children }) => {
     notification,
     showNotification,
     hideNotification,
+    streamConfig,
+    streams,
+    mainFocusStream,
+    streamConfigLoading,
+    needsStreamSetup,
+    updateStreamConfig,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

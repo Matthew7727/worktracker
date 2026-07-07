@@ -5,9 +5,9 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeRaw from 'rehype-raw'
-import { STEPS, PROJECT_TYPE_LABELS } from '../constants'
+import { resolveEntryStreamId } from '../../../utils/markdownParser'
 
-const SummaryView = ({ streams, projectEntries, onEdit }) => {
+const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
   const hasProjectEntries = projectEntries?.some((p) => p.content?.trim())
 
   return (
@@ -53,21 +53,17 @@ const SummaryView = ({ streams, projectEntries, onEdit }) => {
           </Stack>
 
           {hasProjectEntries ? (
-            // New format: per-project entries grouped by type
+            // New format: per-project entries grouped by stream
             <Stack spacing={4}>
-              {['client', 'pd', 'bd'].map((type) => {
+              {streamDefs.map((stream) => {
                 const entries = projectEntries.filter(
-                  (p) => p.type === type && p.content?.trim()
+                  (p) =>
+                    resolveEntryStreamId(p) === stream.id && p.content?.trim()
                 )
                 if (entries.length === 0) return null
-                const typeColor =
-                  type === 'client'
-                    ? 'primary.main'
-                    : type === 'pd'
-                      ? '#ffd166'
-                      : '#eb8449'
+                const typeColor = stream.color
                 return (
-                  <Box key={type}>
+                  <Box key={stream.id}>
                     <Typography
                       variant="h5"
                       sx={{
@@ -77,7 +73,7 @@ const SummaryView = ({ streams, projectEntries, onEdit }) => {
                         letterSpacing: '1px',
                       }}
                     >
-                      {PROJECT_TYPE_LABELS[type]}
+                      {stream.name.toUpperCase()}
                     </Typography>
                     <Stack spacing={3}>
                       {entries.map((project) => (
@@ -120,30 +116,30 @@ const SummaryView = ({ streams, projectEntries, onEdit }) => {
           ) : (
             // Legacy format: stream blobs
             <Stack spacing={6}>
-              {STEPS.map((step) => (
-                <Box key={step.id}>
+              {streamDefs.map((stream) => (
+                <Box key={stream.id}>
                   <Typography
                     variant="h4"
-                    sx={{ fontWeight: 950, color: step.color, mb: 2 }}
+                    sx={{ fontWeight: 950, color: stream.color, mb: 2 }}
                   >
-                    {step.label}
+                    {stream.name.toUpperCase()}
                   </Typography>
                   <Box
                     sx={{
                       pl: 4,
-                      borderLeft: `4px solid ${step.color}22`,
+                      borderLeft: `4px solid ${stream.color}22`,
                       fontSize: '1.25rem',
                       lineHeight: 1.6,
                       color: 'text.secondary',
                       '& p': { m: 0 },
                     }}
                   >
-                    {streams[step.id] ? (
+                    {streams[stream.id] ? (
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm, remarkBreaks]}
                         rehypePlugins={[rehypeRaw]}
                       >
-                        {streams[step.id]}
+                        {streams[stream.id]}
                       </ReactMarkdown>
                     ) : (
                       <Typography sx={{ fontStyle: 'italic', opacity: 0.5 }}>

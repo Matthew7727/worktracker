@@ -1,4 +1,5 @@
 import matter from 'gray-matter'
+import { LEGACY_STREAMS, getStreamByHeading } from './streamConfig'
 
 // Note: gray-matter is isomorphic but might rely on node built-ins like Buffer.
 // Vite usually handles this, or we might need a polyfill configuration.
@@ -37,88 +38,90 @@ export const stringifyMarkdown = (body, frontmatter) => {
 }
 
 /**
- * Parses the markdown body into three predefined streams.
+ * Parses the markdown body into stream sections keyed by stream id.
+ * Headings are matched against each stream's current name and its aliases
+ * (renamed streams keep their old names as aliases), so historical files
+ * keep working without any rewriting.
+ *
  * @param {string} body - The markdown body content
- * @returns {Object} { clientWork, practiceDevelopment, businessDevelopment }
+ * @param {Array} streams - Stream definitions from the workspace config
+ * @returns {Object} { [streamId]: content }
  */
-export const parseStreams = (body) => {
-  const streams = {
-    clientWork: '',
-    practiceDevelopment: '',
-    businessDevelopment: '',
-  }
+export const parseStreams = (body, streams = LEGACY_STREAMS) => {
+  const result = {}
+  streams.forEach((s) => {
+    result[s.id] = ''
+  })
 
-  if (!body) return streams
+  if (!body) return result
 
-  const sections = body.split(
-    /^# (Client Work|Practice Development|Business Development)/m
-  )
+  const config = { streams }
+  const sections = body.split(/^# (.+)$/m)
 
   for (let i = 1; i < sections.length; i += 2) {
-    const title = sections[i]
+    const heading = sections[i]
     const content = sections[i + 1] ? sections[i + 1].trim() : ''
-
-    if (title === 'Client Work') streams.clientWork = content
-    else if (title === 'Practice Development')
-      streams.practiceDevelopment = content
-    else if (title === 'Business Development')
-      streams.businessDevelopment = content
+    const stream = getStreamByHeading(config, heading)
+    if (stream && stream.id in result) {
+      result[stream.id] = result[stream.id]
+        ? `${result[stream.id]}\n\n${content}`
+        : content
+    }
   }
 
-  return streams
+  return result
 }
 
 /**
  * Converts stream contents into a single markdown body string.
- * @param {Object} streams - { clientWork, practiceDevelopment, businessDevelopment }
+ * @param {Object} streamContents - { [streamId]: content }
+ * @param {Array} streams - Stream definitions from the workspace config
  * @returns {string} The formatted markdown body
  */
-export const stringifyStreams = (streams) => {
+export const stringifyStreams = (streamContents, streams = LEGACY_STREAMS) => {
   let body = ''
-  if (streams.clientWork) {
-    body += `# Client Work\n${streams.clientWork}\n\n`
-  }
-  if (streams.practiceDevelopment) {
-    body += `# Practice Development\n${streams.practiceDevelopment}\n\n`
-  }
-  if (streams.businessDevelopment) {
-    body += `# Business Development\n${streams.businessDevelopment}\n\n`
-  }
+  streams.forEach((s) => {
+    if (streamContents[s.id]) {
+      body += `# ${s.name}\n${streamContents[s.id]}\n\n`
+    }
+  })
   return body.trim()
 }
+
+// Historical `type` values map onto the legacy stream ids so pre-1.8 data
+// (and any in-flight objects using them) resolve to the right stream.
+const LEGACY_TYPE_TO_STREAM = {
+  client: 'clientWork',
+  pd: 'practiceDevelopment',
+  bd: 'businessDevelopment',
+}
+
+export const resolveEntryStreamId = (entry) =>
+  entry.streamId || LEGACY_TYPE_TO_STREAM[entry.type] || entry.type
 
 /**
  * Converts per-project entries into a stream-grouped markdown body.
  * Each project becomes a ## subheading within its stream section.
- * @param {Array} projectEntries - [{ title, type: 'client'|'pd'|'bd', content }]
+ * @param {Array} projectEntries - [{ title, streamId, content }]
+ * @param {Array} streams - Stream definitions from the workspace config
  * @returns {string} The formatted markdown body
  */
-export const stringifyProjectEntries = (projectEntries) => {
-  const client = projectEntries.filter(
-    (p) => p.type === 'client' && p.content?.trim()
-  )
-  const pd = projectEntries.filter((p) => p.type === 'pd' && p.content?.trim())
-  const bd = projectEntries.filter((p) => p.type === 'bd' && p.content?.trim())
-
+export const stringifyProjectEntries = (
+  projectEntries,
+  streams = LEGACY_STREAMS
+) => {
   let body = ''
-  if (client.length > 0) {
-    body += '# Client Work\n'
-    client.forEach((p) => {
-      body += `## ${p.title}\n${p.content.trim()}\n\n`
-    })
-  }
-  if (pd.length > 0) {
-    body += '# Practice Development\n'
-    pd.forEach((p) => {
-      body += `## ${p.title}\n${p.content.trim()}\n\n`
-    })
-  }
-  if (bd.length > 0) {
-    body += '# Business Development\n'
-    bd.forEach((p) => {
-      body += `## ${p.title}\n${p.content.trim()}\n\n`
-    })
-  }
+  streams.forEach((s) => {
+    const entries = projectEntries.filter(
+      (p) => resolveEntryStreamId(p) === s.id && p.content?.trim()
+    )
+    if (entries.length > 0) {
+      body += `# ${s.name}\n`
+      entries.forEach((p) => {
+        body += `## ${p.title}\n${p.content.trim()}\n\n`
+      })
+    }
+  })
   return body.trim()
 }
 

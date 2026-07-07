@@ -1,5 +1,7 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import { useAppContext } from '../../../context/AppContext'
+import { getActivityStreamId } from '../../../utils/projectsManager'
 
 const B = ({ children, color }) => (
   <Typography
@@ -11,58 +13,81 @@ const B = ({ children, color }) => (
   </Typography>
 )
 
+const joinNodes = (nodes) =>
+  nodes.map((node, i) => (
+    <React.Fragment key={i}>
+      {i > 0 && (i === nodes.length - 1 ? ' and ' : ', ')}
+      {node}
+    </React.Fragment>
+  ))
+
 const HeroStatement = ({ projects, stats, utilisationTarget }) => {
+  const { streamConfig, streams, mainFocusStream } = useAppContext()
   const currentYear = new Date().getFullYear().toString()
+
+  const projectHierarchy = !!streamConfig?.features?.projectHierarchy
+  const utilisationEnabled = !!streamConfig?.features?.utilisation
+  const mainColor = mainFocusStream?.color || 'primary.main'
 
   const activeClients = projects.clientProjects.filter(
     (p) => p.status === 'active'
   )
 
-  const completedThisYear = (type) =>
+  const completedThisYear = (streamId) =>
     projects.activities.filter((a) => {
       const done = a.status === 'archived' || a.status === 'completed'
       const date = a.completedAt || a.createdAt || ''
-      return done && a.type === type && date.startsWith(currentYear)
+      return (
+        done &&
+        getActivityStreamId(a) === streamId &&
+        date.startsWith(currentYear)
+      )
     }).length
 
-  const pdDone = completedThisYear('PD')
-  const bdDone = completedThisYear('BD')
-
   const currentUtil =
-    stats.totalWords > 0
-      ? Math.round((stats.streamBreakdown.clientWork / stats.totalWords) * 100)
+    stats.totalWords > 0 && mainFocusStream
+      ? Math.round(
+          ((stats.streamBreakdown[mainFocusStream.id] || 0) /
+            stats.totalWords) *
+            100
+        )
       : 0
 
-  // ── Line 1: client engagements ───────────────────────────────────────────
-  let clientLine
-  if (activeClients.length === 0) {
-    clientLine = (
+  // ── Line 1: main-focus engagements (project pipeline) ────────────────────
+  let mainLine
+  if (!projectHierarchy) {
+    const mainWords = stats.streamBreakdown[mainFocusStream?.id] || 0
+    mainLine = (
       <>
-        You have <B color="#888">no active client engagements</B> right now.
+        Your main focus is <B color={mainColor}>{mainFocusStream?.name}</B> —{' '}
+        <B color={mainColor}>{mainWords.toLocaleString()}</B> words logged so
+        far.
       </>
     )
-  } else if (activeClients.length === 1) {
-    clientLine = (
+  } else if (activeClients.length === 0) {
+    mainLine = (
       <>
-        You are currently engaged on{' '}
-        <B color="#80b621">{activeClients[0].title}</B>.
+        You have <B color="#888">no active {mainFocusStream?.name} projects</B>{' '}
+        right now.
       </>
     )
-  } else if (activeClients.length === 2) {
-    clientLine = (
+  } else if (activeClients.length <= 2) {
+    mainLine = (
       <>
         You are currently engaged on{' '}
-        <B color="#80b621">{activeClients[0].title}</B> and{' '}
-        <B color="#80b621">{activeClients[1].title}</B>.
+        {joinNodes(
+          activeClients.map((p) => <B color={mainColor}>{p.title}</B>)
+        )}
+        .
       </>
     )
   } else {
-    clientLine = (
+    mainLine = (
       <>
         You are currently engaged on{' '}
-        <B color="#80b621">{activeClients[0].title}</B>,{' '}
-        <B color="#80b621">{activeClients[1].title}</B>, and{' '}
-        <B color="#80b621">
+        <B color={mainColor}>{activeClients[0].title}</B>,{' '}
+        <B color={mainColor}>{activeClients[1].title}</B>, and{' '}
+        <B color={mainColor}>
           {activeClients.length - 2} other engagement
           {activeClients.length - 2 !== 1 ? 's' : ''}
         </B>
@@ -71,9 +96,9 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
     )
   }
 
-  // ── Line 2: PD/BD + utilisation ─────────────────────────────────────────
+  // ── Line 2: other streams + utilisation ──────────────────────────────────
   let utilSuffix = null
-  if (utilisationTarget !== null) {
+  if (utilisationEnabled && utilisationTarget !== null) {
     const diff = currentUtil - utilisationTarget
     const utilColor =
       diff >= 0 ? '#80b621' : diff >= -10 ? '#f59e0b' : '#d32f2f'
@@ -91,19 +116,32 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
       )
   }
 
-  const activityLine = (
-    <>
-      You've completed <B color="#ffd166">{pdDone} PD</B> and{' '}
-      <B color="#eb8449">{bdDone} BD</B> activities this year{utilSuffix}.
-    </>
-  )
+  const otherStreams = streams.filter((s) => s.id !== mainFocusStream?.id)
+  const activityLine =
+    otherStreams.length > 0 ? (
+      <>
+        You've completed{' '}
+        {joinNodes(
+          otherStreams.map((s) => (
+            <B color={s.color}>
+              {completedThisYear(s.id)} {s.name}
+            </B>
+          ))
+        )}{' '}
+        activities this year{utilSuffix}.
+      </>
+    ) : (
+      <>
+        You've logged <B>{stats.totalDays}</B> days this year{utilSuffix}.
+      </>
+    )
 
   const hStyle = { fontWeight: 800, lineHeight: 1.4, color: 'text.primary' }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       <Typography variant="h3" sx={hStyle}>
-        {clientLine}
+        {mainLine}
       </Typography>
       <Typography variant="h3" sx={hStyle}>
         {activityLine}

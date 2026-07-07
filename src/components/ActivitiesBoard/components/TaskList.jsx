@@ -6,8 +6,17 @@ import {
   IconButton,
   Stack,
   Checkbox,
+  Tooltip,
 } from '@mui/material'
-import { Add, Delete, ChevronRight, ExpandMore } from '@mui/icons-material'
+import {
+  Add,
+  Delete,
+  ChevronRight,
+  ExpandMore,
+  Star,
+  StarBorder,
+} from '@mui/icons-material'
+import TodoAgeChip from '../../shared/TodoAgeChip'
 
 const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
   const [text, setText] = useState('')
@@ -61,6 +70,7 @@ const TaskRow = ({
   readOnly,
   onToggle,
   onDelete,
+  onToggleImportant,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -112,7 +122,7 @@ const TaskRow = ({
             flex: 1,
             textDecoration: task.completed ? 'line-through' : 'none',
             color: task.completed ? 'text.secondary' : 'text.primary',
-            fontWeight: task.completed ? 400 : 600,
+            fontWeight: task.completed ? 400 : task.important ? 800 : 600,
           }}
         >
           {task.text}
@@ -129,6 +139,29 @@ const TaskRow = ({
           >
             {subDoneCount}/{subtasks.length}
           </Typography>
+        )}
+        {!task.completed && <TodoAgeChip item={task} />}
+        {!readOnly && (
+          <Tooltip
+            title={task.important ? 'Unpin' : 'Mark as important'}
+            placement="top"
+          >
+            <IconButton
+              size="small"
+              onClick={() => onToggleImportant?.()}
+              sx={{
+                p: 0.25,
+                color: task.important ? '#f59e0b' : 'text.disabled',
+                '&:hover': { color: '#f59e0b' },
+              }}
+            >
+              {task.important ? (
+                <Star sx={{ fontSize: '0.9rem' }} />
+              ) : (
+                <StarBorder sx={{ fontSize: '0.9rem' }} />
+              )}
+            </IconButton>
+          </Tooltip>
         )}
         {!readOnly && (
           <IconButton
@@ -215,15 +248,24 @@ const TaskList = ({
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onToggleTaskImportant,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
 }) => {
+  // Pin important incomplete tasks to the top for display; order in the store
+  // is updated separately via ActivitiesBoard so index-based ops stay valid.
+  const sorted = [...tasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1
+    if (a.important !== b.important) return a.important ? -1 : 1
+    return 0
+  })
+
   return (
     <Box>
-      {tasks.length > 0 && (
+      {sorted.length > 0 && (
         <Stack spacing={readOnly ? 0.75 : 1}>
-          {tasks.map((task) => (
+          {sorted.map((task) => (
             <TaskRow
               key={task.id}
               task={task}
@@ -231,6 +273,7 @@ const TaskList = ({
               readOnly={readOnly}
               onToggle={() => onToggleTask?.(task.id)}
               onDelete={() => onDeleteTask?.(task.id)}
+              onToggleImportant={() => onToggleTaskImportant?.(task.id)}
               onAddSubtask={(text) => onAddSubtask?.(task.id, text)}
               onToggleSubtask={(subtaskId) =>
                 onToggleSubtask?.(task.id, subtaskId)
@@ -245,7 +288,7 @@ const TaskList = ({
 
       {!readOnly && onAddTask && (
         <Box sx={{ mt: tasks.length > 0 ? 1.5 : 0 }}>
-          <AddRow placeholder="Add a task..." onAdd={onAddTask} />
+          <AddRow placeholder="Add a todo..." onAdd={onAddTask} />
         </Box>
       )}
     </Box>

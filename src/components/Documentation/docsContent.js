@@ -44,7 +44,8 @@ Your workspace will look like this:
   ├── 2024-03-28-todos.md     # Daily Todo List
   ├── 2024-03-29.md
   ├── 2024-03-29-todos.md
-  └── projects.json           # Client projects & activities metadata
+  ├── projects.json           # Projects & activities metadata
+  └── worktracker.config.json # Your work streams & feature settings
 \`\`\`
 
 ### File Formats
@@ -52,15 +53,15 @@ Your workspace will look like this:
 #### 1. Daily Logs (\`YYYY-MM-DD.md\`)
 Contains your journal entries for the day, one section per work stream.
 - **Frontmatter**: Stores metadata — tags, and the projects/activities you linked that day.
-- **Body**: Standard Markdown with three H1 sections (Client Work, Practice Development, Business Development).
+- **Body**: Standard Markdown with one H1 section per stream, named after **your** streams (set during setup, editable in Settings).
 
-Example:
+Example (with the classic consulting streams):
 \`\`\`markdown
 ---
 tags: [dev, meeting]
-clientProjects: ["Acme Corp Website"]
-pdActivities: ["TypeScript Deep Dive"]
-bdActivities: []
+projects:
+  clientWork: ["Acme Corp Website"]
+  practiceDevelopment: ["TypeScript Deep Dive"]
 ---
 
 # Client Work
@@ -73,15 +74,25 @@ bdActivities: []
 ...
 \`\`\`
 
-#### 2. Todo Lists (\`YYYY-MM-DD-todos.md\`)
+#### 2. Work Streams (\`worktracker.config.json\`)
+Defines how your day is split — stream names, colours, which one is your
+**main goal**, and optional features (utilisation target, project pipeline).
+- Lives in the workspace so it syncs across devices with your data.
+- Renaming a stream keeps the old name as an alias, so historical files still parse.
+- Streams are **archived**, never deleted — history stays intact.
+- Existing pre-1.8 workspaces are detected automatically and get the classic
+  Client Work / Practice Development / Business Development setup with zero changes to old files.
+
+#### 3. Todo Lists (\`YYYY-MM-DD-todos.md\`)
 Contains your tasks for the day.
 - Can be edited manually in any text editor.
 - \`# Lane Title\` creates a column.
 - \`- [ ] Task\` creates an open task.
 - \`- [x] Task\` creates a completed task.
+- Tasks may carry a metadata block like \`{created:2026-07-06 !important}\` — this powers the age chips (amber at 3 days, red at 7) and the important flag. It survives the daily rollover so you always know how long something has been waiting.
 
-#### 3. Projects & Activities (\`projects.json\`)
-A single JSON file at the workspace root that stores all your client projects and activities.
+#### 4. Projects & Activities (\`projects.json\`)
+A single JSON file at the workspace root that stores all your projects and activities.
 - Created automatically when you add your first project or activity.
 - Can be safely copied as part of your normal backup.
 - **Do not edit manually** unless you know what you're doing — the app manages this file.
@@ -96,24 +107,17 @@ To backup your data, simply **copy/paste the entire folder** to a USB drive or s
     content: `
 # Daily Editor Deep Dive
 
-The Editor is your daily command center. It guides you through a **structured three-step flow** — one step per work stream — so you build a complete picture of your day.
+The Editor is your daily command center. It guides you through a **structured flow** — one step per project, grouped by your work streams — so you build a complete picture of your day.
 
-### The Three-Step Flow
+### The Flow
 When you open the editor you'll see a start screen with your week laid out. Pick a day and click **Start** to begin.
 
-The editor walks you through three steps:
-1. **Client Work** — What did you do for clients today?
-2. **Practice Development** — What did you learn or improve?
-3. **Business Development** — What did you do to grow the business?
+The editor walks you through one step per project you select, grouped by your work streams — whatever you named them during setup.
 
 A progress bar at the top shows where you are. Use **Next** and **Back** to navigate between steps, or jump directly between them. Hit **Save** on the final step to write the file.
 
 ### Project & Activity Tagging
-At each step, colored chips appear representing your active projects and activities for that stream.
-
-- **Green chips** — Client projects (Client Work step)
-- **Yellow chips** — Practice Development activities (PD step)
-- **Orange chips** — Business Development activities (BD step)
+Colored chips appear representing your active projects and activities, tinted with each stream's colour from your workspace settings.
 
 Click a chip to link that project/activity to today's entry. Click again to unlink. These selections are saved as frontmatter metadata so the Dashboard and Workspace Explorer can surface them later.
 
@@ -142,18 +146,17 @@ The Activities Board is where you manage the ongoing work in your life — the t
 
 ### Two Types of Work
 
-#### Client Projects
-Discrete engagements you do for clients or external stakeholders.
-- Create a project with a name and it becomes available as a **green chip** in the Daily Editor.
+#### Main Goal Projects
+If the **Project pipeline** feature is enabled, your main-goal stream gets its own project list — discrete engagements with a beginning and an end.
+- Create a project with a name and it becomes available as a chip in the Daily Editor.
 - Projects have three statuses: **Active**, **Archived**, **Completed**.
 - When you complete a project it appears in the Dashboard's *Recent Accomplishments* widget.
 - A **stale warning** appears if a project has been active for more than 30 days without being completed — a nudge to either wrap it up or archive it.
 
-#### Activities (PD & BD)
-Ongoing initiatives that don't have a defined end date.
-- **Practice Development (PD)** activities (yellow) — learning, upskilling, internal improvement.
-- **Business Development (BD)** activities (orange) — growth-focused, strategy work.
-- Activities follow the same Active / Archived / Completed lifecycle as client projects.
+#### Activities
+Ongoing initiatives in your other streams that don't have a defined end date — learning, growth work, health, whatever your streams track.
+- Each activity belongs to a stream and takes that stream's colour.
+- Activities follow the same Active / Archived / Completed lifecycle as projects.
 
 ### Managing Status
 Click the three-dot menu on any card to:
@@ -205,7 +208,7 @@ A narrative summary at the top of the dashboard that describes your current proj
 
 ### Stream Alignment
 A visual balance indicator showing how your effort is split across the three work streams.
-- The **ideal balance** is an equal 33.3% across Client Work, Practice Development, and Business Development.
+- The **ideal balance** is an equal split across your active streams.
 - The balance score measures variance from that ideal — lower is better.
 - The **Weekly Intensity** chart below it shows day-by-day activity volume for the current week.
 
@@ -257,7 +260,7 @@ The Global Search (Ctrl+F / Cmd+F) and the Report Filter both use a linear scan 
 # Settings & Configuration
 
 ### Utilisation Target
-Set a target percentage for how much of your logged work should be **Client Work**.
+Set a target percentage for how much of your logged work should go to your **main goal** stream (enable this in Settings → Work Streams).
 - Default is **70%** — meaning 70% of your output should be billable client work.
 - The Dashboard's Stream Alignment widget uses this target to show whether you're on track.
 - Adjust it to reflect your own goals (e.g., a lower target if you're in a heavy learning phase).

@@ -9,17 +9,25 @@ import {
   Tooltip,
 } from '@mui/material'
 import { FolderOpen, Build, Warning } from '@mui/icons-material'
-import { loadProjects } from '../../../utils/projectsManager'
+import {
+  loadProjects,
+  getActivityStreamId,
+} from '../../../utils/projectsManager'
+import { getStreamAbbrev } from '../../../utils/streamConfig'
 import { useAppContext } from '../../../context/AppContext'
 
 const STALE_THRESHOLD = 30
-const ACTIVITY_COLORS = { PD: '#ffd166', BD: '#eb8449' }
 
 const getAge = (createdAt) =>
   Math.floor((new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24))
 
 const ProjectsSummary = () => {
-  const { selectedDirectory, refreshTrigger } = useAppContext()
+  const { selectedDirectory, refreshTrigger, streamConfig, mainFocusStream } =
+    useAppContext()
+  const projectHierarchy = !!streamConfig?.features?.projectHierarchy
+  const streamById = Object.fromEntries(
+    (streamConfig?.streams || []).map((s) => [s.id, s])
+  )
   const [projects, setProjects] = useState({
     activities: [],
     clientProjects: [],
@@ -53,88 +61,92 @@ const ProjectsSummary = () => {
         flexDirection: { xs: 'column', md: 'row' },
       }}
     >
-      {/* Client Work Pipeline */}
-      <Box sx={{ flex: 1 }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-          <FolderOpen sx={{ fontSize: 20, opacity: 0.7 }} />
-          <Typography
-            variant="body1"
-            sx={{
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              opacity: 0.7,
-            }}
-          >
-            Client Work Pipeline
-          </Typography>
-        </Stack>
-        {activeClients.length === 0 ? (
-          <Typography
-            variant="body2"
-            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
-          >
-            No active client projects.
-          </Typography>
-        ) : (
-          <Stack spacing={1.5}>
-            {activeClients.map((project) => {
-              const age = getAge(project.createdAt)
-              const isStale = age >= STALE_THRESHOLD
-              return (
-                <Box
-                  key={project.id}
-                  sx={{
-                    p: 2,
-                    border: '2px solid',
-                    borderColor: isStale ? 'error.main' : 'text.primary',
-                    borderRadius: 2,
-                    boxShadow: (theme) =>
-                      `3px 3px 0px ${theme.palette.text.primary}`,
-                    borderLeft: `5px solid ${isStale ? '#d32f2f' : '#80b621'}`,
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
+      {/* Main-focus project pipeline */}
+      {projectHierarchy && (
+        <Box sx={{ flex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+            <FolderOpen sx={{ fontSize: 20, opacity: 0.7 }} />
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                opacity: 0.7,
+              }}
+            >
+              {mainFocusStream?.name || 'Main Focus'} Pipeline
+            </Typography>
+          </Stack>
+          {activeClients.length === 0 ? (
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+            >
+              No active projects.
+            </Typography>
+          ) : (
+            <Stack spacing={1.5}>
+              {activeClients.map((project) => {
+                const age = getAge(project.createdAt)
+                const isStale = age >= STALE_THRESHOLD
+                return (
+                  <Box
+                    key={project.id}
+                    sx={{
+                      p: 2,
+                      border: '2px solid',
+                      borderColor: isStale ? 'error.main' : 'text.primary',
+                      borderRadius: 2,
+                      boxShadow: (theme) =>
+                        `3px 3px 0px ${theme.palette.text.primary}`,
+                      borderLeft: `5px solid ${isStale ? '#d32f2f' : mainFocusStream?.color || '#80b621'}`,
+                    }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={0.75}>
-                      {isStale && (
-                        <Tooltip
-                          title="Stale — active for over 30 days"
-                          placement="top"
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Stack direction="row" alignItems="center" spacing={0.75}>
+                        {isStale && (
+                          <Tooltip
+                            title="Stale — active for over 30 days"
+                            placement="top"
+                          >
+                            <Warning
+                              sx={{ fontSize: 15, color: 'error.main' }}
+                            />
+                          </Tooltip>
+                        )}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 800,
+                            color: isStale ? 'error.main' : 'text.primary',
+                          }}
                         >
-                          <Warning sx={{ fontSize: 15, color: 'error.main' }} />
-                        </Tooltip>
-                      )}
+                          {project.title}
+                        </Typography>
+                      </Stack>
                       <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
-                          fontWeight: 800,
-                          color: isStale ? 'error.main' : 'text.primary',
+                          fontWeight: 700,
+                          color: isStale ? 'error.main' : 'text.secondary',
+                          opacity: isStale ? 1 : 0.5,
                         }}
                       >
-                        {project.title}
+                        {age}d active
                       </Typography>
                     </Stack>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: 700,
-                        color: isStale ? 'error.main' : 'text.secondary',
-                        opacity: isStale ? 1 : 0.5,
-                      }}
-                    >
-                      {age}d active
-                    </Typography>
-                  </Stack>
-                </Box>
-              )
-            })}
-          </Stack>
-        )}
-      </Box>
+                  </Box>
+                )
+              })}
+            </Stack>
+          )}
+        </Box>
+      )}
 
       {/* Activities Breakdown */}
       <Box sx={{ flex: 1 }}>
@@ -167,7 +179,8 @@ const ProjectsSummary = () => {
               const progress = total > 0 ? (completed / total) * 100 : 0
               const age = getAge(activity.createdAt)
               const isStale = age >= STALE_THRESHOLD
-              const color = ACTIVITY_COLORS[activity.type] || '#888'
+              const stream = streamById[getActivityStreamId(activity)]
+              const color = stream?.color || '#888'
               return (
                 <Box key={activity.id}>
                   <Stack
@@ -186,7 +199,7 @@ const ProjectsSummary = () => {
                         </Tooltip>
                       )}
                       <Chip
-                        label={activity.type}
+                        label={stream ? getStreamAbbrev(stream) : activity.type}
                         size="small"
                         sx={{
                           fontWeight: 900,

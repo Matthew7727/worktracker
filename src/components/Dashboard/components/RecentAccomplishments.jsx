@@ -1,17 +1,23 @@
 import React from 'react'
 import { Box, Typography, Stack, Chip } from '@mui/material'
 import { EmojiEvents } from '@mui/icons-material'
-
-const COLORS = { CW: '#80b621', PD: '#ffd166', BD: '#eb8449' }
+import { useAppContext } from '../../../context/AppContext'
+import { getActivityStreamId } from '../../../utils/projectsManager'
+import { getStreamAbbrev } from '../../../utils/streamConfig'
 
 const RecentAccomplishments = ({ projects }) => {
+  const { streamConfig, mainFocusStream } = useAppContext()
+  const streamById = Object.fromEntries(
+    (streamConfig?.streams || []).map((s) => [s.id, s])
+  )
+
   const completed = [
     ...projects.clientProjects
       .filter((p) => p.status === 'archived' || p.status === 'completed')
-      .map((p) => ({ ...p, category: 'CW' })),
+      .map((p) => ({ ...p, stream: mainFocusStream })),
     ...projects.activities
       .filter((a) => a.status === 'archived' || a.status === 'completed')
-      .map((a) => ({ ...a, category: a.type })),
+      .map((a) => ({ ...a, stream: streamById[getActivityStreamId(a)] })),
   ]
     .sort((a, b) => {
       const dateA = new Date(a.completedAt || a.createdAt)
@@ -46,7 +52,8 @@ const RecentAccomplishments = ({ projects }) => {
       ) : (
         <Stack spacing={1.5}>
           {completed.map((item) => {
-            const color = COLORS[item.category] || '#888'
+            const color = item.stream?.color || '#888'
+            const label = item.stream ? getStreamAbbrev(item.stream) : '—'
             const dateStr = item.completedAt || null
             return (
               <Box
@@ -68,7 +75,7 @@ const RecentAccomplishments = ({ projects }) => {
                 >
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <Chip
-                      label={item.category}
+                      label={label}
                       size="small"
                       sx={{
                         fontWeight: 900,

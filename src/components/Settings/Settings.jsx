@@ -22,11 +22,19 @@ import {
   Assessment,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
+import StreamSettings from './StreamSettings'
 
 const Settings = () => {
   const navigate = useNavigate()
-  const { selectedDirectory, setProjectDirectory, showNotification } =
-    useAppContext()
+  const {
+    selectedDirectory,
+    setProjectDirectory,
+    showNotification,
+    streamConfig,
+    mainFocusStream,
+  } = useAppContext()
+
+  const utilisationEnabled = !!streamConfig?.features?.utilisation
 
   // Notification State
   const [notifEnabled, setNotifEnabled] = useState(false)
@@ -174,6 +182,9 @@ const Settings = () => {
         <Grid container spacing={6} justifyContent="center">
           <Grid item xs={12} md={10}>
             <Stack spacing={4}>
+              {/* Work Streams Section */}
+              <StreamSettings />
+
               {/* Notifications Section */}
               <Paper
                 sx={{
@@ -323,112 +334,115 @@ const Settings = () => {
               </Paper>
 
               {/* Utilisation Target Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.text.primary}`,
-                }}
-              >
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={2}
-                  sx={{ mb: 4 }}
-                >
-                  <TrendingUp sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
-                    Utilisation Target
-                  </Typography>
-                </Stack>
-
-                <Typography
-                  variant="body1"
-                  sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
-                >
-                  Set the percentage of your total logged work that should be
-                  Client Work. This will be tracked on your dashboard.
-                </Typography>
-
-                <Box
+              {utilisationEnabled && (
+                <Paper
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    p: 3,
-                    bgcolor: 'action.hover',
-                    borderRadius: '20px',
-                    border: '3px solid',
+                    p: 6,
+                    borderRadius: '40px',
+                    border: '4px solid',
                     borderColor: 'text.primary',
+                    boxShadow: (theme) =>
+                      `10px 10px 0px ${theme.palette.text.primary}`,
                   }}
                 >
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                      Client Work Target
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={2}
+                    sx={{ mb: 4 }}
+                  >
+                    <TrendingUp sx={{ fontSize: '2.5rem' }} />
+                    <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                      Utilisation Target
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 600, opacity: 0.7 }}
-                    >
-                      What % of your time should be billable?
-                    </Typography>
-                  </Box>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <TextField
-                      type="number"
-                      value={utilisationTarget}
-                      onChange={(e) => setUtilisationTarget(e.target.value)}
-                      inputProps={{ min: 0, max: 100, step: 5 }}
-                      sx={{
-                        width: 100,
-                        '& .MuiInputBase-root': {
+                  </Stack>
+
+                  <Typography
+                    variant="body1"
+                    sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
+                  >
+                    Set the percentage of your total logged work that should be{' '}
+                    {mainFocusStream?.name || 'your main goal'}. This will be
+                    tracked on your dashboard.
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      p: 3,
+                      bgcolor: 'action.hover',
+                      borderRadius: '20px',
+                      border: '3px solid',
+                      borderColor: 'text.primary',
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        {mainFocusStream?.name || 'Main Goal'} Target
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, opacity: 0.7 }}
+                      >
+                        What % of your time should go here?
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <TextField
+                        type="number"
+                        value={utilisationTarget}
+                        onChange={(e) => setUtilisationTarget(e.target.value)}
+                        inputProps={{ min: 0, max: 100, step: 5 }}
+                        sx={{
+                          width: 100,
+                          '& .MuiInputBase-root': {
+                            fontWeight: 900,
+                            fontSize: '1.2rem',
+                            borderRadius: '12px',
+                            border: '2px solid',
+                            borderColor: 'text.primary',
+                          },
+                        }}
+                      />
+                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        %
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        onClick={() => handleSaveUtilisation(utilisationTarget)}
+                        disabled={isUtilSaving}
+                        sx={{
                           fontWeight: 900,
-                          fontSize: '1.2rem',
-                          borderRadius: '12px',
+                          px: 3,
+                          backgroundImage: 'none',
+                          bgcolor: 'background.paper',
+                          color: 'text.primary',
                           border: '2px solid',
                           borderColor: 'text.primary',
-                        },
-                      }}
-                    />
-                    <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                      %
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      onClick={() => handleSaveUtilisation(utilisationTarget)}
-                      disabled={isUtilSaving}
-                      sx={{
-                        fontWeight: 900,
-                        px: 3,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
                           boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                        '&.Mui-disabled': {
-                          opacity: 0.5,
-                          boxShadow: 'none',
-                          border: '2px solid #999',
-                          bgcolor: '#f0f0f0',
-                        },
-                      }}
-                    >
-                      SAVE
-                    </Button>
-                  </Stack>
-                </Box>
-              </Paper>
+                            `4px 4px 0px ${theme.palette.text.primary}`,
+                          '&:hover': {
+                            bgcolor: '#f0f0f0',
+                            boxShadow: (theme) =>
+                              `2px 2px 0px ${theme.palette.text.primary}`,
+                            transform: 'translate(2px, 2px)',
+                          },
+                          '&.Mui-disabled': {
+                            opacity: 0.5,
+                            boxShadow: 'none',
+                            border: '2px solid #999',
+                            bgcolor: '#f0f0f0',
+                          },
+                        }}
+                      >
+                        SAVE
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Paper>
+              )}
 
               {/* Workspace Section */}
               <Paper
@@ -514,9 +528,8 @@ const Settings = () => {
                   variant="body1"
                   sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
                 >
-                  View deep insights of where your time has been spent, across
-                  Client Work, Practice & Business Development over an extended
-                  period.
+                  View deep insights of where your time has been spent across
+                  your work streams over an extended period.
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                   <Button

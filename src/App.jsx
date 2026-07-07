@@ -6,8 +6,10 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
+import { Box, CircularProgress } from '@mui/material'
 import { useAppContext } from './context/AppContext'
 import WelcomeScreen from './components/Onboarding/WelcomeScreen'
+import StreamSetup from './components/Onboarding/StreamSetup'
 import MainLayout from './components/Layout/MainLayout'
 import DailyEditor from './components/DailyEditor/DailyEditor'
 import ActivitiesBoard from './components/ActivitiesBoard/ActivitiesBoard'
@@ -20,7 +22,8 @@ import WorkspaceExplorer from './components/Workspace/WorkspaceExplorer'
 import './App.css'
 
 function App() {
-  const { selectedDirectory } = useAppContext()
+  const { selectedDirectory, streamConfigLoading, needsStreamSetup } =
+    useAppContext()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -43,6 +46,25 @@ function App() {
 
   if (!selectedDirectory) {
     return <WelcomeScreen />
+  }
+
+  if (streamConfigLoading) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (needsStreamSetup) {
+    return <StreamSetup />
   }
 
   return (

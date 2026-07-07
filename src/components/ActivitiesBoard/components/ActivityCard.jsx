@@ -39,10 +39,9 @@ const useConfirm = () => {
 
 // ── Archived card ─────────────────────────────────────────────────────────────
 
-const ArchivedCard = ({ activity, onDelete }) => {
+const ArchivedCard = ({ activity, stream, onDelete }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const { confirm, openConfirm, closeConfirm } = useConfirm()
-  const isBD = activity.type === 'BD'
 
   return (
     <Paper
@@ -62,7 +61,7 @@ const ArchivedCard = ({ activity, onDelete }) => {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
         <Chip
-          label={activity.type}
+          label={stream?.abbrev || activity.type}
           size="small"
           sx={{
             fontWeight: 900,
@@ -137,7 +136,7 @@ const ArchivedCard = ({ activity, onDelete }) => {
           variant="caption"
           sx={{ color: 'text.disabled', fontWeight: 700 }}
         >
-          {isBD ? 'BD' : 'PD'} activity completed
+          {stream?.abbrev || activity.type} activity completed
           {activity.completedAt ? ` · ${activity.completedAt}` : ''}
         </Typography>
       </Box>
@@ -151,9 +150,11 @@ const ArchivedCard = ({ activity, onDelete }) => {
 
 const ActiveCard = ({
   activity,
+  stream,
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onToggleTaskImportant,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -166,8 +167,8 @@ const ActiveCard = ({
   const [renameText, setRenameText] = useState(activity.title)
   const { confirm, openConfirm, closeConfirm } = useConfirm()
 
-  const isBD = activity.type === 'BD'
-  const accentColor = isBD ? '#eb8449' : '#ffd166'
+  const accentColor =
+    stream?.color || (activity.type === 'BD' ? '#eb8449' : '#ffd166')
 
   const saveRename = () => {
     if (renameText.trim() && renameText !== activity.title) {
@@ -199,12 +200,12 @@ const ActiveCard = ({
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
         <Chip
-          label={activity.type}
+          label={stream?.abbrev || activity.type}
           size="small"
           sx={{
             fontWeight: 900,
             fontSize: '0.65rem',
-            bgcolor: isBD ? '#eb8449' : '#ffd166',
+            bgcolor: accentColor,
             color: '#fff',
             border: 'none',
             flexShrink: 0,
@@ -304,6 +305,7 @@ const ActiveCard = ({
         onAddTask={onAddTask}
         onToggleTask={onToggleTask}
         onDeleteTask={onDeleteTask}
+        onToggleTaskImportant={onToggleTaskImportant}
         onAddSubtask={onAddSubtask}
         onToggleSubtask={onToggleSubtask}
         onDeleteSubtask={onDeleteSubtask}
@@ -316,7 +318,7 @@ const ActiveCard = ({
             variant="caption"
             sx={{ color: 'text.secondary', fontWeight: 700 }}
           >
-            {completedCount}/{totalCount} tasks complete
+            {completedCount}/{totalCount} todos complete
           </Typography>
         </Box>
       )}
@@ -330,7 +332,13 @@ const ActiveCard = ({
 
 const ActivityCard = (props) => {
   if (props.activity.status === 'archived') {
-    return <ArchivedCard activity={props.activity} onDelete={props.onDelete} />
+    return (
+      <ArchivedCard
+        activity={props.activity}
+        stream={props.stream}
+        onDelete={props.onDelete}
+      />
+    )
   }
   return <ActiveCard {...props} />
 }
