@@ -32,6 +32,7 @@ const Settings = () => {
     showNotification,
     streamConfig,
     mainFocusStream,
+    rerunStreamSetup,
   } = useAppContext()
 
   const utilisationEnabled = !!streamConfig?.features?.utilisation
@@ -474,7 +475,35 @@ const Settings = () => {
                 >
                   {selectedDirectory}
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={2}
+                  sx={{ justifyContent: 'center' }}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={rerunStreamSetup}
+                    sx={{
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 900,
+                      backgroundImage: 'none',
+                      bgcolor: 'background.paper',
+                      color: 'text.primary',
+                      border: '2px solid',
+                      borderColor: 'text.primary',
+                      boxShadow: (theme) =>
+                        `4px 4px 0px ${theme.palette.text.primary}`,
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        boxShadow: (theme) =>
+                          `2px 2px 0px ${theme.palette.text.primary}`,
+                        transform: 'translate(2px, 2px)',
+                      },
+                    }}
+                  >
+                    RE-RUN STARTUP SETUP
+                  </Button>
                   <Button
                     variant="contained"
                     onClick={() => setProjectDirectory(null)}
@@ -499,7 +528,7 @@ const Settings = () => {
                   >
                     SWITCH WORKSPACE
                   </Button>
-                </Box>
+                </Stack>
               </Paper>
 
               {/* Reports Shortcut Section */}
