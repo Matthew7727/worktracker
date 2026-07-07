@@ -59,10 +59,10 @@ export const AppProvider = ({ children }) => {
     if (selectedDirectory) {
       await saveStreamConfig(selectedDirectory, config)
     }
+  }
 
-    const rerunStreamSetup = () => {
-      setNeedsStreamSetup(true)
-    }
+  const rerunStreamSetup = () => {
+    setNeedsStreamSetup(true)
   }
 
   // Watch for external file changes

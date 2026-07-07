@@ -74,7 +74,10 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/editor" element={<DailyEditor />} />
         <Route path="/todos" element={<ActivitiesBoard />} />
-        <Route path="/todos/:itemType/:itemId" element={<ActivityDetailsPage />} />
+        <Route
+          path="/todos/:itemType/:itemId"
+          element={<ActivityDetailsPage />}
+        />
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />

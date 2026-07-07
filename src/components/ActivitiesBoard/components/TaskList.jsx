@@ -80,9 +80,7 @@ const TaskRow = ({
   const [expanded, setExpanded] = useState(false)
   const subtasks = task.subtasks || []
   const visibleSubtasks = hideCompleted
-    ? subtasks.filter(
-        (s) => !s.completed || recentlyCompletedIds?.has?.(s.id)
-      )
+    ? subtasks.filter((s) => !s.completed || recentlyCompletedIds?.has?.(s.id))
     : subtasks
   const subDoneCount = subtasks.filter((s) => s.completed).length
 
@@ -271,7 +269,9 @@ const TaskList = ({
     return 0
   })
   const visibleTasks = hideCompleted
-    ? sorted.filter((task) => !task.completed || recentlyCompletedIds?.has?.(task.id))
+    ? sorted.filter(
+        (task) => !task.completed || recentlyCompletedIds?.has?.(task.id)
+      )
     : sorted
 
   return (

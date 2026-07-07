@@ -30,7 +30,10 @@ const ActivityDetailsPage = () => {
   const streamById = useMemo(
     () =>
       Object.fromEntries(
-        (streamConfig?.streams || []).map((s) => [s.id, { ...s, abbrev: getStreamAbbrev(s) }])
+        (streamConfig?.streams || []).map((s) => [
+          s.id,
+          { ...s, abbrev: getStreamAbbrev(s) },
+        ])
       ),
     [streamConfig]
   )
@@ -177,7 +180,12 @@ const ActivityDetailsPage = () => {
       <Stack spacing={3}>
         <Paper
           elevation={0}
-          sx={{ p: 3, borderRadius: '20px', border: '3px solid', borderColor: 'divider' }}
+          sx={{
+            p: 3,
+            borderRadius: '20px',
+            border: '3px solid',
+            borderColor: 'divider',
+          }}
         >
           <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
             Description
@@ -194,7 +202,12 @@ const ActivityDetailsPage = () => {
 
         <Paper
           elevation={0}
-          sx={{ p: 3, borderRadius: '20px', border: '3px solid', borderColor: 'divider' }}
+          sx={{
+            p: 3,
+            borderRadius: '20px',
+            border: '3px solid',
+            borderColor: 'divider',
+          }}
         >
           <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
             Team
@@ -239,7 +252,12 @@ const ActivityDetailsPage = () => {
 
         <Paper
           elevation={0}
-          sx={{ p: 3, borderRadius: '20px', border: '3px solid', borderColor: 'divider' }}
+          sx={{
+            p: 3,
+            borderRadius: '20px',
+            border: '3px solid',
+            borderColor: 'divider',
+          }}
         >
           <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
             Todos
@@ -255,8 +273,12 @@ const ActivityDetailsPage = () => {
               itemReadOnly ? undefined : taskHandlers.onToggleTaskImportant
             }
             onAddSubtask={itemReadOnly ? undefined : taskHandlers.onAddSubtask}
-            onToggleSubtask={itemReadOnly ? undefined : taskHandlers.onToggleSubtask}
-            onDeleteSubtask={itemReadOnly ? undefined : taskHandlers.onDeleteSubtask}
+            onToggleSubtask={
+              itemReadOnly ? undefined : taskHandlers.onToggleSubtask
+            }
+            onDeleteSubtask={
+              itemReadOnly ? undefined : taskHandlers.onDeleteSubtask
+            }
           />
         </Paper>
       </Stack>

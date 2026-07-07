@@ -18,6 +18,7 @@ import AddActivityDialog from './components/AddActivityDialog'
 import AddClientProjectDialog from './components/AddClientProjectDialog'
 import { sectionHeaderStyles, filterTabStyles } from './ActivitiesBoard.styles'
 
+// Keep just-completed todos visible briefly so users can catch and undo mistakes.
 const COMPLETED_TODO_GRACE_MS = 5000
 
 // ── Local shared components ───────────────────────────────────────────────────
@@ -371,7 +372,9 @@ const ActivitiesBoard = () => {
               onDelete={handleDeleteClientProject}
               onRename={handleRenameClientProject}
               taskHandlers={clientProjectTaskHandlers}
-              onOpenDetails={(projectId) => navigate(`/todos/project/${projectId}`)}
+              onOpenDetails={(projectId) =>
+                navigate(`/todos/project/${projectId}`)
+              }
               hideCompletedTodos
               recentlyCompletedIds={recentlyCompletedIds}
             />

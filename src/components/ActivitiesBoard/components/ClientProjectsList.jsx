@@ -11,6 +11,8 @@ import { Delete, ChevronRight, ExpandMore } from '@mui/icons-material'
 import ConfirmDialog from './ConfirmDialog'
 import TaskList from './TaskList'
 
+const DETAIL_NAVIGATION_DELAY_MS = 180
+
 const formatDate = (dateStr) => {
   if (!dateStr) return null
   const [year, month, day] = dateStr.split('-')
@@ -56,16 +58,16 @@ const ProjectRow = ({
     } else {
       setEditText(project.title)
     }
-
-    const openDetailsWithClickDelay = () => {
-      if (!onOpenDetails) return
-      if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
-      clickTimerRef.current = setTimeout(() => {
-        onOpenDetails()
-        clickTimerRef.current = null
-      }, 180)
-    }
     setIsEditing(false)
+  }
+
+  const openDetailsWithClickDelay = () => {
+    if (!onOpenDetails) return
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+    clickTimerRef.current = setTimeout(() => {
+      onOpenDetails()
+      clickTimerRef.current = null
+    }, DETAIL_NAVIGATION_DELAY_MS)
   }
 
   return (
