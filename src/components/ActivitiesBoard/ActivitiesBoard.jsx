@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Divider } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
@@ -16,6 +17,9 @@ import ClientProjectsList from './components/ClientProjectsList'
 import AddActivityDialog from './components/AddActivityDialog'
 import AddClientProjectDialog from './components/AddClientProjectDialog'
 import { sectionHeaderStyles, filterTabStyles } from './ActivitiesBoard.styles'
+
+// Keep just-completed todos visible briefly so users can catch and undo mistakes.
+const COMPLETED_TODO_GRACE_MS = 5000
 
 // ── Local shared components ───────────────────────────────────────────────────
 
@@ -104,12 +108,15 @@ const ActivityGrid = ({ children }) => (
 // ── Board ─────────────────────────────────────────────────────────────────────
 
 const ActivitiesBoard = () => {
+  const navigate = useNavigate()
   const { selectedDirectory, streamConfig, streams, mainFocusStream } =
     useAppContext()
   const [data, setData] = useState({ activities: [], clientProjects: [] })
   const [activityFilter, setActivityFilter] = useState('ALL')
   const [addActivityOpen, setAddActivityOpen] = useState(false)
   const [addProjectOpen, setAddProjectOpen] = useState(false)
+  const [recentlyCompleted, setRecentlyCompleted] = useState({})
+  const completionTimersRef = useRef({})
 
   const projectHierarchy = !!streamConfig?.features?.projectHierarchy
 
@@ -130,6 +137,34 @@ const ActivitiesBoard = () => {
     if (!selectedDirectory) return
     loadProjects(selectedDirectory).then(setData)
   }, [selectedDirectory])
+
+  useEffect(() => {
+    const timers = completionTimersRef.current
+    return () => {
+      Object.values(timers).forEach((timer) => clearTimeout(timer))
+    }
+  }, [])
+
+  const markCompletedForGracePeriod = (taskId) => {
+    if (!taskId) return
+    if (completionTimersRef.current[taskId]) {
+      clearTimeout(completionTimersRef.current[taskId])
+    }
+    setRecentlyCompleted((prev) => ({ ...prev, [taskId]: true }))
+    completionTimersRef.current[taskId] = setTimeout(() => {
+      setRecentlyCompleted((prev) => {
+        const next = { ...prev }
+        delete next[taskId]
+        return next
+      })
+      delete completionTimersRef.current[taskId]
+    }, COMPLETED_TODO_GRACE_MS)
+  }
+
+  const recentlyCompletedIds = useMemo(
+    () => new Set(Object.keys(recentlyCompleted)),
+    [recentlyCompleted]
+  )
 
   const save = (newData) => {
     setData(newData)
@@ -152,12 +187,18 @@ const ActivitiesBoard = () => {
   const makeTaskHandlers = (listKey) => ({
     onAddTask: (itemId, text) =>
       updateTasks(listKey, itemId, (tasks) => [...tasks, createTask(text)]),
-    onToggleTask: (itemId, taskId) =>
+    onToggleTask: (itemId, taskId) => {
+      let justCompleted = false
       updateTasks(listKey, itemId, (tasks) =>
-        tasks.map((t) =>
-          t.id === taskId ? { ...t, completed: !t.completed } : t
-        )
-      ),
+        tasks.map((t) => {
+          if (t.id !== taskId) return t
+          const nextCompleted = !t.completed
+          justCompleted = nextCompleted
+          return { ...t, completed: nextCompleted }
+        })
+      )
+      if (justCompleted) markCompletedForGracePeriod(taskId)
+    },
     onDeleteTask: (itemId, taskId) =>
       updateTasks(listKey, itemId, (tasks) =>
         tasks.filter((t) => t.id !== taskId)
@@ -176,19 +217,25 @@ const ActivitiesBoard = () => {
             : t
         )
       ),
-    onToggleSubtask: (itemId, taskId, subtaskId) =>
+    onToggleSubtask: (itemId, taskId, subtaskId) => {
+      let justCompleted = false
       updateTasks(listKey, itemId, (tasks) =>
         tasks.map((t) =>
           t.id === taskId
             ? {
                 ...t,
-                subtasks: (t.subtasks || []).map((s) =>
-                  s.id === subtaskId ? { ...s, completed: !s.completed } : s
-                ),
+                subtasks: (t.subtasks || []).map((s) => {
+                  if (s.id !== subtaskId) return s
+                  const nextCompleted = !s.completed
+                  justCompleted = nextCompleted
+                  return { ...s, completed: nextCompleted }
+                }),
               }
             : t
         )
-      ),
+      )
+      if (justCompleted) markCompletedForGracePeriod(subtaskId)
+    },
     onDeleteSubtask: (itemId, taskId, subtaskId) =>
       updateTasks(listKey, itemId, (tasks) =>
         tasks.map((t) =>
@@ -325,6 +372,11 @@ const ActivitiesBoard = () => {
               onDelete={handleDeleteClientProject}
               onRename={handleRenameClientProject}
               taskHandlers={clientProjectTaskHandlers}
+              onOpenDetails={(projectId) =>
+                navigate(`/todos/project/${projectId}`)
+              }
+              hideCompletedTodos
+              recentlyCompletedIds={recentlyCompletedIds}
             />
           </Box>
 
@@ -442,6 +494,11 @@ const ActivitiesBoard = () => {
                       handleRenameActivity(activity.id, title)
                     }
                     onDelete={() => handleDeleteActivity(activity.id)}
+                    onOpenDetails={() =>
+                      navigate(`/todos/activity/${activity.id}`)
+                    }
+                    hideCompleted
+                    recentlyCompletedIds={recentlyCompletedIds}
                   />
                 ))}
               </ActivityGrid>
@@ -479,6 +536,9 @@ const ActivitiesBoard = () => {
                       activity={activity}
                       stream={getStreamFor(activity)}
                       onDelete={() => handleDeleteActivity(activity.id)}
+                      onOpenDetails={() =>
+                        navigate(`/todos/activity/${activity.id}`)
+                      }
                     />
                   ))}
                 </ActivityGrid>

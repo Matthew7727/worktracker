@@ -61,6 +61,10 @@ export const AppProvider = ({ children }) => {
     }
   }
 
+  const rerunStreamSetup = () => {
+    setNeedsStreamSetup(true)
+  }
+
   // Watch for external file changes
   useEffect(() => {
     if (selectedDirectory) {
@@ -113,6 +117,7 @@ export const AppProvider = ({ children }) => {
     streamConfigLoading,
     needsStreamSetup,
     updateStreamConfig,
+    rerunStreamSetup,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

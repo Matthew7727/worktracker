@@ -39,7 +39,7 @@ const useConfirm = () => {
 
 // ── Archived card ─────────────────────────────────────────────────────────────
 
-const ArchivedCard = ({ activity, stream, onDelete }) => {
+const ArchivedCard = ({ activity, stream, onDelete, onOpenDetails }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const { confirm, openConfirm, closeConfirm } = useConfirm()
 
@@ -75,12 +75,17 @@ const ArchivedCard = ({ activity, stream, onDelete }) => {
         />
         <Typography
           variant="h6"
+          onClick={onOpenDetails}
           sx={{
             flex: 1,
             fontWeight: 900,
             color: 'text.secondary',
             lineHeight: 1.3,
             wordBreak: 'break-word',
+            cursor: onOpenDetails ? 'pointer' : 'default',
+            '&:hover': onOpenDetails
+              ? { textDecoration: 'underline' }
+              : undefined,
           }}
         >
           {activity.title}
@@ -161,6 +166,9 @@ const ActiveCard = ({
   onFinish,
   onRename,
   onDelete,
+  onOpenDetails,
+  hideCompleted,
+  recentlyCompletedIds,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const [isRenaming, setIsRenaming] = useState(false)
@@ -233,10 +241,15 @@ const ActiveCard = ({
           ) : (
             <Typography
               variant="h6"
+              onClick={onOpenDetails}
               sx={{
                 fontWeight: 900,
                 lineHeight: 1.3,
                 wordBreak: 'break-word',
+                cursor: onOpenDetails ? 'pointer' : 'default',
+                '&:hover': onOpenDetails
+                  ? { textDecoration: 'underline' }
+                  : undefined,
               }}
             >
               {activity.title}
@@ -309,6 +322,8 @@ const ActiveCard = ({
         onAddSubtask={onAddSubtask}
         onToggleSubtask={onToggleSubtask}
         onDeleteSubtask={onDeleteSubtask}
+        hideCompleted={hideCompleted}
+        recentlyCompletedIds={recentlyCompletedIds}
       />
 
       {/* Progress footer */}
@@ -337,6 +352,7 @@ const ActivityCard = (props) => {
         activity={props.activity}
         stream={props.stream}
         onDelete={props.onDelete}
+        onOpenDetails={props.onOpenDetails}
       />
     )
   }
