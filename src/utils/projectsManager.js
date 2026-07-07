@@ -71,6 +71,8 @@ export const createActivity = (title, streamId) => ({
   id: generateId(),
   type: streamId, // stream id; legacy rows still carry 'PD' | 'BD'
   title,
+  description: '',
+  teamMembers: [],
   tasks: [],
   status: 'active',
   completedAt: null,
@@ -80,6 +82,8 @@ export const createActivity = (title, streamId) => ({
 export const createClientProject = (title) => ({
   id: generateId(),
   title,
+  description: '',
+  teamMembers: [],
   status: 'active',
   tasks: [],
   createdAt: new Date().toISOString().split('T')[0],

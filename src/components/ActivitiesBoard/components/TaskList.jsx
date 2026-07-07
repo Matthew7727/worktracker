@@ -68,6 +68,8 @@ const TaskRow = ({
   task,
   accentColor,
   readOnly,
+  hideCompleted,
+  recentlyCompletedIds,
   onToggle,
   onDelete,
   onToggleImportant,
@@ -77,6 +79,11 @@ const TaskRow = ({
 }) => {
   const [expanded, setExpanded] = useState(false)
   const subtasks = task.subtasks || []
+  const visibleSubtasks = hideCompleted
+    ? subtasks.filter(
+        (s) => !s.completed || recentlyCompletedIds?.has?.(s.id)
+      )
+    : subtasks
   const subDoneCount = subtasks.filter((s) => s.completed).length
 
   return (
@@ -96,7 +103,8 @@ const TaskRow = ({
           sx={{
             p: 0.25,
             color: 'text.secondary',
-            visibility: subtasks.length > 0 || !readOnly ? 'visible' : 'hidden',
+            visibility:
+              visibleSubtasks.length > 0 || !readOnly ? 'visible' : 'hidden',
           }}
         >
           {expanded ? (
@@ -127,7 +135,7 @@ const TaskRow = ({
         >
           {task.text}
         </Typography>
-        {subtasks.length > 0 && (
+        {visibleSubtasks.length > 0 && (
           <Typography
             variant="caption"
             sx={{
@@ -177,9 +185,9 @@ const TaskRow = ({
 
       {expanded && (
         <Box sx={{ pl: 5, pr: 0.5 }}>
-          {subtasks.length > 0 && (
+          {visibleSubtasks.length > 0 && (
             <Stack spacing={0.5} sx={{ mb: 0.5 }}>
-              {subtasks.map((subtask) => (
+              {visibleSubtasks.map((subtask) => (
                 <Box
                   key={subtask.id}
                   sx={{
@@ -245,6 +253,8 @@ const TaskList = ({
   tasks,
   accentColor = 'primary.main',
   readOnly = false,
+  hideCompleted = false,
+  recentlyCompletedIds,
   onAddTask,
   onToggleTask,
   onDeleteTask,
@@ -260,17 +270,22 @@ const TaskList = ({
     if (a.important !== b.important) return a.important ? -1 : 1
     return 0
   })
+  const visibleTasks = hideCompleted
+    ? sorted.filter((task) => !task.completed || recentlyCompletedIds?.has?.(task.id))
+    : sorted
 
   return (
     <Box>
-      {sorted.length > 0 && (
+      {visibleTasks.length > 0 && (
         <Stack spacing={readOnly ? 0.75 : 1}>
-          {sorted.map((task) => (
+          {visibleTasks.map((task) => (
             <TaskRow
               key={task.id}
               task={task}
               accentColor={accentColor}
               readOnly={readOnly}
+              hideCompleted={hideCompleted}
+              recentlyCompletedIds={recentlyCompletedIds}
               onToggle={() => onToggleTask?.(task.id)}
               onDelete={() => onDeleteTask?.(task.id)}
               onToggleImportant={() => onToggleTaskImportant?.(task.id)}

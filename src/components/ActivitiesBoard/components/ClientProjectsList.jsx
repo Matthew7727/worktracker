@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import {
   Box,
   Paper,
@@ -37,11 +37,15 @@ const ProjectRow = ({
   onDelete,
   onRename,
   taskHandlers,
+  onOpenDetails,
+  hideCompletedTodos,
+  recentlyCompletedIds,
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(project.title)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [tasksExpanded, setTasksExpanded] = useState(false)
+  const clickTimerRef = useRef(null)
   const isDone = project.status === 'done'
   const tasks = project.tasks || []
   const completedCount = tasks.filter((t) => t.completed).length
@@ -51,6 +55,15 @@ const ProjectRow = ({
       onRename(editText.trim())
     } else {
       setEditText(project.title)
+    }
+
+    const openDetailsWithClickDelay = () => {
+      if (!onOpenDetails) return
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = setTimeout(() => {
+        onOpenDetails()
+        clickTimerRef.current = null
+      }, 180)
     }
     setIsEditing(false)
   }
@@ -108,14 +121,19 @@ const ProjectRow = ({
         ) : (
           <Typography
             variant="body2"
-            onDoubleClick={() => setIsEditing(true)}
+            onDoubleClick={() => {
+              if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+              setIsEditing(true)
+            }}
+            onClick={openDetailsWithClickDelay}
             title="Double-click to rename"
             sx={{
               flex: 1,
               fontWeight: 700,
               color: isDone ? 'text.secondary' : 'text.primary',
-              cursor: 'text',
+              cursor: 'pointer',
               userSelect: 'none',
+              '&:hover': { textDecoration: 'underline' },
             }}
           >
             {project.title}
@@ -236,6 +254,8 @@ const ProjectRow = ({
             onDeleteSubtask={(taskId, subtaskId) =>
               taskHandlers.onDeleteSubtask(project.id, taskId, subtaskId)
             }
+            hideCompleted={hideCompletedTodos}
+            recentlyCompletedIds={recentlyCompletedIds}
           />
         </Box>
       )}
@@ -249,6 +269,9 @@ const ClientProjectsList = ({
   onDelete,
   onRename,
   taskHandlers,
+  onOpenDetails,
+  hideCompletedTodos = false,
+  recentlyCompletedIds,
 }) => {
   const sorted = [
     ...projects.filter((p) => p.status === 'active'),
@@ -280,6 +303,9 @@ const ClientProjectsList = ({
             onDelete={() => onDelete(project.id)}
             onRename={(title) => onRename(project.id, title)}
             taskHandlers={taskHandlers}
+            onOpenDetails={() => onOpenDetails?.(project.id)}
+            hideCompletedTodos={hideCompletedTodos}
+            recentlyCompletedIds={recentlyCompletedIds}
           />
         ))
       )}
