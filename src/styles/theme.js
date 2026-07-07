@@ -112,10 +112,6 @@ export const getTheme = (mode) => {
         styleOverrides: {
           ...baseOptions.components.MuiButton.styleOverrides,
           containedPrimary: {
-            backgroundImage:
-              mode === 'light'
-                ? 'linear-gradient(135deg, #80b621 0%, #ffd166 100%)'
-                : 'linear-gradient(135deg, #aedd4d 0%, #80b621 100%)',
             color: mode === 'light' ? '#ffffff' : '#000000',
             border: 'none',
             '&:hover': { opacity: 0.9 },
