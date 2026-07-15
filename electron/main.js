@@ -94,42 +94,70 @@ async function updateNotificationSchedule() {
   }, 60000) // 1 minute
 }
 
-// Auto-updater events
+// Auto-updater
+// Updates are user-driven: check, tell the renderer, and only download or
+// install when the user asks. All events flow over the single 'update:event'
+// channel to the main window only (never the tray widget window).
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
+
+let mainWindow = null
+
+function sendUpdateEvent(payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update:event', payload)
+  }
+}
+
 autoUpdater.on('checking-for-update', () => {
-  log.info('Checking for update...')
-  const mainWindow = BrowserWindow.getAllWindows()[0]
-  if (mainWindow) mainWindow.webContents.send('update:checking')
+  sendUpdateEvent({ status: 'checking' })
 })
 autoUpdater.on('update-available', (info) => {
-  log.info('Update available:', info)
-  const mainWindow = BrowserWindow.getAllWindows()[0]
-  if (mainWindow) mainWindow.webContents.send('update:available', info)
+  log.info('Update available:', info.version)
+  sendUpdateEvent({
+    status: 'available',
+    version: info.version,
+    releaseDate: info.releaseDate,
+    releaseNotes:
+      typeof info.releaseNotes === 'string' ? info.releaseNotes : null,
+  })
 })
-autoUpdater.on('update-not-available', (info) => {
-  log.info('Update not available:', info)
-  const mainWindow = BrowserWindow.getAllWindows()[0]
-  if (mainWindow) mainWindow.webContents.send('update:not-available', info)
+autoUpdater.on('update-not-available', () => {
+  sendUpdateEvent({ status: 'not-available' })
 })
-autoUpdater.on('error', (err) => {
-  log.error('Error in auto-updater:', err)
-  const mainWindow = BrowserWindow.getAllWindows()[0]
-  if (mainWindow) mainWindow.webContents.send('update:error', err.message)
-})
-autoUpdater.on('download-progress', (progressObj) => {
-  let log_message = 'Download speed: ' + progressObj.bytesPerSecond
-  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%'
-  log_message =
-    log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')'
-  log.info(log_message)
-  const mainWindow = BrowserWindow.getAllWindows()[0]
-  if (mainWindow)
-    mainWindow.webContents.send('update:progress', progressObj.percent)
+autoUpdater.on('download-progress', (progress) => {
+  sendUpdateEvent({
+    status: 'downloading',
+    percent: progress.percent,
+    bytesPerSecond: progress.bytesPerSecond,
+    transferred: progress.transferred,
+    total: progress.total,
+  })
 })
 autoUpdater.on('update-downloaded', (info) => {
-  log.info('Update downloaded:', info)
-  const mainWindow = BrowserWindow.getAllWindows()[0]
-  if (mainWindow) mainWindow.webContents.send('update:downloaded', info)
+  log.info('Update downloaded:', info.version)
+  sendUpdateEvent({ status: 'downloaded', version: info.version })
 })
+autoUpdater.on('error', (err) => {
+  log.error('Auto-updater error:', err)
+  sendUpdateEvent({
+    status: 'error',
+    message: err?.message || 'Unknown update error',
+  })
+})
+
+const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000 // 4 hours
+
+function scheduleUpdateChecks() {
+  if (!app.isPackaged) return
+  // Rejections also surface via the 'error' event; the renderer decides
+  // whether a failed background check is worth showing.
+  setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 10000)
+  setInterval(
+    () => autoUpdater.checkForUpdates().catch(() => {}),
+    UPDATE_CHECK_INTERVAL
+  )
+}
 
 async function handleFileOpen() {
   const { canceled, filePaths } = await dialog.showOpenDialog({
@@ -285,7 +313,7 @@ async function handleSearchEntries(event, { rootDir, query }) {
 }
 
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1300,
     height: 900,
     title: 'Work-Tracker',
@@ -419,14 +447,27 @@ app.whenReady().then(async () => {
   })
 
   // Auto-update IPC
-  ipcMain.handle('update:check', () => {
+  ipcMain.handle('update:check', async () => {
     if (!app.isPackaged) return { status: 'dev' }
-    autoUpdater.checkForUpdatesAndNotify()
-    return { status: 'checking' }
+    try {
+      await autoUpdater.checkForUpdates()
+      return { status: 'ok' }
+    } catch (error) {
+      return { status: 'error', message: error.message }
+    }
   })
 
-  ipcMain.handle('update:quitAndInstall', () => {
-    autoUpdater.quitAndInstall()
+  ipcMain.handle('update:download', async () => {
+    try {
+      await autoUpdater.downloadUpdate()
+      return { status: 'ok' }
+    } catch (error) {
+      return { status: 'error', message: error.message }
+    }
+  })
+
+  ipcMain.handle('update:install', () => {
+    setImmediate(() => autoUpdater.quitAndInstall())
   })
 
   // Widget IPC
@@ -438,10 +479,7 @@ app.whenReady().then(async () => {
   createWidgetWindow()
   createTray()
   updateNotificationSchedule()
-
-  if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify()
-  }
+  scheduleUpdateChecks()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

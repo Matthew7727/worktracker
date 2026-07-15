@@ -49,3 +49,28 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx vite build && npx electron-builder --publish always
+
+  # electron-builder uploads assets to a DRAFT release, and electron-updater
+  # can only see published releases. Publish once BOTH platform jobs succeed
+  # so updaters never observe a half-uploaded release.
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID=$(gh api "repos/${{ github.repository }}/releases" \
+            --jq '[.[] | select(.tag_name == "${{ github.ref_name }}")][0].id')
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "No release found for tag ${{ github.ref_name }}"
+            exit 1
+          fi
+          gh api -X PATCH "repos/${{ github.repository }}/releases/$RELEASE_ID" \
+            -F draft=false -f make_latest=true
+          echo "Published release ${{ github.ref_name }} (id $RELEASE_ID)"

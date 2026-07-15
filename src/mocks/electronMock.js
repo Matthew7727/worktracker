@@ -328,17 +328,55 @@ ${bd}
       }
     },
 
-    onUpdateChecking: (cb) => window.electronAPI._on('checking', cb),
-    onUpdateAvailable: (cb) => window.electronAPI._on('available', cb),
-    onUpdateNotAvailable: (cb) => window.electronAPI._on('not-available', cb),
-    onUpdateProgress: (cb) => window.electronAPI._on('progress', cb),
-    onUpdateDownloaded: (cb) => window.electronAPI._on('downloaded', cb),
-    onUpdateError: (cb) => window.electronAPI._on('error', cb),
-    removeAllUpdateListeners: () => {
-      window.electronAPI._listeners = {}
+    // Auto-update (simulates the full check → download → install flow)
+    onUpdateEvent: (cb) => window.electronAPI._on('update-event', cb),
+    removeUpdateListeners: () => {
+      delete window.electronAPI._listeners['update-event']
     },
-    checkForUpdates: async () => ({ status: 'dev' }),
-    quitAndInstall: () => console.log('[Mock] quitAndInstall called'),
+    checkForUpdates: async () => {
+      const emit = (payload) =>
+        window.electronAPI._emit('update-event', payload)
+      emit({ status: 'checking' })
+      setTimeout(
+        () =>
+          emit({
+            status: 'available',
+            version: '99.0.0',
+            releaseDate: new Date().toISOString(),
+            releaseNotes: 'Mock update for browser dev mode.',
+          }),
+        1200
+      )
+      return { status: 'ok' }
+    },
+    downloadUpdate: async () => {
+      const emit = (payload) =>
+        window.electronAPI._emit('update-event', payload)
+      let percent = 0
+      const interval = setInterval(() => {
+        percent = Math.min(percent + 9, 100)
+        emit({
+          status: 'downloading',
+          percent,
+          bytesPerSecond: 4200000,
+          transferred: percent,
+          total: 100,
+        })
+        if (percent >= 100) {
+          clearInterval(interval)
+          setTimeout(
+            () => emit({ status: 'downloaded', version: '99.0.0' }),
+            400
+          )
+        }
+      }, 250)
+      return { status: 'ok' }
+    },
+    installUpdate: async () => {
+      console.log(
+        '[Mock] installUpdate called — real app would quit & relaunch'
+      )
+    },
     getVersion: async () => __APP_VERSION__,
 
     testNotification: async () => {
@@ -358,23 +396,6 @@ ${bd}
       } else {
         alert('Test Notification: Permissions denied. Check console.')
       }
-    },
-
-    devSimulateUpdate: () => {
-      console.log('[Mock] Simulating App Update...')
-      window.electronAPI._emit('checking')
-      setTimeout(() => {
-        window.electronAPI._emit('available')
-        let progress = 0
-        const interval = setInterval(() => {
-          progress += 10
-          window.electronAPI._emit('progress', progress)
-          if (progress >= 100) {
-            clearInterval(interval)
-            setTimeout(() => window.electronAPI._emit('downloaded'), 500)
-          }
-        }, 300)
-      }, 1000)
     },
 
     loadSettings: async () => {

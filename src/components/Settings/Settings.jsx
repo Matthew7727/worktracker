@@ -22,6 +22,7 @@ import {
   Assessment,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
+import { useUpdate } from '../../context/UpdateContext'
 import StreamSettings from './StreamSettings'
 
 const Settings = () => {
@@ -46,11 +47,18 @@ const Settings = () => {
   const [utilisationTarget, setUtilisationTarget] = useState(70)
   const [isUtilSaving, setIsUtilSaving] = useState(false)
 
-  // Auto Update State
+  // Auto Update (state lives in UpdateContext; this page is just a view)
   const [appVersion, setAppVersion] = useState('')
-  const [updateStatus, setUpdateStatus] = useState('idle')
-  const [updateProgress, setUpdateProgress] = useState(0)
-  const [updateError, setUpdateError] = useState(null)
+  const {
+    status: updateStatus,
+    info: updateInfo,
+    progress: updateProgress,
+    error: updateError,
+    checkForUpdates,
+    downloadUpdate,
+    installUpdate,
+    reset: resetUpdate,
+  } = useUpdate()
 
   // Initialize version
   useEffect(() => {
@@ -61,34 +69,6 @@ const Settings = () => {
         .catch(() => {})
     }
   }, [])
-
-  // Setup Update Listeners
-  useEffect(() => {
-    if (!window.electronAPI || !window.electronAPI.onUpdateAvailable) return
-
-    window.electronAPI.onUpdateChecking(() => setUpdateStatus('checking'))
-    window.electronAPI.onUpdateAvailable(() => setUpdateStatus('available'))
-    window.electronAPI.onUpdateNotAvailable(() => {
-      setUpdateStatus('not-available')
-      showNotification('You are on the latest version.', 'success')
-      setTimeout(() => setUpdateStatus('idle'), 3000)
-    })
-    window.electronAPI.onUpdateProgress((percent) => {
-      setUpdateStatus('downloading')
-      setUpdateProgress(Math.floor(percent))
-    })
-    window.electronAPI.onUpdateDownloaded(() => setUpdateStatus('downloaded'))
-    window.electronAPI.onUpdateError((err) => {
-      setUpdateStatus('error')
-      setUpdateError(err)
-    })
-
-    return () => {
-      if (window.electronAPI.removeAllUpdateListeners) {
-        window.electronAPI.removeAllUpdateListeners()
-      }
-    }
-  }, [showNotification])
 
   // Load initial settings
   useEffect(() => {
@@ -628,24 +608,27 @@ const Settings = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  {updateStatus === 'idle' ||
-                  updateStatus === 'not-available' ? (
+                  {updateStatus === 'up-to-date' ? (
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 800, mb: 2, color: '#4caf50' }}
+                    >
+                      ✓ You&apos;re on the latest version
+                    </Typography>
+                  ) : null}
+
+                  {updateStatus === 'idle' || updateStatus === 'up-to-date' ? (
                     <Button
                       variant="contained"
                       onClick={() => {
-                        if (
-                          window.electronAPI &&
-                          window.electronAPI.checkForUpdates
-                        ) {
-                          window.electronAPI.checkForUpdates().then((res) => {
-                            if (res && res.status === 'dev') {
-                              showNotification(
-                                'Cannot check for updates in development mode.',
-                                'info'
-                              )
-                            }
-                          })
-                        }
+                        checkForUpdates().then((res) => {
+                          if (res && res.status === 'dev') {
+                            showNotification(
+                              'Cannot check for updates in development mode.',
+                              'info'
+                            )
+                          }
+                        })
                       }}
                       sx={{
                         fontWeight: 900,
@@ -693,18 +676,51 @@ const Settings = () => {
                     </Button>
                   ) : null}
 
-                  {updateStatus === 'available' ||
-                  updateStatus === 'downloading' ? (
+                  {updateStatus === 'available' ? (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+                        Version {updateInfo?.version} is available
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        onClick={downloadUpdate}
+                        sx={{
+                          fontWeight: 900,
+                          px: 4,
+                          py: 1.5,
+                          fontSize: '1.1rem',
+                          backgroundImage: 'none',
+                          bgcolor: 'background.paper',
+                          color: 'text.primary',
+                          border: '2px solid',
+                          borderColor: 'text.primary',
+                          boxShadow: (theme) =>
+                            `4px 4px 0px ${theme.palette.text.primary}`,
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                            boxShadow: (theme) =>
+                              `2px 2px 0px ${theme.palette.text.primary}`,
+                            transform: 'translate(2px, 2px)',
+                          },
+                        }}
+                      >
+                        DOWNLOAD UPDATE
+                      </Button>
+                    </Box>
+                  ) : null}
+
+                  {updateStatus === 'downloading' ? (
                     <Box sx={{ width: '100%', maxWidth: '500px' }}>
                       <Typography
                         variant="h6"
                         sx={{ fontWeight: 800, mb: 2, textAlign: 'center' }}
                       >
-                        Downloading Update... {updateProgress}%
+                        Downloading Update...{' '}
+                        {Math.floor(updateProgress?.percent || 0)}%
                       </Typography>
                       <LinearProgress
                         variant="determinate"
-                        value={updateProgress}
+                        value={updateProgress?.percent || 0}
                         sx={{
                           height: 16,
                           borderRadius: 8,
@@ -721,7 +737,7 @@ const Settings = () => {
                     <Button
                       variant="contained"
                       color="success"
-                      onClick={() => window.electronAPI.quitAndInstall()}
+                      onClick={installUpdate}
                       sx={{
                         fontWeight: 900,
                         px: 4,
@@ -757,7 +773,7 @@ const Settings = () => {
                       </Typography>
                       <Button
                         variant="contained"
-                        onClick={() => setUpdateStatus('idle')}
+                        onClick={resetUpdate}
                         sx={{
                           fontWeight: 900,
                           px: 4,
@@ -878,37 +894,6 @@ const Settings = () => {
                       }}
                     >
                       TEST NOTIFICATION
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        if (
-                          window.electronAPI &&
-                          window.electronAPI.devSimulateUpdate
-                        ) {
-                          window.electronAPI.devSimulateUpdate()
-                        }
-                      }}
-                      sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        py: 1.5,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                      }}
-                    >
-                      SIMULATE UPDATE
                     </Button>
                   </Stack>
                 </Paper>

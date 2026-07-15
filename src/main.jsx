@@ -14,6 +14,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import './index.css'
 import App from './App.jsx'
 import { AppProvider } from './context/AppContext.jsx'
+import { UpdateProvider } from './context/UpdateContext.jsx'
 import { setupElectronMock } from './mocks/electronMock'
 
 // Setup mock for browser development
@@ -22,14 +23,16 @@ setupElectronMock()
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AppProvider>
-      <ThemeContextProvider>
-        <CssBaseline />
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <HashRouter>
-            <App />
-          </HashRouter>
-        </LocalizationProvider>
-      </ThemeContextProvider>
+      <UpdateProvider>
+        <ThemeContextProvider>
+          <CssBaseline />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <HashRouter>
+              <App />
+            </HashRouter>
+          </LocalizationProvider>
+        </ThemeContextProvider>
+      </UpdateProvider>
     </AppProvider>
   </StrictMode>
 )

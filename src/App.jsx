@@ -20,6 +20,7 @@ import Settings from './components/Settings/Settings'
 import Documentation from './components/Documentation/Documentation'
 import TrayWidget from './components/Widget/TrayWidget'
 import WorkspaceExplorer from './components/Workspace/WorkspaceExplorer'
+import UpdateSnackbar from './components/Updates/UpdateSnackbar'
 import './App.css'
 
 function App() {
@@ -45,12 +46,11 @@ function App() {
     return <TrayWidget />
   }
 
+  let content
   if (!selectedDirectory) {
-    return <WelcomeScreen />
-  }
-
-  if (streamConfigLoading) {
-    return (
+    content = <WelcomeScreen />
+  } else if (streamConfigLoading) {
+    content = (
       <Box
         sx={{
           height: '100vh',
@@ -62,30 +62,35 @@ function App() {
         <CircularProgress />
       </Box>
     )
-  }
-
-  if (needsStreamSetup) {
-    return <StreamSetup />
+  } else if (needsStreamSetup) {
+    content = <StreamSetup />
+  } else {
+    content = (
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/editor" element={<DailyEditor />} />
+          <Route path="/todos" element={<ActivitiesBoard />} />
+          <Route
+            path="/todos/:itemType/:itemId"
+            element={<ActivityDetailsPage />}
+          />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/docs" element={<Documentation />} />
+          <Route path="/workspace" element={<WorkspaceExplorer />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </MainLayout>
+    )
   }
 
   return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/editor" element={<DailyEditor />} />
-        <Route path="/todos" element={<ActivitiesBoard />} />
-        <Route
-          path="/todos/:itemType/:itemId"
-          element={<ActivityDetailsPage />}
-        />
-        <Route path="/dashboard" element={<Navigate to="/" replace />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/docs" element={<Documentation />} />
-        <Route path="/workspace" element={<WorkspaceExplorer />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </MainLayout>
+    <>
+      {content}
+      <UpdateSnackbar />
+    </>
   )
 }
 
