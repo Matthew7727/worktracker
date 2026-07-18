@@ -12,6 +12,8 @@ import {
   InputBase,
   FormControlLabel,
   Switch,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import { ArrowBack, Add } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
@@ -22,6 +24,7 @@ import {
   createActivity,
   getActivityStreamId,
   getChildActivities,
+  getTopLevelActivities,
 } from '../../utils/projectsManager'
 import { getStreamAbbrev } from '../../utils/streamConfig'
 import TaskList from './components/TaskList'
@@ -213,6 +216,16 @@ const ActivityDetailsPage = () => {
       : null
   const childActivities =
     !isProject && item ? getChildActivities(data.activities, item.id) : []
+  const currentActivityStreamId =
+    !isProject && item ? getActivityStreamId(item) : null
+  const parentOptions =
+    !isProject && item
+      ? getTopLevelActivities(data.activities).filter(
+          (activity) =>
+            activity.id !== item.id &&
+            getActivityStreamId(activity) === currentActivityStreamId
+        )
+      : []
 
   const save = (nextData) => {
     setData(nextData)
@@ -367,6 +380,7 @@ const ActivityDetailsPage = () => {
   const entityLabel = isProject ? 'project' : 'activity'
   // Nesting is capped at one level — only top-level activities can take children.
   const canHaveChildren = !isProject && !item.parentId
+  const canSetParent = !isProject && childActivities.length === 0
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -586,6 +600,39 @@ const ActivityDetailsPage = () => {
         </Stack>
 
         <Stack spacing={2}>
+          {!isProject && (
+            <Panel label="Grouping">
+              <Select
+                fullWidth
+                size="small"
+                value={item.parentId || ''}
+                disabled={itemReadOnly || !canSetParent}
+                inputProps={{ 'aria-label': 'Parent activity' }}
+                onChange={(e) =>
+                  updateItem({ parentId: e.target.value || null })
+                }
+              >
+                <MenuItem value="">
+                  <em>None — standalone activity</em>
+                </MenuItem>
+                {parentOptions.map((activity) => (
+                  <MenuItem key={activity.id} value={activity.id}>
+                    {activity.title}
+                  </MenuItem>
+                ))}
+              </Select>
+              {!canSetParent && (
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
+                >
+                  This activity has sub-activities. To assign it to a parent,
+                  first remove or reassign its sub-activities.
+                </Typography>
+              )}
+            </Panel>
+          )}
+
           <Panel label="Notes">
             <InputBase
               fullWidth
