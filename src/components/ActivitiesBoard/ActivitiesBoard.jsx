@@ -314,7 +314,13 @@ const ActivitiesBoard = () => {
         if (t.id !== taskId) return t
         const nextCompleted = !t.completed
         justCompleted = nextCompleted
-        return { ...t, completed: nextCompleted }
+        return {
+          ...t,
+          completed: nextCompleted,
+          completedAt: nextCompleted
+            ? new Date().toISOString().split('T')[0]
+            : null,
+        }
       })
     )
     if (justCompleted) markCompletedForGracePeriod(taskId)

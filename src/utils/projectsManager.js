@@ -107,5 +107,10 @@ export const createTask = (text) => ({
   completed: false,
   important: false,
   createdAt: new Date().toISOString().split('T')[0],
+  completedAt: null,
   subtasks: [],
 })
+
+/** Tasks completed on a specific date (YYYY-MM-DD). */
+export const getTasksCompletedOn = (tasks, dateStr) =>
+  (tasks || []).filter((t) => t.completed && t.completedAt === dateStr)

@@ -248,9 +248,17 @@ const ActivityDetailsPage = () => {
     onAddTask: (text) => updateTasks((tasks) => [...tasks, createTask(text)]),
     onToggleTask: (taskId) =>
       updateTasks((tasks) =>
-        tasks.map((t) =>
-          t.id === taskId ? { ...t, completed: !t.completed } : t
-        )
+        tasks.map((t) => {
+          if (t.id !== taskId) return t
+          const nextCompleted = !t.completed
+          return {
+            ...t,
+            completed: nextCompleted,
+            completedAt: nextCompleted
+              ? new Date().toISOString().split('T')[0]
+              : null,
+          }
+        })
       ),
     onDeleteTask: (taskId) =>
       updateTasks((tasks) => tasks.filter((t) => t.id !== taskId)),

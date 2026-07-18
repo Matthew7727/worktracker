@@ -23,6 +23,7 @@ const DailyEditor = () => {
     selectedFlowProjects,
     toggleFlowProject,
     allAvailableProjects,
+    completedTodosByTitle,
     projectEntries,
     viewMode,
     setViewMode,
@@ -66,6 +67,7 @@ const DailyEditor = () => {
           dayNote={dayNote}
           onNoteChange={setDayNote}
           allAvailableProjects={allAvailableProjects}
+          completedTodosByTitle={completedTodosByTitle}
           selectedFlowProjects={selectedFlowProjects}
           onToggleProject={toggleFlowProject}
           onStart={() => {
@@ -79,6 +81,7 @@ const DailyEditor = () => {
       {viewMode === 'flow' && (
         <FlowView
           selectedFlowProjects={selectedFlowProjects}
+          completedTodosByTitle={completedTodosByTitle}
           projectDrafts={projectDrafts}
           updateProjectDraft={updateProjectDraft}
           currentStep={currentStep}
