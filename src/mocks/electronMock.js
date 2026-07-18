@@ -235,6 +235,11 @@ ${bd}
   // ─── Projects & Activities ────────────────────────────────────────────────
 
   const todayParts = fmt(today)
+  const daysAgo = (n) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() - n)
+    return fmt(d).dateStr
+  }
 
   mockFiles[`${MOCK_ROOT}/projects.json`] = JSON.stringify(
     {
@@ -255,6 +260,8 @@ ${bd}
           status: 'active',
           completedAt: null,
           createdAt: todayParts.dateStr,
+          parentId: null,
+          ongoing: false,
         },
         {
           id: 'mock-activity-2',
@@ -267,6 +274,8 @@ ${bd}
           status: 'active',
           completedAt: null,
           createdAt: todayParts.dateStr,
+          parentId: null,
+          ongoing: false,
         },
         {
           id: 'mock-activity-3',
@@ -279,15 +288,59 @@ ${bd}
           status: 'archived',
           completedAt: todayParts.dateStr,
           createdAt: todayParts.dateStr,
+          parentId: null,
+          ongoing: false,
+        },
+        {
+          // Standing responsibility with no natural end date — old but quiet
+          // todos here should never read as "stale" anywhere in the app.
+          id: 'mock-activity-4',
+          type: 'PD',
+          title: 'DSJ Hire Train Deploy Lead',
+          tasks: [
+            {
+              id: 'task-8',
+              text: 'Review quarterly hiring pipeline',
+              completed: false,
+              createdAt: daysAgo(75),
+            },
+          ],
+          status: 'active',
+          completedAt: null,
+          createdAt: daysAgo(210),
+          parentId: null,
+          ongoing: true,
+        },
+        {
+          // Bounded piece of work nested inside the ongoing role above.
+          id: 'mock-activity-5',
+          type: 'PD',
+          title: 'HTD Cohort — Q3 2026',
+          tasks: [
+            { id: 'task-9', text: 'Confirm cohort roster', completed: true },
+            {
+              id: 'task-10',
+              text: 'Schedule kickoff session',
+              completed: false,
+            },
+          ],
+          status: 'active',
+          completedAt: null,
+          createdAt: todayParts.dateStr,
+          parentId: 'mock-activity-4',
+          ongoing: false,
         },
       ],
       clientProjects: [
         {
+          // Long-running client engagement — 110 days active, but shouldn't
+          // read as stale since its only open todo is fresh.
           id: 'mock-project-1',
           title: 'Acme Corp Audit',
           status: 'active',
-          createdAt: todayParts.dateStr,
+          createdAt: daysAgo(110),
           completedAt: null,
+          ongoing: false,
         },
         {
           id: 'mock-project-2',
@@ -295,6 +348,7 @@ ${bd}
           status: 'done',
           createdAt: todayParts.dateStr,
           completedAt: todayParts.dateStr,
+          ongoing: false,
         },
       ],
     },

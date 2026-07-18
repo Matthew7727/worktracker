@@ -67,7 +67,7 @@ export const groupProjectsByStream = (data, config) => {
   return { byStream, mainFocusProjects, activities }
 }
 
-export const createActivity = (title, streamId) => ({
+export const createActivity = (title, streamId, options = {}) => ({
   id: generateId(),
   type: streamId, // stream id; legacy rows still carry 'PD' | 'BD'
   title,
@@ -77,9 +77,11 @@ export const createActivity = (title, streamId) => ({
   status: 'active',
   completedAt: null,
   createdAt: new Date().toISOString().split('T')[0],
+  parentId: options.parentId ?? null,
+  ongoing: !!options.ongoing,
 })
 
-export const createClientProject = (title) => ({
+export const createClientProject = (title, options = {}) => ({
   id: generateId(),
   title,
   description: '',
@@ -88,7 +90,16 @@ export const createClientProject = (title) => ({
   tasks: [],
   createdAt: new Date().toISOString().split('T')[0],
   completedAt: null,
+  ongoing: !!options.ongoing,
 })
+
+/** Activities that don't belong inside another activity. */
+export const getTopLevelActivities = (activities) =>
+  (activities || []).filter((a) => !a.parentId)
+
+/** Activities nested inside the given parent activity. */
+export const getChildActivities = (activities, parentId) =>
+  (activities || []).filter((a) => a.parentId === parentId)
 
 export const createTask = (text) => ({
   id: generateId(),

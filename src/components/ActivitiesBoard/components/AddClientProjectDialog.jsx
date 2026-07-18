@@ -6,19 +6,23 @@ import {
   DialogActions,
   Button,
   TextField,
+  FormControlLabel,
+  Switch,
 } from '@mui/material'
 
 const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
   const [title, setTitle] = useState('')
+  const [ongoing, setOngoing] = useState(false)
 
   const handleClose = () => {
     setTitle('')
+    setOngoing(false)
     onClose()
   }
 
   const handleSubmit = () => {
     if (!title.trim()) return
-    onAdd(title.trim())
+    onAdd(title.trim(), { ongoing })
     handleClose()
   }
 
@@ -51,6 +55,16 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={ongoing}
+              onChange={(e) => setOngoing(e.target.checked)}
+            />
+          }
+          label="Ongoing — no fixed end date"
+          sx={{ mt: 1 }}
         />
       </DialogContent>
       <DialogActions sx={{ mt: 2, px: 3, pb: 2 }}>

@@ -6,17 +6,14 @@ import {
   LinearProgress,
   CircularProgress,
   Chip,
-  Tooltip,
 } from '@mui/material'
-import { FolderOpen, Build, Warning } from '@mui/icons-material'
+import { FolderOpen, Build } from '@mui/icons-material'
 import {
   loadProjects,
   getActivityStreamId,
 } from '../../../utils/projectsManager'
 import { getStreamAbbrev } from '../../../utils/streamConfig'
 import { useAppContext } from '../../../context/AppContext'
-
-const STALE_THRESHOLD = 30
 
 const getAge = (createdAt) =>
   Math.floor((new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24))
@@ -89,18 +86,17 @@ const ProjectsSummary = () => {
             <Stack spacing={1.5}>
               {activeClients.map((project) => {
                 const age = getAge(project.createdAt)
-                const isStale = age >= STALE_THRESHOLD
                 return (
                   <Box
                     key={project.id}
                     sx={{
                       p: 2,
                       border: '2px solid',
-                      borderColor: isStale ? 'error.main' : 'text.primary',
+                      borderColor: 'text.primary',
                       borderRadius: 2,
                       boxShadow: (theme) =>
                         `3px 3px 0px ${theme.palette.text.primary}`,
-                      borderLeft: `5px solid ${isStale ? '#d32f2f' : mainFocusStream?.color || '#80b621'}`,
+                      borderLeft: `5px solid ${mainFocusStream?.color || '#80b621'}`,
                     }}
                   >
                     <Stack
@@ -108,33 +104,18 @@ const ProjectsSummary = () => {
                       justifyContent="space-between"
                       alignItems="center"
                     >
-                      <Stack direction="row" alignItems="center" spacing={0.75}>
-                        {isStale && (
-                          <Tooltip
-                            title="Stale — active for over 30 days"
-                            placement="top"
-                          >
-                            <Warning
-                              sx={{ fontSize: 15, color: 'error.main' }}
-                            />
-                          </Tooltip>
-                        )}
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 800,
-                            color: isStale ? 'error.main' : 'text.primary',
-                          }}
-                        >
-                          {project.title}
-                        </Typography>
-                      </Stack>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 800, color: 'text.primary' }}
+                      >
+                        {project.title}
+                      </Typography>
                       <Typography
                         variant="caption"
                         sx={{
                           fontWeight: 700,
-                          color: isStale ? 'error.main' : 'text.secondary',
-                          opacity: isStale ? 1 : 0.5,
+                          color: 'text.secondary',
+                          opacity: 0.5,
                         }}
                       >
                         {age}d active
@@ -178,7 +159,6 @@ const ProjectsSummary = () => {
               const completed = activity.tasks.filter((t) => t.completed).length
               const progress = total > 0 ? (completed / total) * 100 : 0
               const age = getAge(activity.createdAt)
-              const isStale = age >= STALE_THRESHOLD
               const stream = streamById[getActivityStreamId(activity)]
               const color = stream?.color || '#888'
               return (
@@ -190,14 +170,6 @@ const ProjectsSummary = () => {
                     sx={{ mb: 0.75 }}
                   >
                     <Stack direction="row" alignItems="center" spacing={0.75}>
-                      {isStale && (
-                        <Tooltip
-                          title="Stale — active for over 30 days"
-                          placement="top"
-                        >
-                          <Warning sx={{ fontSize: 15, color: 'error.main' }} />
-                        </Tooltip>
-                      )}
                       <Chip
                         label={stream ? getStreamAbbrev(stream) : activity.type}
                         size="small"
@@ -213,10 +185,7 @@ const ProjectsSummary = () => {
                       />
                       <Typography
                         variant="body2"
-                        sx={{
-                          fontWeight: 800,
-                          color: isStale ? 'error.main' : 'text.primary',
-                        }}
+                        sx={{ fontWeight: 800, color: 'text.primary' }}
                       >
                         {activity.title}
                       </Typography>
@@ -246,9 +215,7 @@ const ProjectsSummary = () => {
                         border: '2px solid',
                         borderColor: 'text.primary',
                         bgcolor: 'background.paper',
-                        '& .MuiLinearProgress-bar': {
-                          bgcolor: isStale ? 'error.main' : color,
-                        },
+                        '& .MuiLinearProgress-bar': { bgcolor: color },
                       }}
                     />
                   )}

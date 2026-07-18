@@ -16,6 +16,8 @@ import {
   createClientProject,
   createTask,
   getActivityStreamId,
+  getTopLevelActivities,
+  getChildActivities,
 } from '../../utils/projectsManager'
 import { getStreamAbbrev } from '../../utils/streamConfig'
 import ActivityCard from './components/ActivityCard'
@@ -320,10 +322,10 @@ const ActivitiesBoard = () => {
 
   // ── Activity handlers ──────────────────────────────────────────────────
 
-  const handleAddActivity = (title, type) => {
+  const handleAddActivity = (title, type, options) => {
     save({
       ...data,
-      activities: [...data.activities, createActivity(title, type)],
+      activities: [...data.activities, createActivity(title, type, options)],
     })
   }
 
@@ -360,10 +362,13 @@ const ActivitiesBoard = () => {
 
   // ── Client project handlers ────────────────────────────────────────────
 
-  const handleAddClientProject = (title) => {
+  const handleAddClientProject = (title, options) => {
     save({
       ...data,
-      clientProjects: [...data.clientProjects, createClientProject(title)],
+      clientProjects: [
+        ...data.clientProjects,
+        createClientProject(title, options),
+      ],
     })
   }
 
@@ -403,12 +408,24 @@ const ActivitiesBoard = () => {
 
   const typeMatch = (a) =>
     activityFilter === 'ALL' || getActivityStreamId(a) === activityFilter
-  const activeActivities = data.activities.filter(
+  const activeTopLevel = getTopLevelActivities(data.activities).filter(
     (a) => a.status === 'active' && typeMatch(a)
   )
   const archivedActivities = data.activities.filter(
     (a) => a.status === 'archived' && typeMatch(a)
   )
+
+  const cardPropsFor = (activity) => ({
+    activity,
+    stream: getStreamFor(activity),
+    onAddTask: (text) => handleAddTask(activity.id, text),
+    onToggleTask: (taskId) => handleToggleTask(activity.id, taskId),
+    onFinish: () => handleFinishActivity(activity.id),
+    onRename: (title) => handleRenameActivity(activity.id, title),
+    onDelete: () => handleDeleteActivity(activity.id),
+    onOpenDetails: () => navigate(`/todos/activity/${activity.id}`),
+    recentlyCompletedIds,
+  })
 
   // ── Render ─────────────────────────────────────────────────────────────
 
@@ -459,7 +476,7 @@ const ActivitiesBoard = () => {
       <Box sx={{ mb: 5 }}>
         <SectionHeader
           title="Activities"
-          count={activeActivities.length}
+          count={activeTopLevel.length}
           countLabel="active"
         />
 
@@ -488,7 +505,7 @@ const ActivitiesBoard = () => {
           ))}
         </Box>
 
-        {activeActivities.length === 0 && archivedActivities.length === 0 ? (
+        {activeTopLevel.length === 0 && archivedActivities.length === 0 ? (
           <Box
             sx={{
               py: 6,
@@ -516,33 +533,59 @@ const ActivitiesBoard = () => {
           </Box>
         ) : (
           <>
-            {activeActivities.length > 0 && (
+            {activeTopLevel.length > 0 && (
               <ActivityGrid>
-                {activeActivities.map((activity) => (
-                  <ActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    stream={getStreamFor(activity)}
-                    onAddTask={(text) => handleAddTask(activity.id, text)}
-                    onToggleTask={(taskId) =>
-                      handleToggleTask(activity.id, taskId)
-                    }
-                    onFinish={() => handleFinishActivity(activity.id)}
-                    onRename={(title) =>
-                      handleRenameActivity(activity.id, title)
-                    }
-                    onDelete={() => handleDeleteActivity(activity.id)}
-                    onOpenDetails={() =>
-                      navigate(`/todos/activity/${activity.id}`)
-                    }
-                    recentlyCompletedIds={recentlyCompletedIds}
-                  />
-                ))}
+                {activeTopLevel.map((activity) => {
+                  const children = getChildActivities(
+                    data.activities,
+                    activity.id
+                  ).filter((c) => c.status === 'active' && typeMatch(c))
+
+                  if (children.length === 0) {
+                    return (
+                      <ActivityCard
+                        key={activity.id}
+                        {...cardPropsFor(activity)}
+                      />
+                    )
+                  }
+
+                  return (
+                    <Box
+                      key={activity.id}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1.5,
+                      }}
+                    >
+                      <ActivityCard {...cardPropsFor(activity)} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1.5,
+                          pl: 2,
+                          ml: 1,
+                          borderLeft: '2px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        {children.map((child) => (
+                          <ActivityCard
+                            key={child.id}
+                            {...cardPropsFor(child)}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )
+                })}
               </ActivityGrid>
             )}
 
             {archivedActivities.length > 0 && (
-              <Box sx={{ mt: activeActivities.length > 0 ? 4 : 0 }}>
+              <Box sx={{ mt: activeTopLevel.length > 0 ? 4 : 0 }}>
                 <Box
                   component="button"
                   onClick={() => setShowCompleted((s) => !s)}
@@ -605,6 +648,7 @@ const ActivitiesBoard = () => {
         onClose={() => setAddActivityOpen(false)}
         onAdd={handleAddActivity}
         streams={activityStreams}
+        activities={data.activities}
       />
       <AddClientProjectDialog
         open={addProjectOpen}
