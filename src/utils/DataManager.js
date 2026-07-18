@@ -117,3 +117,39 @@ export const loadAllEntries = async (rootDir, streams = LEGACY_STREAMS) => {
     return []
   }
 }
+
+const DEFAULT_MENTION_WINDOW_DAYS = 90
+
+/**
+ * How often each activity/project title has come up in daily entries within
+ * a trailing window — a proxy for how much non-client time something is
+ * actually taking, since we can't tie PD/BD work to hours the way STAFFIT
+ * ties client work to hours.
+ *
+ * @returns {{ byTitle: Object<string, number>, byStream: Object<string, number> }}
+ */
+export const getEntryMentionCounts = (
+  entries,
+  windowDays = DEFAULT_MENTION_WINDOW_DAYS
+) => {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - windowDays)
+  const cutoffStr = cutoff.toISOString().split('T')[0]
+
+  const byTitle = {}
+  const byStream = {}
+
+  entries.forEach((entry) => {
+    if (entry.date < cutoffStr) return
+    Object.entries(entry.projectsByStream || {}).forEach(
+      ([streamId, titles]) => {
+        titles.forEach((title) => {
+          byTitle[title] = (byTitle[title] || 0) + 1
+          byStream[streamId] = (byStream[streamId] || 0) + 1
+        })
+      }
+    )
+  })
+
+  return { byTitle, byStream }
+}

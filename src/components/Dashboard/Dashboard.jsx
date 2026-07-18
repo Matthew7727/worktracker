@@ -38,8 +38,14 @@ const SectionDivider = () => (
 )
 
 const Dashboard = () => {
-  const { stats, projects, allEntries, utilisationTarget, loading } =
-    useDashboardData()
+  const {
+    stats,
+    projects,
+    allEntries,
+    utilisationTarget,
+    utilisationPrediction,
+    loading,
+  } = useDashboardData()
   const { streamConfig } = useAppContext()
 
   const days = stats.totalDays
@@ -74,6 +80,7 @@ const Dashboard = () => {
               projects={projects}
               stats={stats}
               utilisationTarget={utilisationTarget}
+              utilisationPrediction={utilisationPrediction}
             />
           )}
         </Box>
@@ -87,7 +94,7 @@ const Dashboard = () => {
         <StreamAlignment
           entries={allEntries}
           stats={stats}
-          utilisationTarget={utilisationTarget}
+          utilisationPrediction={utilisationPrediction}
           loading={loading}
         />
 

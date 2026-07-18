@@ -356,12 +356,36 @@ ${bd}
     2
   )
 
+  // ─── STAFFIT weekly hours ─────────────────────────────────────────────────
+
+  const mondayOf = (dateObj) => {
+    const d = new Date(dateObj)
+    const day = d.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    d.setDate(d.getDate() + diff)
+    d.setHours(0, 0, 0, 0)
+    return fmt(d).dateStr
+  }
+
+  const staffitHours = {}
+  for (let weeksAgo = 1; weeksAgo <= 6; weeksAgo++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - weeksAgo * 7)
+    staffitHours[mondayOf(d)] = 30 + Math.round(Math.random() * 10)
+  }
+  mockFiles[`${MOCK_ROOT}/staffitHours.json`] = JSON.stringify(
+    staffitHours,
+    null,
+    2
+  )
+
   // ─── In-memory settings store ─────────────────────────────────────────────
 
   let mockSettings = {
     notificationsEnabled: false,
     notificationTime: '17:00',
     utilisationTarget: 70,
+    standardWeeklyHours: 37.5,
     selectedDirectory: MOCK_ROOT,
   }
 

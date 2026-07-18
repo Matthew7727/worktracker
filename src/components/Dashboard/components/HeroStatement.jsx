@@ -21,7 +21,12 @@ const joinNodes = (nodes) =>
     </React.Fragment>
   ))
 
-const HeroStatement = ({ projects, stats, utilisationTarget }) => {
+const HeroStatement = ({
+  projects,
+  stats,
+  utilisationTarget,
+  utilisationPrediction,
+}) => {
   const { streamConfig, streams, mainFocusStream } = useAppContext()
   const currentYear = new Date().getFullYear().toString()
 
@@ -44,24 +49,15 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
       )
     }).length
 
-  const currentUtil =
-    stats.totalWords > 0 && mainFocusStream
-      ? Math.round(
-          ((stats.streamBreakdown[mainFocusStream.id] || 0) /
-            stats.totalWords) *
-            100
-        )
-      : 0
-
   // ── Line 1: main-focus engagements (project pipeline) ────────────────────
   let mainLine
   if (!projectHierarchy) {
-    const mainWords = stats.streamBreakdown[mainFocusStream?.id] || 0
+    const mainEntries = stats.mentionsByStream?.[mainFocusStream?.id] || 0
     mainLine = (
       <>
         Your main focus is <B color={mainColor}>{mainFocusStream?.name}</B> —{' '}
-        <B color={mainColor}>{mainWords.toLocaleString()}</B> words logged so
-        far.
+        <B color={mainColor}>{mainEntries.toLocaleString()}</B> entries logged
+        so far.
       </>
     )
   } else if (activeClients.length === 0) {
@@ -97,21 +93,29 @@ const HeroStatement = ({ projects, stats, utilisationTarget }) => {
   }
 
   // ── Line 2: other streams + utilisation ──────────────────────────────────
+  // Predicted, not measured: it's the trend across STAFFIT hours declared
+  // so far this June-June cycle, projected forward — never a claim about
+  // hours actually worked right now.
   let utilSuffix = null
-  if (utilisationEnabled && utilisationTarget !== null) {
-    const diff = currentUtil - utilisationTarget
+  if (
+    utilisationEnabled &&
+    utilisationTarget !== null &&
+    utilisationPrediction !== null
+  ) {
+    const diff = utilisationPrediction - utilisationTarget
     const utilColor =
       diff >= 0 ? '#80b621' : diff >= -10 ? '#f59e0b' : '#d32f2f'
     utilSuffix =
       diff >= 0 ? (
         <>
-          , and are <B color={utilColor}>{diff}% above</B> your utilisation
-          target
+          , and are predicted to land <B color={utilColor}>{diff}% above</B>{' '}
+          your utilisation target
         </>
       ) : (
         <>
-          , and are <B color={utilColor}>{Math.abs(diff)}% below</B> your
-          utilisation target
+          , and are predicted to land{' '}
+          <B color={utilColor}>{Math.abs(diff)}% below</B> your utilisation
+          target
         </>
       )
   }

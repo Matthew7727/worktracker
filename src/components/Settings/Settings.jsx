@@ -32,7 +32,6 @@ const Settings = () => {
     setProjectDirectory,
     showNotification,
     streamConfig,
-    mainFocusStream,
     rerunStreamSetup,
   } = useAppContext()
 
@@ -45,6 +44,7 @@ const Settings = () => {
 
   // Utilisation Target
   const [utilisationTarget, setUtilisationTarget] = useState(70)
+  const [standardWeeklyHours, setStandardWeeklyHours] = useState(37.5)
   const [isUtilSaving, setIsUtilSaving] = useState(false)
 
   // Auto Update (state lives in UpdateContext; this page is just a view)
@@ -80,13 +80,20 @@ const Settings = () => {
         if (settings.utilisationTarget !== undefined) {
           setUtilisationTarget(settings.utilisationTarget)
         }
+        if (settings.standardWeeklyHours !== undefined) {
+          setStandardWeeklyHours(settings.standardWeeklyHours)
+        }
       }
     }
     fetchSettings()
   }, [])
 
-  const handleSaveUtilisation = async (value) => {
-    const parsed = Math.min(100, Math.max(0, parseInt(value, 10) || 0))
+  const handleSaveUtilisation = async (targetValue, weeklyHoursValue) => {
+    const parsedTarget = Math.min(
+      100,
+      Math.max(0, parseInt(targetValue, 10) || 0)
+    )
+    const parsedHours = Math.max(0, parseFloat(weeklyHoursValue) || 0)
     setIsUtilSaving(true)
     try {
       const current = window.electronAPI?.loadSettings
@@ -94,10 +101,12 @@ const Settings = () => {
         : {}
       const result = await window.electronAPI.saveSettings({
         ...current,
-        utilisationTarget: parsed,
+        utilisationTarget: parsedTarget,
+        standardWeeklyHours: parsedHours,
       })
       if (result.success) {
-        setUtilisationTarget(parsed)
+        setUtilisationTarget(parsedTarget)
+        setStandardWeeklyHours(parsedHours)
         showNotification('Utilisation target updated', 'success')
       }
     } catch {
@@ -342,86 +351,143 @@ const Settings = () => {
                     variant="body1"
                     sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
                   >
-                    Set the percentage of your total logged work that should be{' '}
-                    {mainFocusStream?.name || 'your main goal'}. This will be
-                    tracked on your dashboard.
+                    Utilisation is predicted from the hours you declare in
+                    STAFFIT each week (client work only), tracked against your
+                    standard week, over the 1 June – 31 May cycle.
                   </Typography>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'action.hover',
-                      borderRadius: '20px',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                        {mainFocusStream?.name || 'Main Goal'} Target
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, opacity: 0.7 }}
-                      >
-                        What % of your time should go here?
-                      </Typography>
+                  <Stack spacing={2}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 3,
+                        bgcolor: 'action.hover',
+                        borderRadius: '20px',
+                        border: '3px solid',
+                        borderColor: 'text.primary',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          Utilisation Target
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, opacity: 0.7 }}
+                        >
+                          What % of a standard week should be chargeable?
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <TextField
+                          type="number"
+                          value={utilisationTarget}
+                          onChange={(e) => setUtilisationTarget(e.target.value)}
+                          inputProps={{ min: 0, max: 100, step: 5 }}
+                          sx={{
+                            width: 100,
+                            '& .MuiInputBase-root': {
+                              fontWeight: 900,
+                              fontSize: '1.2rem',
+                              borderRadius: '12px',
+                              border: '2px solid',
+                              borderColor: 'text.primary',
+                            },
+                          }}
+                        />
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          %
+                        </Typography>
+                      </Stack>
                     </Box>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <TextField
-                        type="number"
-                        value={utilisationTarget}
-                        onChange={(e) => setUtilisationTarget(e.target.value)}
-                        inputProps={{ min: 0, max: 100, step: 5 }}
-                        sx={{
-                          width: 100,
-                          '& .MuiInputBase-root': {
-                            fontWeight: 900,
-                            fontSize: '1.2rem',
-                            borderRadius: '12px',
-                            border: '2px solid',
-                            borderColor: 'text.primary',
-                          },
-                        }}
-                      />
-                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                        %
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={() => handleSaveUtilisation(utilisationTarget)}
-                        disabled={isUtilSaving}
-                        sx={{
-                          fontWeight: 900,
-                          px: 3,
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 3,
+                        bgcolor: 'action.hover',
+                        borderRadius: '20px',
+                        border: '3px solid',
+                        borderColor: 'text.primary',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          Standard Week
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, opacity: 0.7 }}
+                        >
+                          Hours in a full, standard working week
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <TextField
+                          type="number"
+                          value={standardWeeklyHours}
+                          onChange={(e) =>
+                            setStandardWeeklyHours(e.target.value)
+                          }
+                          inputProps={{ min: 0, step: 0.5 }}
+                          sx={{
+                            width: 100,
+                            '& .MuiInputBase-root': {
+                              fontWeight: 900,
+                              fontSize: '1.2rem',
+                              borderRadius: '12px',
+                              border: '2px solid',
+                              borderColor: 'text.primary',
+                            },
+                          }}
+                        />
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          hrs
+                        </Typography>
+                      </Stack>
+                    </Box>
+
+                    <Button
+                      variant="contained"
+                      onClick={() =>
+                        handleSaveUtilisation(
+                          utilisationTarget,
+                          standardWeeklyHours
+                        )
+                      }
+                      disabled={isUtilSaving}
+                      sx={{
+                        fontWeight: 900,
+                        alignSelf: 'flex-end',
+                        px: 3,
+                        backgroundImage: 'none',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
+                        '&:hover': {
+                          bgcolor: '#f0f0f0',
                           boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: '#f0f0f0',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
-                          '&.Mui-disabled': {
-                            opacity: 0.5,
-                            boxShadow: 'none',
-                            border: '2px solid #999',
-                            bgcolor: '#f0f0f0',
-                          },
-                        }}
-                      >
-                        SAVE
-                      </Button>
-                    </Stack>
-                  </Box>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
+                          transform: 'translate(2px, 2px)',
+                        },
+                        '&.Mui-disabled': {
+                          opacity: 0.5,
+                          boxShadow: 'none',
+                          border: '2px solid #999',
+                          bgcolor: '#f0f0f0',
+                        },
+                      }}
+                    >
+                      SAVE
+                    </Button>
+                  </Stack>
                 </Paper>
               )}
 

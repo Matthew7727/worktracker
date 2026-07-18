@@ -24,6 +24,8 @@ const DailyEditor = () => {
     toggleFlowProject,
     allAvailableProjects,
     completedTodosByTitle,
+    staffitHours,
+    handleSaveStaffitHours,
     projectEntries,
     viewMode,
     setViewMode,
@@ -58,6 +60,8 @@ const DailyEditor = () => {
         weekStatus={weekStatus}
         streams={streamDefs}
         onQuickSetDayStatus={quickSetDayStatus}
+        staffitHours={staffitHours}
+        onSaveStaffitHours={handleSaveStaffitHours}
       />
 
       {viewMode === 'start' && (
