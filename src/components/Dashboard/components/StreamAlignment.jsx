@@ -3,7 +3,7 @@ import { Box, Typography, Stack, LinearProgress, Skeleton } from '@mui/material'
 import WeeklyChart from '../WeeklyChart'
 import { useAppContext } from '../../../context/AppContext'
 
-const StreamBar = ({ label, value, total, color, targetPct }) => {
+const StreamBar = ({ label, value, total, color }) => {
   const percentage = total > 0 ? (value / total) * 100 : 0
   return (
     <Box>
@@ -15,45 +15,20 @@ const StreamBar = ({ label, value, total, color, targetPct }) => {
           {Math.round(percentage)}%
         </Typography>
       </Stack>
-      <Box sx={{ position: 'relative' }}>
-        <LinearProgress
-          variant="determinate"
-          value={percentage}
-          sx={{
-            height: 12,
-            borderRadius: 6,
-            border: '2px solid',
-            borderColor: 'text.primary',
-            bgcolor: 'background.paper',
-            '& .MuiLinearProgress-bar': { bgcolor: color },
-          }}
-        />
-        {targetPct != null && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: -3,
-              bottom: -3,
-              left: `${targetPct}%`,
-              width: 3,
-              bgcolor: 'text.primary',
-              borderRadius: 1,
-              transform: 'translateX(-50%)',
-            }}
-          />
-        )}
-      </Box>
+      <LinearProgress
+        variant="determinate"
+        value={percentage}
+        sx={{
+          height: 12,
+          borderRadius: 6,
+          border: '2px solid',
+          borderColor: 'text.primary',
+          bgcolor: 'background.paper',
+          '& .MuiLinearProgress-bar': { bgcolor: color },
+        }}
+      />
       <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.6 }}>
-        {value.toLocaleString()} words total
-        {targetPct != null && (
-          <Typography
-            component="span"
-            variant="caption"
-            sx={{ fontWeight: 700, opacity: 0.5, ml: 1 }}
-          >
-            · target {targetPct}%
-          </Typography>
-        )}
+        {value.toLocaleString()} {value === 1 ? 'entry' : 'entries'}
       </Typography>
     </Box>
   )
@@ -67,9 +42,12 @@ const sectionLabel = {
   opacity: 0.7,
 }
 
-const StreamAlignment = ({ entries, stats, utilisationTarget, loading }) => {
-  const { streamConfig, streams, mainFocusStream } = useAppContext()
-  const utilisationEnabled = !!streamConfig?.features?.utilisation
+const StreamAlignment = ({ entries, stats, loading }) => {
+  const { streams } = useAppContext()
+  const totalMentions = Object.values(stats.mentionsByStream || {}).reduce(
+    (a, b) => a + b,
+    0
+  )
 
   return (
     <Box
@@ -110,7 +88,7 @@ const StreamAlignment = ({ entries, stats, utilisationTarget, loading }) => {
               height={150}
               sx={{ borderRadius: 2 }}
             />
-          ) : stats.totalWords === 0 ? (
+          ) : totalMentions === 0 ? (
             <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
               No entries logged yet.
             </Typography>
@@ -119,14 +97,9 @@ const StreamAlignment = ({ entries, stats, utilisationTarget, loading }) => {
               <StreamBar
                 key={stream.id}
                 label={stream.name}
-                value={stats.streamBreakdown[stream.id] || 0}
-                total={stats.totalWords}
+                value={stats.mentionsByStream?.[stream.id] || 0}
+                total={totalMentions}
                 color={stream.color}
-                targetPct={
-                  utilisationEnabled && stream.id === mainFocusStream?.id
-                    ? utilisationTarget
-                    : null
-                }
               />
             ))
           )}

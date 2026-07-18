@@ -8,17 +8,164 @@ import {
   Button,
   TextField,
   Chip,
+  Avatar,
+  InputBase,
+  FormControlLabel,
+  Switch,
 } from '@mui/material'
-import { ArrowBack, Add, Delete } from '@mui/icons-material'
+import { ArrowBack, Add } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import {
   loadProjects,
   saveProjects,
   createTask,
+  createActivity,
   getActivityStreamId,
+  getChildActivities,
 } from '../../utils/projectsManager'
 import { getStreamAbbrev } from '../../utils/streamConfig'
 import TaskList from './components/TaskList'
+import StreamTag from './components/StreamTag'
+import ConfirmDialog from './components/ConfirmDialog'
+import ProgressStrip from './components/ProgressStrip'
+import AddActivityDialog from './components/AddActivityDialog'
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return null
+  const [year, month, day] = dateStr.split('-')
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
+  return `${parseInt(day)} ${months[parseInt(month) - 1]} '${year.slice(2)}`
+}
+
+const initialsFor = (name) =>
+  name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+
+const ProgressRing = ({ done, total, color }) => {
+  const r = 26
+  const circumference = 2 * Math.PI * r
+  const pct = total > 0 ? done / total : 0
+
+  return (
+    <Box sx={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+      <svg width="64" height="64" style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          cx="32"
+          cy="32"
+          r={r}
+          fill="none"
+          strokeWidth="7"
+          style={{
+            stroke: 'var(--mui-palette-action-hover, rgba(0,0,0,0.06))',
+          }}
+        />
+        <circle
+          cx="32"
+          cy="32"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={`${pct * circumference} ${circumference}`}
+        />
+      </svg>
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: '0.7rem',
+          fontWeight: 700,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {done}/{total}
+      </Box>
+    </Box>
+  )
+}
+
+const Panel = ({ label, children, sx = {} }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      p: 2.5,
+      borderRadius: '18px',
+      border: '1.5px solid',
+      borderColor: 'divider',
+      ...sx,
+    }}
+  >
+    <Typography
+      sx={{
+        fontSize: '0.66rem',
+        fontWeight: 800,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: 'text.secondary',
+        mb: 1.5,
+      }}
+    >
+      {label}
+    </Typography>
+    {children}
+  </Paper>
+)
+
+const StatusPill = ({ label, tone }) => (
+  <Box
+    component="span"
+    sx={{
+      fontSize: '0.68rem',
+      fontWeight: 800,
+      px: 1.5,
+      py: 0.4,
+      borderRadius: '999px',
+      flexShrink: 0,
+      ...(tone === 'active'
+        ? { bgcolor: 'primary.main', color: '#fff' }
+        : {
+            bgcolor: 'transparent',
+            border: '1.5px solid',
+            borderColor: 'divider',
+            color: 'text.disabled',
+          }),
+    }}
+  >
+    {label}
+  </Box>
+)
+
+const EMPTY_CONFIRM = {
+  open: false,
+  title: '',
+  message: '',
+  confirmLabel: 'Confirm',
+  danger: false,
+  onConfirm: null,
+}
 
 const ActivityDetailsPage = () => {
   const { itemType, itemId } = useParams()
@@ -26,6 +173,12 @@ const ActivityDetailsPage = () => {
   const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
   const [data, setData] = useState({ activities: [], clientProjects: [] })
   const [teamInput, setTeamInput] = useState('')
+  const [addingTeam, setAddingTeam] = useState(false)
+  const [addSubOpen, setAddSubOpen] = useState(false)
+  const [confirm, setConfirm] = useState(EMPTY_CONFIRM)
+  const openConfirm = (options) =>
+    setConfirm({ ...EMPTY_CONFIRM, ...options, open: true })
+  const closeConfirm = () => setConfirm(EMPTY_CONFIRM)
 
   const streamById = useMemo(
     () =>
@@ -43,21 +196,37 @@ const ActivityDetailsPage = () => {
     loadProjects(selectedDirectory).then(setData)
   }, [selectedDirectory])
 
-  const listKey = itemType === 'project' ? 'clientProjects' : 'activities'
+  const isProject = itemType === 'project'
+  const listKey = isProject ? 'clientProjects' : 'activities'
   const item = data[listKey].find((entry) => entry.id === itemId) || null
   const itemReadOnly =
-    (itemType === 'project' && item?.status === 'done') ||
-    (itemType === 'activity' && item?.status === 'archived')
+    (isProject && item?.status === 'done') ||
+    (!isProject && item?.status === 'archived')
 
-  const stream =
-    itemType === 'project'
-      ? mainFocusStream
-      : streamById[getActivityStreamId(item || {})]
-  const streamAbbrev = stream ? getStreamAbbrev(stream) : null
+  const stream = isProject
+    ? mainFocusStream
+    : streamById[getActivityStreamId(item || {})]
+
+  const parentActivity =
+    !isProject && item?.parentId
+      ? data.activities.find((a) => a.id === item.parentId) || null
+      : null
+  const childActivities =
+    !isProject && item ? getChildActivities(data.activities, item.id) : []
 
   const save = (nextData) => {
     setData(nextData)
     saveProjects(selectedDirectory, nextData)
+  }
+
+  const addSubActivity = (title, streamIdArg, options) => {
+    save({
+      ...data,
+      activities: [
+        ...data.activities,
+        createActivity(title, streamIdArg, options),
+      ],
+    })
   }
 
   const updateItem = (patchOrUpdater) => {
@@ -79,9 +248,17 @@ const ActivityDetailsPage = () => {
     onAddTask: (text) => updateTasks((tasks) => [...tasks, createTask(text)]),
     onToggleTask: (taskId) =>
       updateTasks((tasks) =>
-        tasks.map((t) =>
-          t.id === taskId ? { ...t, completed: !t.completed } : t
-        )
+        tasks.map((t) => {
+          if (t.id !== taskId) return t
+          const nextCompleted = !t.completed
+          return {
+            ...t,
+            completed: nextCompleted,
+            completedAt: nextCompleted
+              ? new Date().toISOString().split('T')[0]
+              : null,
+          }
+        })
       ),
     onDeleteTask: (taskId) =>
       updateTasks((tasks) => tasks.filter((t) => t.id !== taskId)),
@@ -128,13 +305,45 @@ const ActivityDetailsPage = () => {
   const teamMembers = item?.teamMembers || []
   const addTeamMember = () => {
     const name = teamInput.trim()
-    if (!name || teamMembers.includes(name)) return
+    if (!name || teamMembers.includes(name)) {
+      setTeamInput('')
+      setAddingTeam(false)
+      return
+    }
     updateItem({ teamMembers: [...teamMembers, name] })
     setTeamInput('')
   }
 
   const removeTeamMember = (name) => {
     updateItem({ teamMembers: teamMembers.filter((member) => member !== name) })
+  }
+
+  // ── Lifecycle actions ────────────────────────────────────────────────
+
+  const today = () => new Date().toISOString().split('T')[0]
+
+  const markComplete = () => {
+    if (isProject) {
+      updateItem({ status: 'done', completedAt: today() })
+    } else {
+      updateItem({ status: 'archived', completedAt: today() })
+    }
+  }
+
+  const reopen = () => {
+    if (isProject) {
+      updateItem({ status: 'active', completedAt: null })
+    } else {
+      updateItem({ status: 'active', completedAt: null })
+    }
+  }
+
+  const deleteItem = () => {
+    save({
+      ...data,
+      [listKey]: data[listKey].filter((entry) => entry.id !== itemId),
+    })
+    navigate('/todos')
   }
 
   if (!item) {
@@ -150,138 +359,424 @@ const ActivityDetailsPage = () => {
     )
   }
 
+  const tasks = item.tasks || []
+  const doneCount = tasks.filter((t) => t.completed).length
+  const accentColor = stream?.color || '#80b621'
+  const isActive = !itemReadOnly
+  const statusLabel = isActive ? 'Active' : isProject ? 'Done' : 'Completed'
+  const entityLabel = isProject ? 'project' : 'activity'
+  // Nesting is capped at one level — only top-level activities can take children.
+  const canHaveChildren = !isProject && !item.parentId
+
   return (
     <Box sx={{ pb: 6 }}>
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+      {/* ── Header ── */}
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
         <Button
           variant="outlined"
+          size="small"
           startIcon={<ArrowBack />}
           onClick={() => navigate('/todos')}
-          sx={{ fontWeight: 900 }}
+          sx={{
+            fontWeight: 900,
+            borderRadius: '999px',
+            borderWidth: '2px',
+            borderColor: 'text.primary',
+            color: 'text.primary',
+            px: 2,
+            '&:hover': { borderWidth: '2px' },
+          }}
         >
           Back
         </Button>
-        <Typography variant="h4" sx={{ fontWeight: 900 }}>
-          {item.title}
-        </Typography>
-        {streamAbbrev && (
-          <Chip
-            label={streamAbbrev}
-            size="small"
-            sx={{
-              fontWeight: 900,
-              bgcolor: stream.color,
-              color: '#fff',
-            }}
-          />
+        {stream && (
+          <StreamTag stream={stream} label={stream.name} size="medium" />
         )}
+        <StatusPill label={statusLabel} tone={isActive ? 'active' : 'muted'} />
       </Stack>
 
-      <Stack spacing={3}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            borderRadius: '20px',
-            border: '3px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-            Description
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            minRows={4}
-            placeholder="Add full context for this activity..."
-            value={item.description || ''}
-            onChange={(e) => updateItem({ description: e.target.value })}
-          />
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            borderRadius: '20px',
-            border: '3px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-            Team
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Add teammate name..."
-              value={teamInput}
-              onChange={(e) => setTeamInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addTeamMember()}
-            />
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={addTeamMember}
-              disabled={!teamInput.trim()}
-              sx={{ fontWeight: 900 }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 3,
+          mb: 3,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 260 }}>
+          {parentActivity && (
+            <Typography
+              onClick={() => navigate(`/todos/activity/${parentActivity.id}`)}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: 'text.secondary',
+                cursor: 'pointer',
+                mb: 0.5,
+                '&:hover': {
+                  color: 'text.primary',
+                  textDecoration: 'underline',
+                },
+              }}
             >
-              Add
-            </Button>
-          </Stack>
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            {teamMembers.length === 0 ? (
+              Part of: {parentActivity.title}
+            </Typography>
+          )}
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 900, letterSpacing: '-0.02em', mb: 0.75 }}
+          >
+            {item.title}
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              flexWrap: 'wrap',
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '0.7rem',
+              color: 'text.secondary',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {!item.ongoing && item.createdAt && (
+              <span>Started {formatDate(item.createdAt)}</span>
+            )}
+            <span>
+              {itemReadOnly && item.completedAt
+                ? `Completed ${formatDate(item.completedAt)}`
+                : 'Ongoing'}
+            </span>
+            {tasks.length > 0 && (
+              <span>
+                {tasks.length} todos · {doneCount} done
+              </span>
+            )}
+          </Box>
+        </Box>
+        {tasks.length > 0 && (
+          <ProgressRing
+            done={doneCount}
+            total={tasks.length}
+            color={accentColor}
+          />
+        )}
+      </Box>
+
+      {/* ── Main grid ── */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 320px' },
+          gap: 2.5,
+          alignItems: 'start',
+        }}
+      >
+        <Stack spacing={2.5}>
+          <Panel label="Todos">
+            <TaskList
+              tasks={tasks}
+              accentColor={accentColor}
+              readOnly={itemReadOnly}
+              ghostAdd
+              divided
+              collapseCompleted
+              onAddTask={itemReadOnly ? undefined : taskHandlers.onAddTask}
+              onToggleTask={
+                itemReadOnly ? undefined : taskHandlers.onToggleTask
+              }
+              onDeleteTask={
+                itemReadOnly ? undefined : taskHandlers.onDeleteTask
+              }
+              onToggleTaskImportant={
+                itemReadOnly ? undefined : taskHandlers.onToggleTaskImportant
+              }
+              onAddSubtask={
+                itemReadOnly ? undefined : taskHandlers.onAddSubtask
+              }
+              onToggleSubtask={
+                itemReadOnly ? undefined : taskHandlers.onToggleSubtask
+              }
+              onDeleteSubtask={
+                itemReadOnly ? undefined : taskHandlers.onDeleteSubtask
+              }
+            />
+            {tasks.length === 0 && itemReadOnly && (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                No team members added yet.
+                No todos were added.
               </Typography>
-            ) : (
-              teamMembers.map((member) => (
+            )}
+          </Panel>
+
+          {canHaveChildren && (childActivities.length > 0 || !itemReadOnly) && (
+            <Panel label="Sub-activities">
+              {childActivities.length > 0 ? (
+                <Stack spacing={1} sx={{ mb: itemReadOnly ? 0 : 1.5 }}>
+                  {childActivities.map((child) => {
+                    const childTasks = child.tasks || []
+                    const childDone = childTasks.filter(
+                      (t) => t.completed
+                    ).length
+                    return (
+                      <Box
+                        key={child.id}
+                        onClick={() => navigate(`/todos/activity/${child.id}`)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: '12px',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          cursor: 'pointer',
+                          '&:hover': { borderColor: 'text.secondary' },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.88rem',
+                            mb: childTasks.length > 0 ? 0.75 : 0,
+                          }}
+                        >
+                          {child.title}
+                        </Typography>
+                        {childTasks.length > 0 && (
+                          <ProgressStrip
+                            done={childDone}
+                            total={childTasks.length}
+                            color={accentColor}
+                          />
+                        )}
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mb: 1.5 }}
+                >
+                  No sub-activities yet.
+                </Typography>
+              )}
+              {!itemReadOnly && (
+                <Button
+                  onClick={() => setAddSubOpen(true)}
+                  startIcon={<Add sx={{ fontSize: '1rem' }} />}
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    color: 'text.secondary',
+                    pl: 0,
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                      color: 'text.primary',
+                    },
+                  }}
+                >
+                  Add sub-activity
+                </Button>
+              )}
+            </Panel>
+          )}
+        </Stack>
+
+        <Stack spacing={2}>
+          <Panel label="Notes">
+            <InputBase
+              fullWidth
+              multiline
+              minRows={2}
+              readOnly={itemReadOnly}
+              placeholder={`Add context for this ${entityLabel}…`}
+              value={item.description || ''}
+              onChange={(e) => updateItem({ description: e.target.value })}
+              sx={{
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+                '& textarea::placeholder': { fontStyle: 'italic' },
+              }}
+            />
+          </Panel>
+
+          <Panel label="Team">
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {teamMembers.map((member) => (
                 <Chip
                   key={member}
                   label={member}
-                  onDelete={() => removeTeamMember(member)}
-                  deleteIcon={<Delete />}
+                  onDelete={
+                    itemReadOnly ? undefined : () => removeTeamMember(member)
+                  }
+                  avatar={
+                    <Avatar
+                      sx={{
+                        bgcolor: accentColor,
+                        color: '#fff',
+                        fontSize: '0.6rem',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {initialsFor(member)}
+                    </Avatar>
+                  }
                   sx={{ fontWeight: 700 }}
                 />
-              ))
-            )}
-          </Stack>
-        </Paper>
+              ))}
+              {!itemReadOnly &&
+                (addingTeam ? (
+                  <InputBase
+                    autoFocus
+                    placeholder="Name…"
+                    value={teamInput}
+                    onChange={(e) => setTeamInput(e.target.value)}
+                    onBlur={addTeamMember}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addTeamMember()
+                      if (e.key === 'Escape') {
+                        setTeamInput('')
+                        setAddingTeam(false)
+                      }
+                    }}
+                    sx={{ fontSize: '0.85rem', minWidth: 120 }}
+                  />
+                ) : (
+                  <Chip
+                    label="+ Add"
+                    onClick={() => setAddingTeam(true)}
+                    variant="outlined"
+                    sx={{
+                      fontWeight: 700,
+                      borderStyle: 'dashed',
+                      color: 'text.secondary',
+                    }}
+                  />
+                ))}
+              {teamMembers.length === 0 && itemReadOnly && (
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  No team members.
+                </Typography>
+              )}
+            </Stack>
+          </Panel>
 
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            borderRadius: '20px',
-            border: '3px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-            Todos
-          </Typography>
-          <TaskList
-            tasks={item.tasks || []}
-            accentColor={stream?.color || 'primary.main'}
-            readOnly={itemReadOnly}
-            onAddTask={itemReadOnly ? undefined : taskHandlers.onAddTask}
-            onToggleTask={itemReadOnly ? undefined : taskHandlers.onToggleTask}
-            onDeleteTask={itemReadOnly ? undefined : taskHandlers.onDeleteTask}
-            onToggleTaskImportant={
-              itemReadOnly ? undefined : taskHandlers.onToggleTaskImportant
-            }
-            onAddSubtask={itemReadOnly ? undefined : taskHandlers.onAddSubtask}
-            onToggleSubtask={
-              itemReadOnly ? undefined : taskHandlers.onToggleSubtask
-            }
-            onDeleteSubtask={
-              itemReadOnly ? undefined : taskHandlers.onDeleteSubtask
-            }
-          />
-        </Paper>
-      </Stack>
+          <Panel label="Actions">
+            <Stack spacing={1}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!item.ongoing}
+                    onChange={(e) => updateItem({ ongoing: e.target.checked })}
+                  />
+                }
+                label="Ongoing — no fixed end date"
+                sx={{ mb: 0.5, ml: 0 }}
+              />
+              {isActive ? (
+                <Button
+                  fullWidth
+                  onClick={() =>
+                    openConfirm({
+                      title: isProject
+                        ? 'Mark Project Done'
+                        : 'Finish Activity',
+                      message: `"${item.title}" will be marked as ${
+                        isProject ? 'done' : 'completed'
+                      }.`,
+                      confirmLabel: isProject ? 'Mark done' : 'Finish',
+                      onConfirm: markComplete,
+                    })
+                  }
+                  sx={{
+                    fontWeight: 800,
+                    borderRadius: '12px',
+                    bgcolor: 'primary.main',
+                    color: '#fff',
+                    py: 1.1,
+                    '&:hover': { bgcolor: 'primary.dark' },
+                  }}
+                >
+                  {isProject ? 'Mark done' : 'Mark complete'}
+                </Button>
+              ) : (
+                <>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 1,
+                      borderRadius: '10px',
+                      bgcolor: 'action.hover',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      color: 'text.secondary',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {statusLabel}
+                    {item.completedAt
+                      ? ` · ${formatDate(item.completedAt)}`
+                      : ''}
+                  </Box>
+                  <Button
+                    fullWidth
+                    onClick={reopen}
+                    sx={{
+                      fontWeight: 800,
+                      borderRadius: '12px',
+                      border: '1.5px solid',
+                      borderColor: 'divider',
+                      color: 'text.primary',
+                      py: 1,
+                    }}
+                  >
+                    Reopen
+                  </Button>
+                </>
+              )}
+              <Button
+                fullWidth
+                onClick={() =>
+                  openConfirm({
+                    title: isProject ? 'Delete Project' : 'Delete Activity',
+                    message: `"${item.title}" will be permanently removed.`,
+                    confirmLabel: 'Delete',
+                    danger: true,
+                    onConfirm: deleteItem,
+                  })
+                }
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.78rem',
+                  color: 'error.main',
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                Delete {entityLabel}…
+              </Button>
+            </Stack>
+          </Panel>
+        </Stack>
+      </Box>
+
+      <ConfirmDialog {...confirm} onCancel={closeConfirm} />
+
+      {canHaveChildren && (
+        <AddActivityDialog
+          open={addSubOpen}
+          onClose={() => setAddSubOpen(false)}
+          onAdd={addSubActivity}
+          streams={streamConfig?.streams || []}
+          activities={data.activities}
+          defaultParentId={item.id}
+        />
+      )}
     </Box>
   )
 }

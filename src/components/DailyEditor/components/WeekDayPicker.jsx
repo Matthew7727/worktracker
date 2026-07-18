@@ -1,5 +1,12 @@
 import React, { useState } from 'react'
-import { Box, Stack, Typography, Menu, MenuItem } from '@mui/material'
+import {
+  Box,
+  Stack,
+  Typography,
+  Menu,
+  MenuItem,
+  InputBase,
+} from '@mui/material'
 import { MoreHoriz } from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
 import { getWeekDays } from '../utils/weekDays'
@@ -71,12 +78,93 @@ const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
   )
 }
 
+const StaffitHoursBox = ({ hours, onSave }) => {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+
+  const commit = () => {
+    setEditing(false)
+    const parsed = parseFloat(value)
+    onSave(isNaN(parsed) ? null : parsed)
+  }
+
+  return (
+    <Box
+      component="button"
+      onClick={() => {
+        setValue(hours ?? '')
+        setEditing(true)
+      }}
+      sx={{
+        px: 3,
+        py: 1.5,
+        fontFamily: 'inherit',
+        border: '4px solid',
+        borderColor: 'text.primary',
+        borderRadius: 0,
+        cursor: editing ? 'text' : 'pointer',
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 1,
+        minWidth: 96,
+      }}
+    >
+      <Typography
+        sx={{
+          fontWeight: 950,
+          fontSize: '0.65rem',
+          letterSpacing: '0.06em',
+        }}
+      >
+        STAFFIT / WK
+      </Typography>
+      {editing ? (
+        <InputBase
+          autoFocus
+          type="number"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit()
+            if (e.key === 'Escape') {
+              setValue(hours ?? '')
+              setEditing(false)
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          inputProps={{
+            step: 0.5,
+            min: 0,
+            style: {
+              textAlign: 'center',
+              fontWeight: 950,
+              fontSize: '1rem',
+              width: 56,
+              padding: 0,
+            },
+          }}
+        />
+      ) : (
+        <Typography sx={{ fontWeight: 950, fontSize: '1rem' }}>
+          {hours != null && hours !== '' ? hours : '—'}
+        </Typography>
+      )}
+    </Box>
+  )
+}
+
 const WeekDayPicker = ({
   currentDate,
   onSelectDay,
   weekStatus,
   streams = [],
   onQuickSetDayStatus,
+  staffitHours,
+  onSaveStaffitHours,
 }) => {
   const weekDays = getWeekDays(new Date())
 
@@ -86,7 +174,7 @@ const WeekDayPicker = ({
         {formatDate(currentDate)}
       </Typography>
 
-      <Stack direction="row" spacing={1.5}>
+      <Stack direction="row" spacing={1.5} alignItems="center">
         {weekDays.map((day, i) => {
           const isSelected = day.toDateString() === currentDate.toDateString()
           const dateKey = day.toISOString().split('T')[0]
@@ -205,6 +293,9 @@ const WeekDayPicker = ({
             </Box>
           )
         })}
+        {onSaveStaffitHours && (
+          <StaffitHoursBox hours={staffitHours} onSave={onSaveStaffitHours} />
+        )}
       </Stack>
     </Stack>
   )

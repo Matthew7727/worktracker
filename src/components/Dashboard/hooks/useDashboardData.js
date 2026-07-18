@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useAppContext } from '../../../context/AppContext'
-import { loadAllEntries } from '../../../utils/DataManager'
+import {
+  loadAllEntries,
+  getEntryMentionCounts,
+} from '../../../utils/DataManager'
 import { loadProjects } from '../../../utils/projectsManager'
+import { loadStaffitHours } from '../../../utils/staffitManager'
+import { getUtilisationPrediction } from '../../../utils/utilisationUtils'
 
 const calculateStreaks = (uniqueDates) => {
   if (uniqueDates.length === 0) return 0
@@ -25,10 +30,12 @@ const useDashboardData = () => {
 
   const [stats, setStats] = useState({
     totalDays: 0,
-    totalWords: 0,
     currentStreak: 0,
     balanceScore: 0,
-    streamBreakdown: {},
+    // Entries mentioning each activity/stream — the effort proxy for
+    // non-client (PD/BD-style) streams, replacing word counts.
+    mentionsByStream: {},
+    mentionsByTitle: {},
   })
   const [projects, setProjects] = useState({
     activities: [],
@@ -36,6 +43,9 @@ const useDashboardData = () => {
   })
   const [allEntries, setAllEntries] = useState([])
   const [utilisationTarget, setUtilisationTarget] = useState(null)
+  const [utilisationPrediction, setUtilisationPrediction] = useState(null)
+  const [staffitHours, setStaffitHours] = useState({})
+  const [standardWeeklyHours, setStandardWeeklyHours] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -44,17 +54,24 @@ const useDashboardData = () => {
       setLoading(true)
       try {
         const allStreams = streamConfig.streams
-        const [resolvedEntries, projectsData, settings] = await Promise.all([
-          loadAllEntries(selectedDirectory, allStreams),
-          loadProjects(selectedDirectory),
-          window.electronAPI?.loadSettings
-            ? window.electronAPI.loadSettings()
-            : Promise.resolve({}),
-        ])
+        const [resolvedEntries, projectsData, settings, staffitHours] =
+          await Promise.all([
+            loadAllEntries(selectedDirectory, allStreams),
+            loadProjects(selectedDirectory),
+            window.electronAPI?.loadSettings
+              ? window.electronAPI.loadSettings()
+              : Promise.resolve({}),
+            loadStaffitHours(selectedDirectory),
+          ])
 
         if (settings.utilisationTarget !== undefined) {
           setUtilisationTarget(settings.utilisationTarget)
         }
+        setStandardWeeklyHours(settings.standardWeeklyHours ?? null)
+        setStaffitHours(staffitHours || {})
+        setUtilisationPrediction(
+          getUtilisationPrediction(staffitHours, settings.standardWeeklyHours)
+        )
 
         setAllEntries(resolvedEntries)
         setProjects(projectsData)
@@ -62,23 +79,13 @@ const useDashboardData = () => {
         const uniqueDates = Array.from(
           new Set(resolvedEntries.map((e) => e.date))
         )
-        const streamBreakdown = {}
-        allStreams.forEach((s) => {
-          streamBreakdown[s.id] = 0
-        })
-        let totalWords = 0
 
-        resolvedEntries.forEach((entry) => {
-          if (entry.streamCounts) {
-            allStreams.forEach((s) => {
-              streamBreakdown[s.id] += entry.streamCounts[s.id] || 0
-            })
-            totalWords += entry.totalWords
-          }
-        })
+        const { byTitle: mentionsByTitle, byStream: mentionsByStream } =
+          getEntryMentionCounts(resolvedEntries)
 
-        // Balance score: how close the ACTIVE streams are to an even split
-        const activeCounts = streams.map((s) => streamBreakdown[s.id] || 0)
+        // Balance score: how evenly effort (entry mentions) spreads across
+        // the active streams — client work included, on the same footing.
+        const activeCounts = streams.map((s) => mentionsByStream[s.id] || 0)
         const sum = activeCounts.reduce((a, b) => a + b, 0)
         let balanceScore = 0
         if (sum > 0 && streams.length > 0) {
@@ -98,10 +105,10 @@ const useDashboardData = () => {
 
         setStats({
           totalDays: uniqueDates.length,
-          totalWords,
           currentStreak: calculateStreaks(uniqueDates),
           balanceScore,
-          streamBreakdown,
+          mentionsByStream,
+          mentionsByTitle,
         })
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
@@ -112,7 +119,16 @@ const useDashboardData = () => {
     fetchData()
   }, [selectedDirectory, refreshTrigger, streamConfig]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { stats, projects, allEntries, utilisationTarget, loading }
+  return {
+    stats,
+    projects,
+    allEntries,
+    utilisationTarget,
+    utilisationPrediction,
+    staffitHours,
+    standardWeeklyHours,
+    loading,
+  }
 }
 
 export default useDashboardData

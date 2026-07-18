@@ -1,11 +1,17 @@
 import React from 'react'
 import { Box, Typography, Fade, Stack, LinearProgress } from '@mui/material'
-import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material'
+import {
+  ArrowForward,
+  ArrowBack,
+  CheckCircle,
+  TaskAlt,
+} from '@mui/icons-material'
 import { flowStyles } from '../DailyEditor.styles'
 import EntryCard from './EntryCard'
 
 const FlowView = ({
   selectedFlowProjects,
+  completedTodosByTitle,
   projectDrafts,
   updateProjectDraft,
   currentStep,
@@ -66,6 +72,7 @@ const FlowView = ({
   const isLastStep = currentStep === selectedFlowProjects.length - 1
   const color = project.color || 'primary.main'
   const typeLabel = project.streamName ? project.streamName.toUpperCase() : ''
+  const completedTodos = completedTodosByTitle?.[project.title] || []
 
   return (
     <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
@@ -110,9 +117,37 @@ const FlowView = ({
             </Typography>
           )}
 
-          <Typography variant="h3" sx={{ mb: 4, fontWeight: 950, color }}>
+          <Typography
+            variant="h3"
+            sx={{ mb: completedTodos.length ? 2 : 4, fontWeight: 950, color }}
+          >
             What did you do on {project.title} today?
           </Typography>
+
+          {completedTodos.length > 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.75,
+                mb: 4,
+              }}
+            >
+              {completedTodos.map((todo) => (
+                <Stack
+                  key={todo.id}
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                >
+                  <TaskAlt sx={{ fontSize: '1.1rem', color }} />
+                  <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                    {todo.text}
+                  </Typography>
+                </Stack>
+              ))}
+            </Box>
+          )}
 
           <EntryCard
             entry={{ content: projectDrafts[project.title] || '', tags: [] }}

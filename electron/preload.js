@@ -29,30 +29,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeStartFlowGlobalListeners: () =>
     ipcRenderer.removeAllListeners('app:start-flow'),
 
-  // Auto-Updater actions
+  // Auto-update
   checkForUpdates: () => ipcRenderer.invoke('update:check'),
-  quitAndInstall: () => ipcRenderer.invoke('update:quitAndInstall'),
-
-  // Auto-Updater event listeners
-  onUpdateChecking: (callback) => ipcRenderer.on('update:checking', callback),
-  onUpdateAvailable: (callback) =>
-    ipcRenderer.on('update:available', (event, info) => callback(info)),
-  onUpdateNotAvailable: (callback) =>
-    ipcRenderer.on('update:not-available', (event, info) => callback(info)),
-  onUpdateDownloaded: (callback) =>
-    ipcRenderer.on('update:downloaded', (event, info) => callback(info)),
-  onUpdateError: (callback) =>
-    ipcRenderer.on('update:error', (event, error) => callback(error)),
-  onUpdateProgress: (callback) =>
-    ipcRenderer.on('update:progress', (event, progress) => callback(progress)),
-
-  // Cleanup listeners (critical for preventing duplicates on component re-mounts)
-  removeAllUpdateListeners: () => {
-    ipcRenderer.removeAllListeners('update:checking')
-    ipcRenderer.removeAllListeners('update:available')
-    ipcRenderer.removeAllListeners('update:not-available')
-    ipcRenderer.removeAllListeners('update:downloaded')
-    ipcRenderer.removeAllListeners('update:error')
-    ipcRenderer.removeAllListeners('update:progress')
-  },
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  onUpdateEvent: (callback) =>
+    ipcRenderer.on('update:event', (event, payload) => callback(payload)),
+  removeUpdateListeners: () => ipcRenderer.removeAllListeners('update:event'),
 })

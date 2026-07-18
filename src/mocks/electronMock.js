@@ -232,9 +232,33 @@ ${bd}
     mockFiles[`${MOCK_ROOT}/${year}/${month}/${dateStr}.md`] = content
   })
 
+  // A handful of non-working days (PTO / sick / volunteering) so the
+  // Wellbeing widget and heatmap statuses have data to show.
+  const dayOffs = [
+    { offset: 4, status: 'pto' },
+    { offset: 11, status: 'pto' },
+    { offset: 18, status: 'sick' },
+    { offset: 25, status: 'volunteering' },
+    { offset: 40, status: 'pto' },
+  ]
+  dayOffs.forEach(({ offset, status }) => {
+    const date = new Date(today)
+    date.setDate(today.getDate() - offset)
+    const { year, month, dateStr } = fmt(date)
+    mockFiles[`${MOCK_ROOT}/${year}/${month}/${dateStr}.md`] = `---
+dayStatus: ${status}
+---
+`
+  })
+
   // ─── Projects & Activities ────────────────────────────────────────────────
 
   const todayParts = fmt(today)
+  const daysAgo = (n) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() - n)
+    return fmt(d).dateStr
+  }
 
   mockFiles[`${MOCK_ROOT}/projects.json`] = JSON.stringify(
     {
@@ -243,11 +267,28 @@ ${bd}
           id: 'mock-activity-1',
           type: 'PD',
           title: 'Get AWS Solutions Architect Certified',
+          teamMembers: ['Jordan Smith', 'Amira Lopez'],
           tasks: [
             {
               id: 'task-1',
               text: 'Complete Cloud Practitioner course',
               completed: true,
+              completedAt: daysAgo(3),
+              subtasks: [
+                {
+                  id: 'st-1',
+                  text: 'Watch module 1',
+                  completed: true,
+                  completedAt: daysAgo(6),
+                },
+                {
+                  id: 'st-2',
+                  text: 'Watch module 2',
+                  completed: true,
+                  completedAt: daysAgo(4),
+                },
+                { id: 'st-3', text: 'Take practice quiz', completed: false },
+              ],
             },
             { id: 'task-2', text: 'Purchase exam voucher', completed: false },
             { id: 'task-3', text: 'Book exam date', completed: false },
@@ -255,39 +296,105 @@ ${bd}
           status: 'active',
           completedAt: null,
           createdAt: todayParts.dateStr,
+          parentId: null,
+          ongoing: false,
         },
         {
           id: 'mock-activity-2',
           type: 'BD',
           title: 'Build standard pitch deck',
+          teamMembers: ['Jordan Smith', 'Tom Chen'],
           tasks: [
-            { id: 'task-4', text: 'Gather case studies', completed: true },
+            {
+              id: 'task-4',
+              text: 'Gather case studies',
+              completed: true,
+              completedAt: daysAgo(10),
+            },
             { id: 'task-5', text: 'Draft slides 1-5', completed: false },
           ],
           status: 'active',
           completedAt: null,
           createdAt: todayParts.dateStr,
+          parentId: null,
+          ongoing: false,
         },
         {
           id: 'mock-activity-3',
           type: 'PD',
           title: 'Complete TypeScript deep dive',
+          teamMembers: ['Amira Lopez'],
           tasks: [
-            { id: 'task-6', text: 'Finish generics module', completed: true },
-            { id: 'task-7', text: 'Build capstone project', completed: true },
+            {
+              id: 'task-6',
+              text: 'Finish generics module',
+              completed: true,
+              completedAt: daysAgo(2),
+            },
+            {
+              id: 'task-7',
+              text: 'Build capstone project',
+              completed: true,
+              completedAt: daysAgo(9),
+            },
           ],
           status: 'archived',
           completedAt: todayParts.dateStr,
           createdAt: todayParts.dateStr,
+          parentId: null,
+          ongoing: false,
+        },
+        {
+          // Standing responsibility with no natural end date — old but quiet
+          // todos here should never read as "stale" anywhere in the app.
+          id: 'mock-activity-4',
+          type: 'PD',
+          title: 'DSJ Hire Train Deploy Lead',
+          tasks: [
+            {
+              id: 'task-8',
+              text: 'Review quarterly hiring pipeline',
+              completed: false,
+              createdAt: daysAgo(75),
+            },
+          ],
+          status: 'active',
+          completedAt: null,
+          createdAt: daysAgo(210),
+          parentId: null,
+          ongoing: true,
+        },
+        {
+          // Bounded piece of work nested inside the ongoing role above.
+          id: 'mock-activity-5',
+          type: 'PD',
+          title: 'HTD Cohort — Q3 2026',
+          tasks: [
+            { id: 'task-9', text: 'Confirm cohort roster', completed: true },
+            {
+              id: 'task-10',
+              text: 'Schedule kickoff session',
+              completed: false,
+            },
+          ],
+          status: 'active',
+          completedAt: null,
+          createdAt: todayParts.dateStr,
+          parentId: 'mock-activity-4',
+          ongoing: false,
         },
       ],
       clientProjects: [
         {
+          // Long-running client engagement — 110 days active, but shouldn't
+          // read as stale since its only open todo is fresh.
           id: 'mock-project-1',
           title: 'Acme Corp Audit',
+          teamMembers: ['Jordan Smith', 'Tom Chen', 'Amira Lopez'],
           status: 'active',
-          createdAt: todayParts.dateStr,
+          createdAt: daysAgo(110),
           completedAt: null,
+          ongoing: false,
         },
         {
           id: 'mock-project-2',
@@ -295,9 +402,35 @@ ${bd}
           status: 'done',
           createdAt: todayParts.dateStr,
           completedAt: todayParts.dateStr,
+          ongoing: false,
         },
       ],
     },
+    null,
+    2
+  )
+
+  // ─── STAFFIT weekly hours ─────────────────────────────────────────────────
+
+  const mondayOf = (dateObj) => {
+    const d = new Date(dateObj)
+    const day = d.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    d.setDate(d.getDate() + diff)
+    d.setHours(0, 0, 0, 0)
+    // Match the app's canonical week key (staffitManager.getWeekKey), which is
+    // the week's Monday serialised via toISOString.
+    return d.toISOString().split('T')[0]
+  }
+
+  const staffitHours = {}
+  for (let weeksAgo = 0; weeksAgo <= 6; weeksAgo++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - weeksAgo * 7)
+    staffitHours[mondayOf(d)] = 30 + Math.round(Math.random() * 10)
+  }
+  mockFiles[`${MOCK_ROOT}/staffitHours.json`] = JSON.stringify(
+    staffitHours,
     null,
     2
   )
@@ -308,6 +441,7 @@ ${bd}
     notificationsEnabled: false,
     notificationTime: '17:00',
     utilisationTarget: 70,
+    standardWeeklyHours: 37.5,
     selectedDirectory: MOCK_ROOT,
   }
 
@@ -328,17 +462,55 @@ ${bd}
       }
     },
 
-    onUpdateChecking: (cb) => window.electronAPI._on('checking', cb),
-    onUpdateAvailable: (cb) => window.electronAPI._on('available', cb),
-    onUpdateNotAvailable: (cb) => window.electronAPI._on('not-available', cb),
-    onUpdateProgress: (cb) => window.electronAPI._on('progress', cb),
-    onUpdateDownloaded: (cb) => window.electronAPI._on('downloaded', cb),
-    onUpdateError: (cb) => window.electronAPI._on('error', cb),
-    removeAllUpdateListeners: () => {
-      window.electronAPI._listeners = {}
+    // Auto-update (simulates the full check → download → install flow)
+    onUpdateEvent: (cb) => window.electronAPI._on('update-event', cb),
+    removeUpdateListeners: () => {
+      delete window.electronAPI._listeners['update-event']
     },
-    checkForUpdates: async () => ({ status: 'dev' }),
-    quitAndInstall: () => console.log('[Mock] quitAndInstall called'),
+    checkForUpdates: async () => {
+      const emit = (payload) =>
+        window.electronAPI._emit('update-event', payload)
+      emit({ status: 'checking' })
+      setTimeout(
+        () =>
+          emit({
+            status: 'available',
+            version: '99.0.0',
+            releaseDate: new Date().toISOString(),
+            releaseNotes: 'Mock update for browser dev mode.',
+          }),
+        1200
+      )
+      return { status: 'ok' }
+    },
+    downloadUpdate: async () => {
+      const emit = (payload) =>
+        window.electronAPI._emit('update-event', payload)
+      let percent = 0
+      const interval = setInterval(() => {
+        percent = Math.min(percent + 9, 100)
+        emit({
+          status: 'downloading',
+          percent,
+          bytesPerSecond: 4200000,
+          transferred: percent,
+          total: 100,
+        })
+        if (percent >= 100) {
+          clearInterval(interval)
+          setTimeout(
+            () => emit({ status: 'downloaded', version: '99.0.0' }),
+            400
+          )
+        }
+      }, 250)
+      return { status: 'ok' }
+    },
+    installUpdate: async () => {
+      console.log(
+        '[Mock] installUpdate called — real app would quit & relaunch'
+      )
+    },
     getVersion: async () => __APP_VERSION__,
 
     testNotification: async () => {
@@ -358,23 +530,6 @@ ${bd}
       } else {
         alert('Test Notification: Permissions denied. Check console.')
       }
-    },
-
-    devSimulateUpdate: () => {
-      console.log('[Mock] Simulating App Update...')
-      window.electronAPI._emit('checking')
-      setTimeout(() => {
-        window.electronAPI._emit('available')
-        let progress = 0
-        const interval = setInterval(() => {
-          progress += 10
-          window.electronAPI._emit('progress', progress)
-          if (progress >= 100) {
-            clearInterval(interval)
-            setTimeout(() => window.electronAPI._emit('downloaded'), 500)
-          }
-        }, 300)
-      }, 1000)
     },
 
     loadSettings: async () => {

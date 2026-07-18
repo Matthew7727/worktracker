@@ -22,6 +22,7 @@ import {
   Assessment,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
+import { useUpdate } from '../../context/UpdateContext'
 import StreamSettings from './StreamSettings'
 
 const Settings = () => {
@@ -31,7 +32,6 @@ const Settings = () => {
     setProjectDirectory,
     showNotification,
     streamConfig,
-    mainFocusStream,
     rerunStreamSetup,
   } = useAppContext()
 
@@ -44,13 +44,21 @@ const Settings = () => {
 
   // Utilisation Target
   const [utilisationTarget, setUtilisationTarget] = useState(70)
+  const [standardWeeklyHours, setStandardWeeklyHours] = useState(37.5)
   const [isUtilSaving, setIsUtilSaving] = useState(false)
 
-  // Auto Update State
+  // Auto Update (state lives in UpdateContext; this page is just a view)
   const [appVersion, setAppVersion] = useState('')
-  const [updateStatus, setUpdateStatus] = useState('idle')
-  const [updateProgress, setUpdateProgress] = useState(0)
-  const [updateError, setUpdateError] = useState(null)
+  const {
+    status: updateStatus,
+    info: updateInfo,
+    progress: updateProgress,
+    error: updateError,
+    checkForUpdates,
+    downloadUpdate,
+    installUpdate,
+    reset: resetUpdate,
+  } = useUpdate()
 
   // Initialize version
   useEffect(() => {
@@ -62,34 +70,6 @@ const Settings = () => {
     }
   }, [])
 
-  // Setup Update Listeners
-  useEffect(() => {
-    if (!window.electronAPI || !window.electronAPI.onUpdateAvailable) return
-
-    window.electronAPI.onUpdateChecking(() => setUpdateStatus('checking'))
-    window.electronAPI.onUpdateAvailable(() => setUpdateStatus('available'))
-    window.electronAPI.onUpdateNotAvailable(() => {
-      setUpdateStatus('not-available')
-      showNotification('You are on the latest version.', 'success')
-      setTimeout(() => setUpdateStatus('idle'), 3000)
-    })
-    window.electronAPI.onUpdateProgress((percent) => {
-      setUpdateStatus('downloading')
-      setUpdateProgress(Math.floor(percent))
-    })
-    window.electronAPI.onUpdateDownloaded(() => setUpdateStatus('downloaded'))
-    window.electronAPI.onUpdateError((err) => {
-      setUpdateStatus('error')
-      setUpdateError(err)
-    })
-
-    return () => {
-      if (window.electronAPI.removeAllUpdateListeners) {
-        window.electronAPI.removeAllUpdateListeners()
-      }
-    }
-  }, [showNotification])
-
   // Load initial settings
   useEffect(() => {
     const fetchSettings = async () => {
@@ -100,13 +80,20 @@ const Settings = () => {
         if (settings.utilisationTarget !== undefined) {
           setUtilisationTarget(settings.utilisationTarget)
         }
+        if (settings.standardWeeklyHours !== undefined) {
+          setStandardWeeklyHours(settings.standardWeeklyHours)
+        }
       }
     }
     fetchSettings()
   }, [])
 
-  const handleSaveUtilisation = async (value) => {
-    const parsed = Math.min(100, Math.max(0, parseInt(value, 10) || 0))
+  const handleSaveUtilisation = async (targetValue, weeklyHoursValue) => {
+    const parsedTarget = Math.min(
+      100,
+      Math.max(0, parseInt(targetValue, 10) || 0)
+    )
+    const parsedHours = Math.max(0, parseFloat(weeklyHoursValue) || 0)
     setIsUtilSaving(true)
     try {
       const current = window.electronAPI?.loadSettings
@@ -114,10 +101,12 @@ const Settings = () => {
         : {}
       const result = await window.electronAPI.saveSettings({
         ...current,
-        utilisationTarget: parsed,
+        utilisationTarget: parsedTarget,
+        standardWeeklyHours: parsedHours,
       })
       if (result.success) {
-        setUtilisationTarget(parsed)
+        setUtilisationTarget(parsedTarget)
+        setStandardWeeklyHours(parsedHours)
         showNotification('Utilisation target updated', 'success')
       }
     } catch {
@@ -362,86 +351,143 @@ const Settings = () => {
                     variant="body1"
                     sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
                   >
-                    Set the percentage of your total logged work that should be{' '}
-                    {mainFocusStream?.name || 'your main goal'}. This will be
-                    tracked on your dashboard.
+                    Utilisation is predicted from the hours you declare in
+                    STAFFIT each week (client work only), tracked against your
+                    standard week, over the 1 June – 31 May cycle.
                   </Typography>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'action.hover',
-                      borderRadius: '20px',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                        {mainFocusStream?.name || 'Main Goal'} Target
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, opacity: 0.7 }}
-                      >
-                        What % of your time should go here?
-                      </Typography>
+                  <Stack spacing={2}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 3,
+                        bgcolor: 'action.hover',
+                        borderRadius: '20px',
+                        border: '3px solid',
+                        borderColor: 'text.primary',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          Utilisation Target
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, opacity: 0.7 }}
+                        >
+                          What % of a standard week should be chargeable?
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <TextField
+                          type="number"
+                          value={utilisationTarget}
+                          onChange={(e) => setUtilisationTarget(e.target.value)}
+                          inputProps={{ min: 0, max: 100, step: 5 }}
+                          sx={{
+                            width: 100,
+                            '& .MuiInputBase-root': {
+                              fontWeight: 900,
+                              fontSize: '1.2rem',
+                              borderRadius: '12px',
+                              border: '2px solid',
+                              borderColor: 'text.primary',
+                            },
+                          }}
+                        />
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          %
+                        </Typography>
+                      </Stack>
                     </Box>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <TextField
-                        type="number"
-                        value={utilisationTarget}
-                        onChange={(e) => setUtilisationTarget(e.target.value)}
-                        inputProps={{ min: 0, max: 100, step: 5 }}
-                        sx={{
-                          width: 100,
-                          '& .MuiInputBase-root': {
-                            fontWeight: 900,
-                            fontSize: '1.2rem',
-                            borderRadius: '12px',
-                            border: '2px solid',
-                            borderColor: 'text.primary',
-                          },
-                        }}
-                      />
-                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                        %
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={() => handleSaveUtilisation(utilisationTarget)}
-                        disabled={isUtilSaving}
-                        sx={{
-                          fontWeight: 900,
-                          px: 3,
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 3,
+                        bgcolor: 'action.hover',
+                        borderRadius: '20px',
+                        border: '3px solid',
+                        borderColor: 'text.primary',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          Standard Week
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, opacity: 0.7 }}
+                        >
+                          Hours in a full, standard working week
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <TextField
+                          type="number"
+                          value={standardWeeklyHours}
+                          onChange={(e) =>
+                            setStandardWeeklyHours(e.target.value)
+                          }
+                          inputProps={{ min: 0, step: 0.5 }}
+                          sx={{
+                            width: 100,
+                            '& .MuiInputBase-root': {
+                              fontWeight: 900,
+                              fontSize: '1.2rem',
+                              borderRadius: '12px',
+                              border: '2px solid',
+                              borderColor: 'text.primary',
+                            },
+                          }}
+                        />
+                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                          hrs
+                        </Typography>
+                      </Stack>
+                    </Box>
+
+                    <Button
+                      variant="contained"
+                      onClick={() =>
+                        handleSaveUtilisation(
+                          utilisationTarget,
+                          standardWeeklyHours
+                        )
+                      }
+                      disabled={isUtilSaving}
+                      sx={{
+                        fontWeight: 900,
+                        alignSelf: 'flex-end',
+                        px: 3,
+                        backgroundImage: 'none',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        border: '2px solid',
+                        borderColor: 'text.primary',
+                        boxShadow: (theme) =>
+                          `4px 4px 0px ${theme.palette.text.primary}`,
+                        '&:hover': {
+                          bgcolor: '#f0f0f0',
                           boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: '#f0f0f0',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
-                          '&.Mui-disabled': {
-                            opacity: 0.5,
-                            boxShadow: 'none',
-                            border: '2px solid #999',
-                            bgcolor: '#f0f0f0',
-                          },
-                        }}
-                      >
-                        SAVE
-                      </Button>
-                    </Stack>
-                  </Box>
+                            `2px 2px 0px ${theme.palette.text.primary}`,
+                          transform: 'translate(2px, 2px)',
+                        },
+                        '&.Mui-disabled': {
+                          opacity: 0.5,
+                          boxShadow: 'none',
+                          border: '2px solid #999',
+                          bgcolor: '#f0f0f0',
+                        },
+                      }}
+                    >
+                      SAVE
+                    </Button>
+                  </Stack>
                 </Paper>
               )}
 
@@ -628,24 +674,27 @@ const Settings = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  {updateStatus === 'idle' ||
-                  updateStatus === 'not-available' ? (
+                  {updateStatus === 'up-to-date' ? (
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 800, mb: 2, color: '#4caf50' }}
+                    >
+                      ✓ You&apos;re on the latest version
+                    </Typography>
+                  ) : null}
+
+                  {updateStatus === 'idle' || updateStatus === 'up-to-date' ? (
                     <Button
                       variant="contained"
                       onClick={() => {
-                        if (
-                          window.electronAPI &&
-                          window.electronAPI.checkForUpdates
-                        ) {
-                          window.electronAPI.checkForUpdates().then((res) => {
-                            if (res && res.status === 'dev') {
-                              showNotification(
-                                'Cannot check for updates in development mode.',
-                                'info'
-                              )
-                            }
-                          })
-                        }
+                        checkForUpdates().then((res) => {
+                          if (res && res.status === 'dev') {
+                            showNotification(
+                              'Cannot check for updates in development mode.',
+                              'info'
+                            )
+                          }
+                        })
                       }}
                       sx={{
                         fontWeight: 900,
@@ -693,18 +742,51 @@ const Settings = () => {
                     </Button>
                   ) : null}
 
-                  {updateStatus === 'available' ||
-                  updateStatus === 'downloading' ? (
+                  {updateStatus === 'available' ? (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+                        Version {updateInfo?.version} is available
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        onClick={downloadUpdate}
+                        sx={{
+                          fontWeight: 900,
+                          px: 4,
+                          py: 1.5,
+                          fontSize: '1.1rem',
+                          backgroundImage: 'none',
+                          bgcolor: 'background.paper',
+                          color: 'text.primary',
+                          border: '2px solid',
+                          borderColor: 'text.primary',
+                          boxShadow: (theme) =>
+                            `4px 4px 0px ${theme.palette.text.primary}`,
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                            boxShadow: (theme) =>
+                              `2px 2px 0px ${theme.palette.text.primary}`,
+                            transform: 'translate(2px, 2px)',
+                          },
+                        }}
+                      >
+                        DOWNLOAD UPDATE
+                      </Button>
+                    </Box>
+                  ) : null}
+
+                  {updateStatus === 'downloading' ? (
                     <Box sx={{ width: '100%', maxWidth: '500px' }}>
                       <Typography
                         variant="h6"
                         sx={{ fontWeight: 800, mb: 2, textAlign: 'center' }}
                       >
-                        Downloading Update... {updateProgress}%
+                        Downloading Update...{' '}
+                        {Math.floor(updateProgress?.percent || 0)}%
                       </Typography>
                       <LinearProgress
                         variant="determinate"
-                        value={updateProgress}
+                        value={updateProgress?.percent || 0}
                         sx={{
                           height: 16,
                           borderRadius: 8,
@@ -721,7 +803,7 @@ const Settings = () => {
                     <Button
                       variant="contained"
                       color="success"
-                      onClick={() => window.electronAPI.quitAndInstall()}
+                      onClick={installUpdate}
                       sx={{
                         fontWeight: 900,
                         px: 4,
@@ -757,7 +839,7 @@ const Settings = () => {
                       </Typography>
                       <Button
                         variant="contained"
-                        onClick={() => setUpdateStatus('idle')}
+                        onClick={resetUpdate}
                         sx={{
                           fontWeight: 900,
                           px: 4,
@@ -878,37 +960,6 @@ const Settings = () => {
                       }}
                     >
                       TEST NOTIFICATION
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        if (
-                          window.electronAPI &&
-                          window.electronAPI.devSimulateUpdate
-                        ) {
-                          window.electronAPI.devSimulateUpdate()
-                        }
-                      }}
-                      sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        py: 1.5,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                      }}
-                    >
-                      SIMULATE UPDATE
                     </Button>
                   </Stack>
                 </Paper>

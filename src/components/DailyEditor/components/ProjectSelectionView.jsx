@@ -1,5 +1,13 @@
 import React from 'react'
-import { Box, Typography, Fade, Stack, TextField, Chip } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Fade,
+  Stack,
+  TextField,
+  Chip,
+  Badge,
+} from '@mui/material'
 import { ArrowForward, CheckCircle } from '@mui/icons-material'
 import { DAY_STATUSES } from '../constants'
 import { flowStyles } from '../DailyEditor.styles'
@@ -10,6 +18,7 @@ const ProjectSelectionView = ({
   dayNote,
   onNoteChange,
   allAvailableProjects,
+  completedTodosByTitle,
   selectedFlowProjects,
   onToggleProject,
   onStart,
@@ -23,10 +32,6 @@ const ProjectSelectionView = ({
     <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
       <Fade in={true}>
         <Box>
-          <Typography variant="h3" sx={{ mb: 4, fontWeight: 950 }}>
-            How was your day?
-          </Typography>
-
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 4 }}>
             {DAY_STATUSES.map((status) => {
               const isActive = dayStatus === status.id
@@ -73,29 +78,45 @@ const ProjectSelectionView = ({
                   const isSelected = selectedFlowProjects.some(
                     (p) => p.title === project.title
                   )
+                  const doneCount = (
+                    completedTodosByTitle?.[project.title] || []
+                  ).length
                   return (
-                    <Chip
+                    <Badge
                       key={project.title}
-                      label={project.title}
-                      onClick={() => onToggleProject(project)}
+                      badgeContent={doneCount}
+                      color="success"
                       sx={{
-                        fontWeight: 800,
-                        fontSize: '0.85rem',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        borderRadius: 0,
-                        bgcolor: isSelected ? project.color : 'transparent',
-                        color: isSelected ? 'text.primary' : 'text.secondary',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        '&:hover': {
-                          bgcolor: project.color,
-                          color: 'text.primary',
-                          opacity: 0.85,
+                        '& .MuiBadge-badge': {
+                          fontWeight: 900,
+                          fontSize: '0.65rem',
+                          border: '2px solid',
+                          borderColor: 'background.default',
                         },
-                        '& .MuiChip-label': { px: 1.5 },
                       }}
-                    />
+                    >
+                      <Chip
+                        label={project.title}
+                        onClick={() => onToggleProject(project)}
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          border: '2px solid',
+                          borderColor: 'text.primary',
+                          borderRadius: 0,
+                          bgcolor: isSelected ? project.color : 'transparent',
+                          color: isSelected ? 'text.primary' : 'text.secondary',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          '&:hover': {
+                            bgcolor: project.color,
+                            color: 'text.primary',
+                            opacity: 0.85,
+                          },
+                          '& .MuiChip-label': { px: 1.5 },
+                        }}
+                      />
+                    </Badge>
                   )
                 })}
               </Box>

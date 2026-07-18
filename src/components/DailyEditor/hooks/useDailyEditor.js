@@ -13,7 +13,13 @@ import {
 import {
   loadProjects,
   groupProjectsByStream,
+  getTasksCompletedOn,
 } from '../../../utils/projectsManager'
+import {
+  loadStaffitHours,
+  setHoursForWeek,
+  getWeekKey,
+} from '../../../utils/staffitManager'
 import { getProjectsByStream } from '../../../utils/DataManager'
 import { getWeekDays, getDefaultDate } from '../utils/weekDays'
 
@@ -63,6 +69,8 @@ export const useDailyEditor = () => {
   const [selectedFlowProjects, setSelectedFlowProjects] = useState([])
 
   const [availableByStream, setAvailableByStream] = useState({})
+  const [completedTodosByTitle, setCompletedTodosByTitle] = useState({})
+  const [staffitHours, setStaffitHours] = useState(null)
   const [viewMode, setViewMode] = useState('start')
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -84,20 +92,42 @@ export const useDailyEditor = () => {
     }
   }, [location.state])
 
-  // Load active projects and activities for selection chips
+  // Load active projects and activities for selection chips, plus which of
+  // their todos were completed on the day currently being journaled.
   useEffect(() => {
     if (!selectedDirectory || !streamConfig) return
+    const dateStr = currentDate.toISOString().split('T')[0]
     loadProjects(selectedDirectory).then((data) => {
       const { byStream } = groupProjectsByStream(data, streamConfig)
       const active = {}
+      const completedToday = {}
       Object.entries(byStream).forEach(([streamId, projects]) => {
         active[streamId] = projects
           .filter((p) => p.status === 'active')
           .map((p) => p.title)
+        projects.forEach((p) => {
+          completedToday[p.title] = getTasksCompletedOn(p.tasks, dateStr)
+        })
       })
       setAvailableByStream(active)
+      setCompletedTodosByTitle(completedToday)
     })
-  }, [selectedDirectory, streamConfig])
+  }, [selectedDirectory, streamConfig, currentDate])
+
+  // The STAFFIT box always tracks the real current week (matching the
+  // weekday picker above it), not whichever day is being journaled.
+  useEffect(() => {
+    if (!selectedDirectory) return
+    loadStaffitHours(selectedDirectory).then((data) => {
+      setStaffitHours(data[getWeekKey(new Date())] ?? null)
+    })
+  }, [selectedDirectory])
+
+  const handleSaveStaffitHours = async (hours) => {
+    if (!selectedDirectory) return
+    setStaffitHours(hours)
+    await setHoursForWeek(selectedDirectory, new Date(), hours)
+  }
 
   // Flat list of all available projects with stream metadata
   const allAvailableProjects = streams.flatMap((stream) =>
@@ -385,6 +415,9 @@ export const useDailyEditor = () => {
     selectedFlowProjects,
     toggleFlowProject,
     allAvailableProjects,
+    completedTodosByTitle,
+    staffitHours,
+    handleSaveStaffitHours,
     projectEntries,
     viewMode,
     setViewMode,

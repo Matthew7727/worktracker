@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Divider } from '@mui/material'
-import { Add } from '@mui/icons-material'
+import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material'
+import {
+  Add,
+  Delete,
+  CheckCircle,
+  ChevronRight,
+  ExpandMore,
+} from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import {
   loadProjects,
@@ -10,100 +16,213 @@ import {
   createClientProject,
   createTask,
   getActivityStreamId,
+  getTopLevelActivities,
+  getChildActivities,
 } from '../../utils/projectsManager'
 import { getStreamAbbrev } from '../../utils/streamConfig'
 import ActivityCard from './components/ActivityCard'
 import ClientProjectsList from './components/ClientProjectsList'
 import AddActivityDialog from './components/AddActivityDialog'
 import AddClientProjectDialog from './components/AddClientProjectDialog'
-import { sectionHeaderStyles, filterTabStyles } from './ActivitiesBoard.styles'
+import ConfirmDialog from './components/ConfirmDialog'
+import StreamTag from './components/StreamTag'
+import { filterTabStyles } from './ActivitiesBoard.styles'
 
 // Keep just-completed todos visible briefly so users can catch and undo mistakes.
 const COMPLETED_TODO_GRACE_MS = 5000
 
 // ── Local shared components ───────────────────────────────────────────────────
 
-const SectionHeader = ({ title, subtitle, children }) => (
-  <Box sx={{ ...sectionHeaderStyles, mb: 3 }}>
-    <Box>
+const SectionHeader = ({ title, count, countLabel, subtitle }) => (
+  <Box sx={{ mb: 2.5 }}>
+    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
       <Typography variant="h5" sx={{ fontWeight: 900 }}>
         {title}
       </Typography>
-      {subtitle && (
-        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-          {subtitle}
+      {count !== undefined && (
+        <Typography
+          component="span"
+          sx={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.68rem',
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+          }}
+        >
+          {count} {countLabel}
         </Typography>
       )}
     </Box>
-    {children}
+    {subtitle && (
+      <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+        {subtitle}
+      </Typography>
+    )}
   </Box>
 )
 
-const AddButton = ({ label, onClick }) => (
-  <Box
-    component="button"
-    onClick={onClick}
-    sx={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 0.75,
-      fontFamily: 'inherit',
-      fontSize: '0.85rem',
-      fontWeight: 900,
-      px: 2.5,
-      py: 1,
-      borderRadius: '25px',
-      border: '3px solid',
-      borderColor: 'text.primary',
-      color: 'text.primary',
-      bgcolor: 'background.paper',
-      cursor: 'pointer',
-      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-      position: 'relative',
-      overflow: 'hidden',
-      '&:hover': {
-        transform: 'scale(1.05)',
-        boxShadow: '6px 6px 0px',
-        boxShadowColor: 'text.primary',
-        '& .shine-layer': {
-          opacity: 1,
-          transform: 'translateX(100%) skewX(-15deg)',
-        },
-      },
-    }}
-  >
-    <Add sx={{ fontSize: '1rem' }} />
-    {label}
-    <Box
-      className="shine-layer"
-      sx={{
-        position: 'absolute',
-        top: 0,
-        left: '-100%',
-        width: '200%',
-        height: '100%',
-        opacity: 0,
-        transition: 'all 0.8s ease',
-        background:
-          'linear-gradient(90deg, transparent, #80b621, #00d2ff, #eb8449, transparent)',
-        pointerEvents: 'none',
-        zIndex: 1,
-      }}
-    />
-  </Box>
-)
+const NewButton = ({ onAddProject, onAddActivity, showProjects }) => {
+  const [anchorEl, setAnchorEl] = useState(null)
+
+  const handleClick = (e) => {
+    // Without a project pipeline there's only one thing to create.
+    if (!showProjects) {
+      onAddActivity()
+      return
+    }
+    setAnchorEl(e.currentTarget)
+  }
+
+  return (
+    <>
+      <Box
+        component="button"
+        onClick={handleClick}
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.75,
+          fontFamily: 'inherit',
+          fontSize: '0.85rem',
+          fontWeight: 900,
+          px: 2.5,
+          py: 1,
+          borderRadius: '25px',
+          border: '2px solid',
+          borderColor: 'text.primary',
+          color: 'text.primary',
+          bgcolor: 'background.paper',
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+          '&:hover': {
+            boxShadow: '4px 4px 0px',
+            transform: 'translate(-1px, -1px)',
+          },
+        }}
+      >
+        <Add sx={{ fontSize: '1rem' }} />
+        New
+      </Box>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null)
+            onAddProject()
+          }}
+          sx={{ fontWeight: 700 }}
+        >
+          Project
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null)
+            onAddActivity()
+          }}
+          sx={{ fontWeight: 700 }}
+        >
+          Activity
+        </MenuItem>
+      </Menu>
+    </>
+  )
+}
 
 const ActivityGrid = ({ children }) => (
   <Box
     sx={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-      gap: 2.5,
+      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+      gap: 2,
+      alignItems: 'stretch',
     }}
   >
     {children}
   </Box>
 )
+
+const CompletedActivityRow = ({
+  activity,
+  stream,
+  onDelete,
+  onOpenDetails,
+}) => {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        py: 1,
+        px: 0.75,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        '&:last-of-type': { borderBottom: 'none' },
+        '&:hover .row-delete': { opacity: 1 },
+      }}
+    >
+      <CheckCircle sx={{ fontSize: '1rem', color: 'primary.main' }} />
+      <Typography
+        variant="body2"
+        onClick={onOpenDetails}
+        sx={{
+          fontWeight: 600,
+          color: 'text.secondary',
+          textDecoration: 'line-through',
+          cursor: 'pointer',
+          '&:hover': { color: 'text.primary' },
+        }}
+      >
+        {activity.title}
+      </Typography>
+      <StreamTag
+        stream={stream}
+        label={stream?.abbrev || activity.type}
+        muted
+      />
+      <Box sx={{ flex: 1 }} />
+      {activity.completedAt && (
+        <Typography
+          sx={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.66rem',
+            color: 'text.disabled',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {activity.completedAt}
+        </Typography>
+      )}
+      <IconButton
+        size="small"
+        className="row-delete"
+        onClick={() => setConfirmOpen(true)}
+        sx={{ opacity: 0, transition: 'opacity 0.15s', p: 0.25 }}
+      >
+        <Delete sx={{ fontSize: '0.9rem' }} />
+      </IconButton>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Activity"
+        message={`"${activity.title}" will be permanently removed.`}
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => {
+          setConfirmOpen(false)
+          onDelete()
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </Box>
+  )
+}
 
 // ── Board ─────────────────────────────────────────────────────────────────────
 
@@ -115,6 +234,7 @@ const ActivitiesBoard = () => {
   const [activityFilter, setActivityFilter] = useState('ALL')
   const [addActivityOpen, setAddActivityOpen] = useState(false)
   const [addProjectOpen, setAddProjectOpen] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(true)
   const [recentlyCompleted, setRecentlyCompleted] = useState({})
   const completionTimersRef = useRef({})
 
@@ -171,93 +291,47 @@ const ActivitiesBoard = () => {
     saveProjects(selectedDirectory, newData)
   }
 
-  // ── Generic task/subtask handlers (shared by activities & clientProjects) ──
+  // ── Activity task handlers (cards only add + toggle; detail manages) ──
 
-  const updateTasks = (listKey, itemId, updateFn) => {
+  const updateActivityTasks = (activityId, updateFn) => {
     save({
       ...data,
-      [listKey]: data[listKey].map((item) =>
-        item.id === itemId
+      activities: data.activities.map((item) =>
+        item.id === activityId
           ? { ...item, tasks: updateFn(item.tasks || []) }
           : item
       ),
     })
   }
 
-  const makeTaskHandlers = (listKey) => ({
-    onAddTask: (itemId, text) =>
-      updateTasks(listKey, itemId, (tasks) => [...tasks, createTask(text)]),
-    onToggleTask: (itemId, taskId) => {
-      let justCompleted = false
-      updateTasks(listKey, itemId, (tasks) =>
-        tasks.map((t) => {
-          if (t.id !== taskId) return t
-          const nextCompleted = !t.completed
-          justCompleted = nextCompleted
-          return { ...t, completed: nextCompleted }
-        })
-      )
-      if (justCompleted) markCompletedForGracePeriod(taskId)
-    },
-    onDeleteTask: (itemId, taskId) =>
-      updateTasks(listKey, itemId, (tasks) =>
-        tasks.filter((t) => t.id !== taskId)
-      ),
-    onToggleTaskImportant: (itemId, taskId) =>
-      updateTasks(listKey, itemId, (tasks) =>
-        tasks.map((t) =>
-          t.id === taskId ? { ...t, important: !t.important } : t
-        )
-      ),
-    onAddSubtask: (itemId, taskId, text) =>
-      updateTasks(listKey, itemId, (tasks) =>
-        tasks.map((t) =>
-          t.id === taskId
-            ? { ...t, subtasks: [...(t.subtasks || []), createTask(text)] }
-            : t
-        )
-      ),
-    onToggleSubtask: (itemId, taskId, subtaskId) => {
-      let justCompleted = false
-      updateTasks(listKey, itemId, (tasks) =>
-        tasks.map((t) =>
-          t.id === taskId
-            ? {
-                ...t,
-                subtasks: (t.subtasks || []).map((s) => {
-                  if (s.id !== subtaskId) return s
-                  const nextCompleted = !s.completed
-                  justCompleted = nextCompleted
-                  return { ...s, completed: nextCompleted }
-                }),
-              }
-            : t
-        )
-      )
-      if (justCompleted) markCompletedForGracePeriod(subtaskId)
-    },
-    onDeleteSubtask: (itemId, taskId, subtaskId) =>
-      updateTasks(listKey, itemId, (tasks) =>
-        tasks.map((t) =>
-          t.id === taskId
-            ? {
-                ...t,
-                subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
-              }
-            : t
-        )
-      ),
-  })
+  const handleAddTask = (activityId, text) =>
+    updateActivityTasks(activityId, (tasks) => [...tasks, createTask(text)])
 
-  const activityTaskHandlers = makeTaskHandlers('activities')
-  const clientProjectTaskHandlers = makeTaskHandlers('clientProjects')
+  const handleToggleTask = (activityId, taskId) => {
+    let justCompleted = false
+    updateActivityTasks(activityId, (tasks) =>
+      tasks.map((t) => {
+        if (t.id !== taskId) return t
+        const nextCompleted = !t.completed
+        justCompleted = nextCompleted
+        return {
+          ...t,
+          completed: nextCompleted,
+          completedAt: nextCompleted
+            ? new Date().toISOString().split('T')[0]
+            : null,
+        }
+      })
+    )
+    if (justCompleted) markCompletedForGracePeriod(taskId)
+  }
 
   // ── Activity handlers ──────────────────────────────────────────────────
 
-  const handleAddActivity = (title, type) => {
+  const handleAddActivity = (title, type, options) => {
     save({
       ...data,
-      activities: [...data.activities, createActivity(title, type)],
+      activities: [...data.activities, createActivity(title, type, options)],
     })
   }
 
@@ -294,10 +368,13 @@ const ActivitiesBoard = () => {
 
   // ── Client project handlers ────────────────────────────────────────────
 
-  const handleAddClientProject = (title) => {
+  const handleAddClientProject = (title, options) => {
     save({
       ...data,
-      clientProjects: [...data.clientProjects, createClientProject(title)],
+      clientProjects: [
+        ...data.clientProjects,
+        createClientProject(title, options),
+      ],
     })
   }
 
@@ -337,61 +414,77 @@ const ActivitiesBoard = () => {
 
   const typeMatch = (a) =>
     activityFilter === 'ALL' || getActivityStreamId(a) === activityFilter
-  const activeActivities = data.activities.filter(
+  const activeTopLevel = getTopLevelActivities(data.activities).filter(
     (a) => a.status === 'active' && typeMatch(a)
   )
   const archivedActivities = data.activities.filter(
     (a) => a.status === 'archived' && typeMatch(a)
   )
 
+  const cardPropsFor = (activity) => ({
+    activity,
+    stream: getStreamFor(activity),
+    onAddTask: (text) => handleAddTask(activity.id, text),
+    onToggleTask: (taskId) => handleToggleTask(activity.id, taskId),
+    onFinish: () => handleFinishActivity(activity.id),
+    onRename: (title) => handleRenameActivity(activity.id, title),
+    onDelete: () => handleDeleteActivity(activity.id),
+    onOpenDetails: () => navigate(`/todos/activity/${activity.id}`),
+    recentlyCompletedIds,
+  })
+
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <Box sx={{ pb: 6 }}>
-      <Typography variant="h4" sx={{ fontWeight: 900, mb: 4 }}>
-        Projects & Activities
-      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 4,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 900 }}>
+          Projects & Activities
+        </Typography>
+        <NewButton
+          showProjects={projectHierarchy}
+          onAddProject={() => setAddProjectOpen(true)}
+          onAddActivity={() => setAddActivityOpen(true)}
+        />
+      </Box>
 
       {/* ── Main focus project pipeline ── */}
       {projectHierarchy && (
-        <>
-          <Box sx={{ mb: 5 }}>
-            <SectionHeader
-              title={`${mainFocusStream?.name || 'Main Focus'} Projects`}
-              subtitle={`Track what ${mainFocusStream?.name || 'main focus'} you're doing and have done.`}
-            >
-              <AddButton
-                label="Add Project"
-                onClick={() => setAddProjectOpen(true)}
-              />
-            </SectionHeader>
-
-            <ClientProjectsList
-              projects={data.clientProjects}
-              onToggleStatus={handleToggleClientProjectStatus}
-              onDelete={handleDeleteClientProject}
-              onRename={handleRenameClientProject}
-              taskHandlers={clientProjectTaskHandlers}
-              onOpenDetails={(projectId) =>
-                navigate(`/todos/project/${projectId}`)
-              }
-              hideCompletedTodos
-              recentlyCompletedIds={recentlyCompletedIds}
-            />
-          </Box>
-
-          <Divider sx={{ mb: 5 }} />
-        </>
+        <Box sx={{ mb: 5 }}>
+          <SectionHeader
+            title={mainFocusStream?.name || 'Main Focus'}
+            count={data.clientProjects.length}
+            countLabel={
+              data.clientProjects.length === 1 ? 'project' : 'projects'
+            }
+            subtitle="Dated engagements with a start, an end, and a status."
+          />
+          <ClientProjectsList
+            projects={data.clientProjects}
+            onToggleStatus={handleToggleClientProjectStatus}
+            onDelete={handleDeleteClientProject}
+            onRename={handleRenameClientProject}
+            onOpenDetails={(projectId) =>
+              navigate(`/todos/project/${projectId}`)
+            }
+          />
+        </Box>
       )}
 
       {/* ── Activities ── */}
       <Box sx={{ mb: 5 }}>
-        <SectionHeader title="Activities">
-          <AddButton
-            label="Add Activity"
-            onClick={() => setAddActivityOpen(true)}
-          />
-        </SectionHeader>
+        <SectionHeader
+          title="Activities"
+          count={activeTopLevel.length}
+          countLabel="active"
+        />
 
         {/* Filter tabs */}
         <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
@@ -418,7 +511,7 @@ const ActivitiesBoard = () => {
           ))}
         </Box>
 
-        {activeActivities.length === 0 && archivedActivities.length === 0 ? (
+        {activeTopLevel.length === 0 && archivedActivities.length === 0 ? (
           <Box
             sx={{
               py: 6,
@@ -446,102 +539,110 @@ const ActivitiesBoard = () => {
           </Box>
         ) : (
           <>
-            {activeActivities.length > 0 && (
+            {activeTopLevel.length > 0 && (
               <ActivityGrid>
-                {activeActivities.map((activity) => (
-                  <ActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    stream={getStreamFor(activity)}
-                    onAddTask={(text) =>
-                      activityTaskHandlers.onAddTask(activity.id, text)
-                    }
-                    onToggleTask={(taskId) =>
-                      activityTaskHandlers.onToggleTask(activity.id, taskId)
-                    }
-                    onDeleteTask={(taskId) =>
-                      activityTaskHandlers.onDeleteTask(activity.id, taskId)
-                    }
-                    onToggleTaskImportant={(taskId) =>
-                      activityTaskHandlers.onToggleTaskImportant(
-                        activity.id,
-                        taskId
-                      )
-                    }
-                    onAddSubtask={(taskId, text) =>
-                      activityTaskHandlers.onAddSubtask(
-                        activity.id,
-                        taskId,
-                        text
-                      )
-                    }
-                    onToggleSubtask={(taskId, subtaskId) =>
-                      activityTaskHandlers.onToggleSubtask(
-                        activity.id,
-                        taskId,
-                        subtaskId
-                      )
-                    }
-                    onDeleteSubtask={(taskId, subtaskId) =>
-                      activityTaskHandlers.onDeleteSubtask(
-                        activity.id,
-                        taskId,
-                        subtaskId
-                      )
-                    }
-                    onFinish={() => handleFinishActivity(activity.id)}
-                    onRename={(title) =>
-                      handleRenameActivity(activity.id, title)
-                    }
-                    onDelete={() => handleDeleteActivity(activity.id)}
-                    onOpenDetails={() =>
-                      navigate(`/todos/activity/${activity.id}`)
-                    }
-                    hideCompleted
-                    recentlyCompletedIds={recentlyCompletedIds}
-                  />
-                ))}
+                {activeTopLevel.map((activity) => {
+                  const children = getChildActivities(
+                    data.activities,
+                    activity.id
+                  ).filter((c) => c.status === 'active' && typeMatch(c))
+
+                  if (children.length === 0) {
+                    return (
+                      <ActivityCard
+                        key={activity.id}
+                        {...cardPropsFor(activity)}
+                      />
+                    )
+                  }
+
+                  return (
+                    <Box
+                      key={activity.id}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1.5,
+                      }}
+                    >
+                      <ActivityCard {...cardPropsFor(activity)} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1.5,
+                          pl: 2,
+                          ml: 1,
+                          borderLeft: '2px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        {children.map((child) => (
+                          <ActivityCard
+                            key={child.id}
+                            {...cardPropsFor(child)}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )
+                })}
               </ActivityGrid>
             )}
 
             {archivedActivities.length > 0 && (
-              <Box sx={{ mt: activeActivities.length > 0 ? 4 : 0 }}>
+              <Box sx={{ mt: activeTopLevel.length > 0 ? 4 : 0 }}>
                 <Box
+                  component="button"
+                  onClick={() => setShowCompleted((s) => !s)}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2,
-                    mb: 2.5,
+                    gap: 1,
+                    border: 'none',
+                    background: 'none',
+                    p: 0.5,
+                    mb: 0.5,
+                    fontFamily: 'inherit',
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.1em',
+                    color: 'text.secondary',
+                    cursor: 'pointer',
                   }}
                 >
-                  <Divider sx={{ flex: 1 }} />
+                  {showCompleted ? (
+                    <ExpandMore sx={{ fontSize: '0.9rem' }} />
+                  ) : (
+                    <ChevronRight sx={{ fontSize: '0.9rem' }} />
+                  )}
+                  COMPLETED
                   <Typography
-                    variant="caption"
+                    component="span"
                     sx={{
-                      fontWeight: 900,
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '0.66rem',
                       color: 'text.disabled',
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      flexShrink: 0,
                     }}
                   >
-                    Completed
+                    {archivedActivities.length}
                   </Typography>
-                  <Divider sx={{ flex: 1 }} />
                 </Box>
-                <ActivityGrid>
-                  {archivedActivities.map((activity) => (
-                    <ActivityCard
-                      key={activity.id}
-                      activity={activity}
-                      stream={getStreamFor(activity)}
-                      onDelete={() => handleDeleteActivity(activity.id)}
-                      onOpenDetails={() =>
-                        navigate(`/todos/activity/${activity.id}`)
-                      }
-                    />
-                  ))}
-                </ActivityGrid>
+                {showCompleted && (
+                  <Box>
+                    {archivedActivities.map((activity) => (
+                      <CompletedActivityRow
+                        key={activity.id}
+                        activity={activity}
+                        stream={getStreamFor(activity)}
+                        onDelete={() => handleDeleteActivity(activity.id)}
+                        onOpenDetails={() =>
+                          navigate(`/todos/activity/${activity.id}`)
+                        }
+                      />
+                    ))}
+                  </Box>
+                )}
               </Box>
             )}
           </>
@@ -553,6 +654,7 @@ const ActivitiesBoard = () => {
         onClose={() => setAddActivityOpen(false)}
         onAdd={handleAddActivity}
         streams={activityStreams}
+        activities={data.activities}
       />
       <AddClientProjectDialog
         open={addProjectOpen}
