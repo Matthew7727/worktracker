@@ -1,66 +1,312 @@
 export const docsContent = [
   {
-    id: 'philosophy',
-    title: 'Philosophy & Core Concepts',
+    id: 'getting-started',
+    title: 'Getting Started',
     content: `
-# Philosophy & Core Concepts
+# Getting Started
 
-Work Tracker is built on three unshakeable pillars: **Ownership**, **Speed**, and **Simplicity**.
+This guide explains how each part of Work Tracker works and how the pieces fit together. Start here for the lay of the land, then dive into the feature you need.
 
-### 1. Radical Data Ownership
-Most productivity apps lock your data into a proprietary database or cloud server. If they shut down, you lose everything.
-**Work Tracker is different.**
-- There is no database.
-- There is no cloud.
-- Your data exists as simple, human-readable **Markdown files** on your own hard drive.
-- You can open your work logs in *Notion*, *Obsidian*, *VS Code*, or even *Notepad*.
+### Choosing a workspace
+On first launch you pick a **workspace folder**. This is where every file the app creates lives — daily entries, todos, projects, and configuration. Nothing is stored in a database or the cloud; the folder *is* the app's storage.
 
-### 2. Speed as a Feature
-The interface is designed to reduce friction.
-- **Instant Load**: No API calls, no spinners.
-- **Keyboard First**: Navigate the entire app without a mouse.
-- **Zero Latency**: Everything happens locally on your machine.
+You can point the app at a folder synced by Dropbox, Google Drive, or Git to keep your data backed up or shared across machines. To switch workspaces later, use **Settings → Change Workspace**. The current path is remembered in \`localStorage\`, so the app reopens where you left off.
 
-### 3. "What, Not When"
-Traditional time trackers ask you to punch a clock. Work Tracker asks: *"What did you achieve?"*
-We believe that describing your output is more valuable than measuring your minutes.
+### The main navigation
+The left sidebar is your map:
+
+- **Dashboard** — analytics and insights derived from everything you log.
+- **Entries** — the daily editor where you record your work.
+- **Activities** — projects, activities, tasks, and subtasks.
+- **Workspace** — a read-only explorer of your entire history.
+- **Settings** — streams, utilisation, notifications, updates.
+- **Docs** — this documentation.
+
+A global search box lets you jump to any day that matches your query. There's also a **system tray widget** for logging without opening the full window (see *Tray Widget*).
+
+### A typical day
+1. Open **Entries** and start today's log.
+2. Write what you did under each work stream, tag the projects/activities you touched, and set the day's status.
+3. The file saves itself as you type.
+4. Check the **Dashboard** to see your streak, utilisation forecast, and throughput update in real time.
 `,
   },
   {
-    id: 'filesystem-db',
-    title: 'The File System Database',
+    id: 'daily-entries',
+    title: 'Logging Your Day',
     content: `
-# The File System Database
+# Logging Your Day
 
-Understanding how Work Tracker stores data allows you to master it.
-When you select a *Workspace*, the app simply reads and writes files in that folder.
+The **Entries** page (the Daily Editor) is where you record what you actually did. It walks you through a structured flow so you end up with a complete, consistently formatted log.
 
-### Directory Structure
-Your workspace will look like this:
+### The guided flow
+Opening the editor shows your week. Pick a day and click **Start**.
 
+The editor then steps you through your day one section at a time, grouped by your **work streams**. A progress bar tracks where you are; use **Next** / **Back** to move between steps or jump directly to one. Each step is a free-text Markdown field — write as much or as little as you like.
+
+### Setting the day's status
+Every day carries a **status** so non-working days don't distort your stats:
+
+- **Working** — a normal day of logged work.
+- **PTO** — annual leave / holiday.
+- **Sick** — sick leave.
+- **Volunteering** — volunteering or charity days.
+
+Non-working days are excluded from streak and utilisation calculations and are counted in the Dashboard's *Wellbeing* view.
+
+### Tagging projects & activities
+Coloured chips represent your active projects and activities, each tinted with its stream's colour. **Click a chip to link** it to today's entry; click again to unlink. These links are written into the file's frontmatter, which is what lets the Dashboard and Workspace Explorer connect a day to the work it belonged to.
+
+You can also add free-form **tags** (e.g. \`meeting\`, \`review\`, \`travel\`). Tags are aggregated on the Dashboard's *Tag Insights* widget.
+
+### Auto-save
+You never press Save mid-session. The editor watches your keystrokes, waits for a **500 ms pause** (a debounce), then writes the file to disk. Switching days or steps also flushes the current text.
+
+### Markdown support
+Entries support GitHub-Flavored Markdown:
+
+- **Bold** — \`**text**\`
+- *Italic* — \`*text*\`
+- \`Code\` — backticks
+- Lists — \`- item\` or \`1. item\`
+- Headings — \`# H1\`, \`## H2\`
+
+Because entries are plain \`.md\` files, they render correctly in Obsidian, VS Code, or any Markdown viewer.
+`,
+  },
+  {
+    id: 'streams',
+    title: 'Work Streams',
+    content: `
+# Work Streams
+
+**Streams** are the top-level buckets your day is divided into. Out of the box Work Tracker uses the classic consulting split:
+
+- **Client Work** — billable, client-facing delivery.
+- **Practice Development** — internal capability, tooling, enablement.
+- **Business Development** — proposals, pitches, relationships.
+
+Each stream has a **name**, a **colour**, and an **icon**, all editable in **Settings → Work Streams**. Those colours flow through the whole app — chips in the editor, stream tabs on the Activities board, and every chart on the Dashboard.
+
+### How streams map to files
+Each stream becomes an \`# H1\` section inside your daily \`.md\` file, named after the stream. \`src/utils/markdownParser.js\` reads and writes these sections, so renaming a stream is safe:
+
+- Renaming keeps the **old name as an alias**, so historical files still parse correctly.
+- Streams are **archived, never deleted** — your history stays intact.
+- Existing pre-1.8 workspaces are detected automatically and keep the classic three-stream layout with no changes to old files.
+
+### The main-goal stream
+One stream can be designated your **main goal** — typically Client Work. This is the stream your **utilisation target** measures against (see *Utilisation & STAFFIT*) and the one whose completed projects feed the Dashboard's *Recent Accomplishments*.
+
+Stream configuration lives in \`worktracker.config.json\` at the workspace root, so it travels with your data across devices.
+`,
+  },
+  {
+    id: 'projects-activities',
+    title: 'Projects & Activities',
+    content: `
+# Projects & Activities
+
+The **Activities** page is where you manage ongoing work — the things you tag in daily entries and track over weeks and months.
+
+### Projects vs activities
+- **Client Projects** are **dated engagements** with a start, an end, and a status. Completing one records a completion date and surfaces it in the Dashboard's *Recent Accomplishments*.
+- **Activities** are ongoing initiatives in your other streams (learning, enablement, internal work) that don't have a fixed end date.
+
+Both take the colour of their stream and appear as chips in the Daily Editor.
+
+### Tasks & subtasks
+Every project and activity can hold a checklist of **tasks**, and each task can hold **subtasks**. Tasks carry:
+
+- A **completed** flag (with a brief grace period after ticking, so an accidental tick is easy to undo).
+- An **important** flag.
+- **Created** and **completed** timestamps, which power ageing and throughput analytics.
+
+Open tasks and their ageing feed the Dashboard's *Task Throughput* and *Current Priorities* widgets.
+
+### Team members
+Assign **team members** to a project or activity from its detail page. The people you collaborate with most often are ranked on the Dashboard's *Collaborators* widget.
+
+### Nesting
+Activities can be **nested** under a parent activity, letting you group related workstreams into a hierarchy while still tracking each piece individually.
+
+### The lifecycle
+Every item moves through three states, switchable from its card menu or detail page:
+
+- **Active** — currently in flight.
+- **Completed** — done; records a completion date.
+- **Archived** — removed from active lists without losing history.
+
+Filter tabs at the top of the board switch between these states and between streams. A **stale warning** flags a project that's been active for more than 30 days without completing — a nudge to wrap it up or archive it.
+
+### How it connects
+Everything here is stored in \`projects.json\` at the workspace root. When you tag a project or activity in the Daily Editor, that link is written into the day's frontmatter — which is how the Dashboard turns your logs into stream alignment, collaborator, and throughput insights.
+`,
+  },
+  {
+    id: 'dashboard',
+    title: 'The Dashboard',
+    content: `
+# The Dashboard
+
+The Dashboard is a live analysis of everything you've logged. Sections stay hidden until there's data to fill them, so a new workspace stays clean and reveals more as you build history.
+
+### Dynamic hero
+A narrative greeting at the top: a time-of-day salutation plus the projects you're currently engaged on. Beneath it, a **rotating spotlight** highlights one real insight drawn from your data — utilisation, streaks, tags, collaborators, momentum, recent wins, and more. The spotlight **advances each time you open the app**, so you see a different angle on your work from visit to visit.
+
+### Vital signs
+A strip of headline stats: your **logging streak**, **days logged**, **utilisation**, **work-life balance**, and **tasks closed per week**. Tiles with no data are hidden automatically.
+
+### Utilisation cycle
+Progress through the **June → May fiscal cycle**, with a bar showing your **predicted** utilisation against your **target** and a marker for where the target sits. Below it, a mini bar chart shows **STAFFIT hours declared per week** across the cycle so far.
+
+### Task throughput
+**Tasks closed per week** over the last eight weeks, plus **backlog health** — open vs closed counts and overall subtask progress — so you can see whether you're keeping pace or accumulating a backlog.
+
+### Stream alignment & weekly intensity
+How your effort is split across your streams, scored against an even balance, with a day-by-day intensity chart for the current week.
+
+### Momentum trends
+Your activity volume over time, so you can spot ramps and lulls.
+
+### Tag insights
+A weighted cloud of your most-used tags from roughly the last 90 days — larger tags mean more frequent use.
+
+### Collaborators
+The team members you've worked with most, ranked, each with a coloured initials avatar.
+
+### Wellbeing
+**PTO**, **Sick**, and **Volunteering** days taken this cycle, drawn from your daily statuses — a quick read on whether you're taking time off.
+
+### The Journey
+A contribution-graph heatmap of every logged day. Darker squares mean more activity; it's an at-a-glance view of long-term consistency. It unlocks once you've logged enough days.
+
+### Needs attention, accomplishments & priorities
+- **Needs Attention** — stale projects and items that need a decision.
+- **Recent Accomplishments** — a timeline of recently completed projects and activities.
+- **Current Priorities** — your active work with age indicators so nothing sits too long.
+`,
+  },
+  {
+    id: 'utilisation-staffit',
+    title: 'Utilisation & STAFFIT',
+    content: `
+# Utilisation & STAFFIT
+
+Work Tracker forecasts your billable **utilisation** across the fiscal cycle so you can see, early, whether you'll land on target.
+
+### The fiscal cycle
+The cycle runs **June to May**. All utilisation maths — the prediction, the weekly bars, and the wellbeing counts — are scoped to the current cycle.
+
+### STAFFIT hours
+Enter the hours you've **declared** each week. These are stored in \`staffitHours.json\` as a map of week → hours. Each week is keyed consistently so a given week always lines up with the right bar on the Dashboard.
+
+### Standard weekly hours
+In **Settings** you set your **standard weekly hours** (default **37.5**). This is your capacity baseline — the denominator the prediction divides declared hours by.
+
+### The prediction
+Your predicted utilisation is the average, across the weeks elapsed this cycle, of *declared hours ÷ standard weekly hours*. The Dashboard's **Utilisation Cycle** widget plots this prediction against your **utilisation target** (default **70%**), and the **vital signs** strip shows whether you're above or below target at a glance.
+
+Non-working days (PTO, sick, volunteering) don't count against you — capacity is measured in whole weeks, and time off is reported separately in *Wellbeing*.
+`,
+  },
+  {
+    id: 'workspace-reports',
+    title: 'Workspace Explorer & Reports',
+    content: `
+# Workspace Explorer & Reports
+
+### Workspace Explorer
+The **Workspace** page is a read-only window into your entire history. It's a split view:
+
+- **Left** — a directory tree of your workspace, organised by year and month.
+- **Right** — the selected entry rendered as formatted Markdown, with its linked project/activity chips shown in their stream colours.
+
+Use it to review a period, check what was tagged to a project before archiving it, or gauge how consistent your output has been. To *change* an entry, use the Daily Editor — the explorer never edits.
+
+### Search
+The global search box scans every file in your workspace with a simple case-insensitive linear pass. Because your data is local, thousands of files scan in milliseconds. Matches include text stored in frontmatter (tags, linked projects), and clicking a result jumps you to that day.
+
+### Reports & export
+The **Reports** page turns a date range into a shareable summary and lets you export your data:
+
+- **Markdown (\`.md\`)** — compiles the selected entries into one chronological document, ideal for performance reviews or archiving a period. Paste it straight into Notion or Obsidian.
+- **JSON (\`.json\`)** — the raw structured data, including frontmatter metadata, for custom scripts or migrating elsewhere.
+`,
+  },
+  {
+    id: 'settings',
+    title: 'Settings & Configuration',
+    content: `
+# Settings & Configuration
+
+### Work streams
+Rename streams, change their colours and icons, choose your **main-goal** stream, and enable optional features like the project pipeline. Stream config is saved to \`worktracker.config.json\` in your workspace, so it syncs with your data. Renamed streams keep the old name as an alias; removed streams are archived, never deleted.
+
+### Utilisation target & standard weekly hours
+- **Utilisation target** — the percentage of effort you aim to put into your main-goal stream (default **70%**). The Dashboard measures your forecast against it.
+- **Standard weekly hours** — your capacity baseline (default **37.5**), used to turn STAFFIT hours into a utilisation percentage.
+
+These app-level preferences live in \`settings.json\` in Electron's \`userData\` folder, so they belong to the machine rather than the workspace.
+
+### Notifications
+Schedule a daily reminder to log your work. Toggle it on and pick a time; the reminder fires as a native system notification. The app needs to be running (it can sit in the tray) to deliver it.
+
+### Auto-update
+Click **Check for Updates** for a manual check. If an update is available it downloads in the background with a progress bar, then prompts you to restart to apply it. Updates are handled by \`electron-updater\`.
+
+### Workspace
+Your workspace path is shown at the top of Settings. **Change Workspace** points the app at a different folder; your data stays wherever it lives — only the remembered path changes.
+
+### Theme
+Switch between the light and dark themes from the header toggle. Your choice is remembered across sessions.
+`,
+  },
+  {
+    id: 'tray-widget',
+    title: 'Tray Widget',
+    content: `
+# Tray Widget
+
+Work Tracker adds an icon to your system tray so you can log without bringing up the full window.
+
+### How it works
+The app runs two windows: the **main window** and a small, frameless, always-on-top **widget**. Clicking the tray icon toggles the widget popup.
+
+### Starting a log from the tray
+Hit **Start** in the widget and the app fires an internal event that navigates the main window straight to the **Daily Editor** for today — no hunting through the interface. It's the fastest path from "I should log that" to actually logging it.
+
+### Staying available
+Keeping the app running in the tray is also what lets **daily reminder notifications** fire at your chosen time (see *Settings*).
+`,
+  },
+  {
+    id: 'file-formats',
+    title: 'File Formats & Data',
+    content: `
+# File Formats & Data
+
+Everything Work Tracker knows lives in plain files in your workspace. Understanding the layout lets you back it up, sync it, or read it in any editor.
+
+### Directory structure
 \`\`\`text
-/My_Workspace
-  ├── 2024-03-28.md           # Daily Log
-  ├── 2024-03-28-todos.md     # Daily Todo List
-  ├── 2024-03-29.md
-  ├── 2024-03-29-todos.md
-  ├── projects.json           # Projects & activities metadata
-  └── worktracker.config.json # Your work streams & feature settings
+[workspace]/
+  ├── 2026/07/2026-07-06.md         # daily log
+  ├── 2026/07/2026-07-06-todos.md   # per-day todo list
+  ├── projects.json                 # projects, activities, tasks, subtasks, team
+  ├── staffitHours.json             # weekKey → declared hours
+  └── worktracker.config.json       # work streams (names, colours, icons)
 \`\`\`
 
-### File Formats
+### Daily logs (\`YYYY-MM-DD.md\`)
+Frontmatter holds metadata; the body has one \`# H1\` section per stream.
 
-#### 1. Daily Logs (\`YYYY-MM-DD.md\`)
-Contains your journal entries for the day, one section per work stream.
-- **Frontmatter**: Stores metadata — tags, and the projects/activities you linked that day.
-- **Body**: Standard Markdown with one H1 section per stream, named after **your** streams (set during setup, editable in Settings).
-
-Example (with the classic consulting streams):
 \`\`\`markdown
 ---
 tags: [dev, meeting]
+dayStatus: working
 projects:
-  clientWork: ["Acme Corp Website"]
+  clientWork: ["Acme Corp Rebuild"]
   practiceDevelopment: ["TypeScript Deep Dive"]
 ---
 
@@ -74,211 +320,27 @@ projects:
 ...
 \`\`\`
 
-#### 2. Work Streams (\`worktracker.config.json\`)
-Defines how your day is split — stream names, colours, which one is your
-**main goal**, and optional features (utilisation target, project pipeline).
-- Lives in the workspace so it syncs across devices with your data.
-- Renaming a stream keeps the old name as an alias, so historical files still parse.
-- Streams are **archived**, never deleted — history stays intact.
-- Existing pre-1.8 workspaces are detected automatically and get the classic
-  Client Work / Practice Development / Business Development setup with zero changes to old files.
+- **tags** — free-form labels aggregated into *Tag Insights*.
+- **dayStatus** — \`working\`, \`pto\`, \`sick\`, or \`volunteering\`.
+- **projects** — the projects/activities linked that day, bucketed by stream.
 
-#### 3. Todo Lists (\`YYYY-MM-DD-todos.md\`)
-Contains your tasks for the day.
-- Can be edited manually in any text editor.
+### Todo lists (\`YYYY-MM-DD-todos.md\`)
+Editable in any text editor:
 - \`# Lane Title\` creates a column.
-- \`- [ ] Task\` creates an open task.
-- \`- [x] Task\` creates a completed task.
-- Tasks may carry a metadata block like \`{created:2026-07-06 !important}\` — this powers the age chips (amber at 3 days, red at 7) and the important flag. It survives the daily rollover so you always know how long something has been waiting.
+- \`- [ ] Task\` is open; \`- [x] Task\` is done.
+- A trailing metadata block like \`{created:2026-07-06 !important}\` powers the **age chips** (amber at 3 days, red at 7) and the **important** flag. It survives the daily **rollover**, so an item's age keeps counting until it's actually finished.
 
-#### 4. Projects & Activities (\`projects.json\`)
-A single JSON file at the workspace root that stores all your projects and activities.
-- Created automatically when you add your first project or activity.
-- Can be safely copied as part of your normal backup.
-- **Do not edit manually** unless you know what you're doing — the app manages this file.
+### Projects & activities (\`projects.json\`)
+A single JSON file created automatically when you add your first project or activity. It stores every project, activity, task, subtask, team member, status, and nesting relationship. Back it up with the rest of the folder, but let the app manage it rather than editing by hand.
+
+### STAFFIT hours (\`staffitHours.json\`)
+A map of week → declared hours that drives the utilisation forecast.
+
+### Streams (\`worktracker.config.json\`)
+Your stream definitions. Lives in the workspace so it syncs with your data.
 
 ### Backups
-To backup your data, simply **copy/paste the entire folder** to a USB drive or sync it with Google Drive/Dropbox. The app doesn't care; it just reads files.
-`,
-  },
-  {
-    id: 'daily-editor',
-    title: 'Daily Editor Deep Dive',
-    content: `
-# Daily Editor Deep Dive
-
-The Editor is your daily command center. It guides you through a **structured flow** — one step per project, grouped by your work streams — so you build a complete picture of your day.
-
-### The Flow
-When you open the editor you'll see a start screen with your week laid out. Pick a day and click **Start** to begin.
-
-The editor walks you through one step per project you select, grouped by your work streams — whatever you named them during setup.
-
-A progress bar at the top shows where you are. Use **Next** and **Back** to navigate between steps, or jump directly between them. Hit **Save** on the final step to write the file.
-
-### Project & Activity Tagging
-Colored chips appear representing your active projects and activities, tinted with each stream's colour from your workspace settings.
-
-Click a chip to link that project/activity to today's entry. Click again to unlink. These selections are saved as frontmatter metadata so the Dashboard and Workspace Explorer can surface them later.
-
-### Auto-Save Mechanics
-You never need to press "Save" mid-session.
-- The editor listens to your keystrokes.
-- It waits for a **500ms pause** in your typing (debounce).
-- It then writes the file to disk instantly.
-
-### Markdown Support
-The editor supports Github Flavored Markdown.
-- **Bold**: \`**text**\` or \`__text__\`
-- *Italic*: \`*text*\` or \`_text_\`
-- \`Code\`: \` \`text\` \`
-- **Lists**: \`- item\` or \`1. item\`
-- **Headers**: \`# H1\`, \`## H2\`
-`,
-  },
-  {
-    id: 'activities-board',
-    title: 'Projects & Activities',
-    content: `
-# Projects & Activities
-
-The Activities Board is where you manage the ongoing work in your life — the things you tag in daily entries and track over time.
-
-### Two Types of Work
-
-#### Main Goal Projects
-If the **Project pipeline** feature is enabled, your main-goal stream gets its own project list — discrete engagements with a beginning and an end.
-- Create a project with a name and it becomes available as a chip in the Daily Editor.
-- Projects have three statuses: **Active**, **Archived**, **Completed**.
-- When you complete a project it appears in the Dashboard's *Recent Accomplishments* widget.
-- A **stale warning** appears if a project has been active for more than 30 days without being completed — a nudge to either wrap it up or archive it.
-
-#### Activities
-Ongoing initiatives in your other streams that don't have a defined end date — learning, growth work, health, whatever your streams track.
-- Each activity belongs to a stream and takes that stream's colour.
-- Activities follow the same Active / Archived / Completed lifecycle as projects.
-
-### Managing Status
-Click the three-dot menu on any card to:
-- **Archive** — remove from active lists without losing history.
-- **Complete** — mark as done and record a completion date.
-- Archived and completed items can be viewed by switching the filter tabs at the top.
-
-### How Projects Link to Entries
-Everything you tag in the Daily Editor flows back to \`projects.json\`. The frontmatter in each daily log records which projects and activities were active that day, giving the Dashboard and Workspace Explorer the data they need to surface trends and summaries.
-`,
-  },
-  {
-    id: 'workspace-explorer',
-    title: 'Workspace Explorer',
-    content: `
-# Workspace Explorer
-
-The Workspace Explorer gives you a read-only window into your entire work history — every entry, every day, all in one place.
-
-### How It Works
-Navigate to **Workspace** in the sidebar to open the explorer. It presents a split-pane view:
-- **Left pane** — A hierarchical directory tree of your workspace folder, organised by year and month.
-- **Right pane** — The content of the selected entry, rendered as formatted Markdown.
-
-### Reading Entries
-Click any file in the tree to open it in the viewer. The viewer shows:
-- The full Markdown content of the entry.
-- Any **project and activity chips** linked to that entry (pulled from frontmatter), displayed in their stream colors.
-- Entry date as a header.
-
-### What It's For
-- Reviewing what you worked on during a specific period.
-- Checking what was tagged to a particular project before archiving it.
-- Getting a feel for the density and consistency of your historical output.
-
-The explorer is **read-only** — use the Daily Editor to make or change entries.
-`,
-  },
-  {
-    id: 'dashboard-logic',
-    title: 'Dashboard Intelligence',
-    content: `
-# Dashboard Intelligence
-
-The Dashboard is a calculated analysis of your work habits, built from everything you've logged.
-
-### Hero Statement
-A narrative summary at the top of the dashboard that describes your current projects and recent focus areas in plain English. It updates automatically as you log work and tag projects.
-
-### Stream Alignment
-A visual balance indicator showing how your effort is split across the three work streams.
-- The **ideal balance** is an equal split across your active streams.
-- The balance score measures variance from that ideal — lower is better.
-- The **Weekly Intensity** chart below it shows day-by-day activity volume for the current week.
-
-### Streak & Consistency
-A "streak" is the number of consecutive days you've logged at least one entry.
-- **Missed a day?** The streak resets to 0.
-- Weekends count — consistency is a 24/7 mindset (for now).
-
-### The Contribution Graph
-A calendar-style heatmap of your entire logging history. Darker squares = more activity on that day. A quick visual of your long-term consistency.
-
-### Recent Accomplishments
-A timeline of recently completed client projects and activities. Completing something in the Activities Board adds it here automatically.
-
-### Current Priorities
-A live view of your active client projects and activities, with age indicators so you can spot what's been sitting too long.
-`,
-  },
-  {
-    id: 'reports-export',
-    title: 'Reports & Exporting',
-    content: `
-# Reports & Exporting
-
-Your data is yours. The Reports page helps you get it out.
-
-### Search
-The Global Search (Ctrl+F / Cmd+F) and the Report Filter both use a linear scan across all your files.
-- Because your data is local, thousands of files can be scanned in milliseconds.
-- Search is **case-insensitive**.
-- Matches surface the full entry text, including any project and activity metadata stored in frontmatter.
-
-### Export Formats
-
-#### Markdown Export (\`.md\`)
-- Compiles all your selected entries into one chronological Master Document.
-- Perfect for archiving a period of work into a single file for performance reviews.
-- **Compatibility**: Copy-paste the result directly into Notion or Obsidian.
-
-#### JSON Export (\`.json\`)
-- Exports the raw data structure including frontmatter metadata (tags, linked projects, activities).
-- Useful for developers who want to write custom visualisation scripts or migrate to other systems.
-`,
-  },
-  {
-    id: 'settings',
-    title: 'Settings & Configuration',
-    content: `
-# Settings & Configuration
-
-### Utilisation Target
-Set a target percentage for how much of your logged work should go to your **main goal** stream (enable this in Settings → Work Streams).
-- Default is **70%** — meaning 70% of your output should be billable client work.
-- The Dashboard's Stream Alignment widget uses this target to show whether you're on track.
-- Adjust it to reflect your own goals (e.g., a lower target if you're in a heavy learning phase).
-
-### Notifications
-Schedule a daily reminder to log your work.
-- Toggle notifications on and set a time (e.g., 17:00).
-- The reminder fires as a native system notification via Electron.
-- Requires the app to be running in the background.
-
-### Auto-Update
-Work Tracker can check for and install updates automatically.
-- Click **Check for Updates** to trigger a manual check.
-- If an update is available, a download will start and a progress bar will appear.
-- Once downloaded, the app will prompt you to restart to apply the update.
-
-### Workspace
-Your workspace path is shown at the top of the Settings page. Click **Change Workspace** to point the app at a different folder. All your data stays wherever you put it — the app just remembers the path in \`localStorage\`.
+There's no export ritual — just **copy the whole folder** to a USB drive or a synced folder. The app only ever reads and writes files, so a plain copy is a complete, portable backup.
 `,
   },
 ]
