@@ -232,6 +232,25 @@ ${bd}
     mockFiles[`${MOCK_ROOT}/${year}/${month}/${dateStr}.md`] = content
   })
 
+  // A handful of non-working days (PTO / sick / volunteering) so the
+  // Wellbeing widget and heatmap statuses have data to show.
+  const dayOffs = [
+    { offset: 4, status: 'pto' },
+    { offset: 11, status: 'pto' },
+    { offset: 18, status: 'sick' },
+    { offset: 25, status: 'volunteering' },
+    { offset: 40, status: 'pto' },
+  ]
+  dayOffs.forEach(({ offset, status }) => {
+    const date = new Date(today)
+    date.setDate(today.getDate() - offset)
+    const { year, month, dateStr } = fmt(date)
+    mockFiles[`${MOCK_ROOT}/${year}/${month}/${dateStr}.md`] = `---
+dayStatus: ${status}
+---
+`
+  })
+
   // ─── Projects & Activities ────────────────────────────────────────────────
 
   const todayParts = fmt(today)
@@ -248,11 +267,28 @@ ${bd}
           id: 'mock-activity-1',
           type: 'PD',
           title: 'Get AWS Solutions Architect Certified',
+          teamMembers: ['Jordan Smith', 'Amira Lopez'],
           tasks: [
             {
               id: 'task-1',
               text: 'Complete Cloud Practitioner course',
               completed: true,
+              completedAt: daysAgo(3),
+              subtasks: [
+                {
+                  id: 'st-1',
+                  text: 'Watch module 1',
+                  completed: true,
+                  completedAt: daysAgo(6),
+                },
+                {
+                  id: 'st-2',
+                  text: 'Watch module 2',
+                  completed: true,
+                  completedAt: daysAgo(4),
+                },
+                { id: 'st-3', text: 'Take practice quiz', completed: false },
+              ],
             },
             { id: 'task-2', text: 'Purchase exam voucher', completed: false },
             { id: 'task-3', text: 'Book exam date', completed: false },
@@ -267,8 +303,14 @@ ${bd}
           id: 'mock-activity-2',
           type: 'BD',
           title: 'Build standard pitch deck',
+          teamMembers: ['Jordan Smith', 'Tom Chen'],
           tasks: [
-            { id: 'task-4', text: 'Gather case studies', completed: true },
+            {
+              id: 'task-4',
+              text: 'Gather case studies',
+              completed: true,
+              completedAt: daysAgo(10),
+            },
             { id: 'task-5', text: 'Draft slides 1-5', completed: false },
           ],
           status: 'active',
@@ -281,9 +323,20 @@ ${bd}
           id: 'mock-activity-3',
           type: 'PD',
           title: 'Complete TypeScript deep dive',
+          teamMembers: ['Amira Lopez'],
           tasks: [
-            { id: 'task-6', text: 'Finish generics module', completed: true },
-            { id: 'task-7', text: 'Build capstone project', completed: true },
+            {
+              id: 'task-6',
+              text: 'Finish generics module',
+              completed: true,
+              completedAt: daysAgo(2),
+            },
+            {
+              id: 'task-7',
+              text: 'Build capstone project',
+              completed: true,
+              completedAt: daysAgo(9),
+            },
           ],
           status: 'archived',
           completedAt: todayParts.dateStr,
@@ -337,6 +390,7 @@ ${bd}
           // read as stale since its only open todo is fresh.
           id: 'mock-project-1',
           title: 'Acme Corp Audit',
+          teamMembers: ['Jordan Smith', 'Tom Chen', 'Amira Lopez'],
           status: 'active',
           createdAt: daysAgo(110),
           completedAt: null,
@@ -364,11 +418,13 @@ ${bd}
     const diff = day === 0 ? -6 : 1 - day
     d.setDate(d.getDate() + diff)
     d.setHours(0, 0, 0, 0)
-    return fmt(d).dateStr
+    // Match the app's canonical week key (staffitManager.getWeekKey), which is
+    // the week's Monday serialised via toISOString.
+    return d.toISOString().split('T')[0]
   }
 
   const staffitHours = {}
-  for (let weeksAgo = 1; weeksAgo <= 6; weeksAgo++) {
+  for (let weeksAgo = 0; weeksAgo <= 6; weeksAgo++) {
     const d = new Date(today)
     d.setDate(d.getDate() - weeksAgo * 7)
     staffitHours[mondayOf(d)] = 30 + Math.round(Math.random() * 10)

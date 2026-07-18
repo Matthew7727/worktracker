@@ -44,6 +44,8 @@ const useDashboardData = () => {
   const [allEntries, setAllEntries] = useState([])
   const [utilisationTarget, setUtilisationTarget] = useState(null)
   const [utilisationPrediction, setUtilisationPrediction] = useState(null)
+  const [staffitHours, setStaffitHours] = useState({})
+  const [standardWeeklyHours, setStandardWeeklyHours] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -65,6 +67,8 @@ const useDashboardData = () => {
         if (settings.utilisationTarget !== undefined) {
           setUtilisationTarget(settings.utilisationTarget)
         }
+        setStandardWeeklyHours(settings.standardWeeklyHours ?? null)
+        setStaffitHours(staffitHours || {})
         setUtilisationPrediction(
           getUtilisationPrediction(staffitHours, settings.standardWeeklyHours)
         )
@@ -121,6 +125,8 @@ const useDashboardData = () => {
     allEntries,
     utilisationTarget,
     utilisationPrediction,
+    staffitHours,
+    standardWeeklyHours,
     loading,
   }
 }
