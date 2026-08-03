@@ -79,6 +79,8 @@ export const createActivity = (title, streamId, options = {}) => ({
   createdAt: new Date().toISOString().split('T')[0],
   parentId: options.parentId ?? null,
   ongoing: !!options.ongoing,
+  // New activities always sort after existing ones (which default to 0).
+  order: Date.now(),
 })
 
 export const createClientProject = (title, options = {}) => ({
@@ -93,13 +95,33 @@ export const createClientProject = (title, options = {}) => ({
   ongoing: !!options.ongoing,
 })
 
+// Sorts by the explicit `order` field. Legacy activities without one default
+// to 0 and fall back to their original (insertion) order via a stable sort.
+const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0)
+
 /** Activities that don't belong inside another activity. */
 export const getTopLevelActivities = (activities) =>
-  (activities || []).filter((a) => !a.parentId)
+  (activities || []).filter((a) => !a.parentId).sort(byOrder)
 
 /** Activities nested inside the given parent activity. */
 export const getChildActivities = (activities, parentId) =>
-  (activities || []).filter((a) => a.parentId === parentId)
+  (activities || []).filter((a) => a.parentId === parentId).sort(byOrder)
+
+/**
+ * Re-orders a sibling group (either all top-level activities, or all
+ * children of one parent) to match `orderedIds`, without touching any
+ * other activities.
+ *
+ * @param {Array} activities - The full activities array
+ * @param {Array<string>} orderedIds - Sibling ids in their new order
+ * @returns {Array} A new activities array with updated `order` values
+ */
+export const reorderActivities = (activities, orderedIds) => {
+  const orderMap = new Map(orderedIds.map((id, index) => [id, index]))
+  return (activities || []).map((a) =>
+    orderMap.has(a.id) ? { ...a, order: orderMap.get(a.id) } : a
+  )
+}
 
 export const createTask = (text) => ({
   id: generateId(),

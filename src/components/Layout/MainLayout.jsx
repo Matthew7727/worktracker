@@ -16,6 +16,7 @@ import {
   MenuBook as DocsIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
   Bolt,
+  PushPin,
   LightMode,
   DarkMode,
 } from '@mui/icons-material'
@@ -74,6 +75,12 @@ const MainLayout = ({ children }) => {
       path: '/todos',
       icon: <Bolt />,
       activeColor: '#ffd166',
+    },
+    {
+      label: 'Notes',
+      path: '/notes',
+      icon: <PushPin />,
+      activeColor: '#f45b69',
     },
     {
       label: 'Workspace',
