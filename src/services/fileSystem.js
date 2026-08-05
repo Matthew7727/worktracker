@@ -35,3 +35,15 @@ export const listFiles = async (dirPath) => {
   if (!api) return { success: false, error: 'API not available' }
   return await api.listFiles(dirPath)
 }
+
+export const listAllFiles = async (dirPath) => {
+  const api = getAPI()
+  if (!api) return { success: false, error: 'API not available' }
+  return await api.listAllFiles(dirPath)
+}
+
+export const deleteFile = async (filePath) => {
+  const api = getAPI()
+  if (!api) return { success: false, error: 'API not available' }
+  return await api.deleteFile(filePath)
+}
