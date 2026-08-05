@@ -24,11 +24,20 @@ import {
   getChildActivities,
 } from '../../utils/projectsManager'
 import { getStreamAbbrev } from '../../utils/streamConfig'
+import {
+  loadNotes,
+  saveNote,
+  deleteNote,
+  createNote,
+  getNotesForActivity,
+} from '../../utils/notesManager'
 import TaskList from './components/TaskList'
 import StreamTag from './components/StreamTag'
 import ConfirmDialog from './components/ConfirmDialog'
 import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
+import NoteCard from '../Notes/components/NoteCard'
+import NoteEditorDialog from '../Notes/components/NoteEditorDialog'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -176,6 +185,9 @@ const ActivityDetailsPage = () => {
   const [addingTeam, setAddingTeam] = useState(false)
   const [addSubOpen, setAddSubOpen] = useState(false)
   const [confirm, setConfirm] = useState(EMPTY_CONFIRM)
+  const [notes, setNotes] = useState([])
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
+  const [editingNote, setEditingNote] = useState(null)
   const openConfirm = (options) =>
     setConfirm({ ...EMPTY_CONFIRM, ...options, open: true })
   const closeConfirm = () => setConfirm(EMPTY_CONFIRM)
@@ -194,6 +206,16 @@ const ActivityDetailsPage = () => {
   useEffect(() => {
     if (!selectedDirectory) return
     loadProjects(selectedDirectory).then(setData)
+  }, [selectedDirectory])
+
+  const refreshNotes = () => {
+    if (!selectedDirectory) return
+    loadNotes(selectedDirectory).then(setNotes)
+  }
+
+  useEffect(() => {
+    refreshNotes()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDirectory])
 
   const isProject = itemType === 'project'
@@ -344,6 +366,43 @@ const ActivityDetailsPage = () => {
       [listKey]: data[listKey].filter((entry) => entry.id !== itemId),
     })
     navigate('/todos')
+  }
+
+  // ── Linked notes ─────────────────────────────────────────────────────
+
+  const linkedNotes = getNotesForActivity(notes, itemId)
+
+  const openNewNote = () => {
+    setEditingNote(null)
+    setNoteEditorOpen(true)
+  }
+
+  const openExistingNote = (note) => {
+    setEditingNote(note)
+    setNoteEditorOpen(true)
+  }
+
+  const handleSaveNote = async (fields) => {
+    const base = editingNote || createNote()
+    const updated = {
+      ...base,
+      ...fields,
+      activityId: itemId,
+      activityTitle: item?.title || null,
+      updatedAt: new Date().toISOString(),
+    }
+    await saveNote(selectedDirectory, updated, editingNote?.filePath)
+    setNoteEditorOpen(false)
+    setEditingNote(null)
+    refreshNotes()
+  }
+
+  const handleDeleteNote = async () => {
+    if (!editingNote) return
+    await deleteNote(selectedDirectory, editingNote)
+    setNoteEditorOpen(false)
+    setEditingNote(null)
+    refreshNotes()
   }
 
   if (!item) {
@@ -586,7 +645,7 @@ const ActivityDetailsPage = () => {
         </Stack>
 
         <Stack spacing={2}>
-          <Panel label="Notes">
+          <Panel label="Context">
             <InputBase
               fullWidth
               multiline
@@ -602,6 +661,45 @@ const ActivityDetailsPage = () => {
               }}
             />
           </Panel>
+
+          {!isProject && (
+            <Panel label="Notes">
+              {linkedNotes.length > 0 ? (
+                <Stack spacing={1.5} sx={{ mb: 1.5 }}>
+                  {linkedNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      onOpen={() => openExistingNote(note)}
+                    />
+                  ))}
+                </Stack>
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mb: 1.5 }}
+                >
+                  No notes linked yet.
+                </Typography>
+              )}
+              <Button
+                onClick={openNewNote}
+                startIcon={<Add sx={{ fontSize: '1rem' }} />}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  color: 'text.secondary',
+                  pl: 0,
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    color: 'text.primary',
+                  },
+                }}
+              >
+                Add note
+              </Button>
+            </Panel>
+          )}
 
           <Panel label="Team">
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
@@ -775,6 +873,22 @@ const ActivityDetailsPage = () => {
           streams={streamConfig?.streams || []}
           activities={data.activities}
           defaultParentId={item.id}
+        />
+      )}
+
+      {!isProject && (
+        <NoteEditorDialog
+          open={noteEditorOpen}
+          onClose={() => {
+            setNoteEditorOpen(false)
+            setEditingNote(null)
+          }}
+          onSave={handleSaveNote}
+          onDelete={editingNote ? handleDeleteNote : undefined}
+          note={editingNote}
+          activities={data.activities}
+          streamById={streamById}
+          lockActivityId={itemId}
         />
       )}
     </Box>

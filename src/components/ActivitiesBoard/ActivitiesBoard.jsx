@@ -8,6 +8,21 @@ import {
   ChevronRight,
   ExpandMore,
 } from '@mui/icons-material'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useAppContext } from '../../context/AppContext'
 import {
   loadProjects,
@@ -18,6 +33,7 @@ import {
   getActivityStreamId,
   getTopLevelActivities,
   getChildActivities,
+  reorderActivities,
 } from '../../utils/projectsManager'
 import { getStreamAbbrev } from '../../utils/streamConfig'
 import ActivityCard from './components/ActivityCard'
@@ -130,6 +146,34 @@ const NewButton = ({ onAddProject, onAddActivity, showProjects }) => {
         </MenuItem>
       </Menu>
     </>
+  )
+}
+
+// Wraps a draggable activity: exposes the drag handle to `ActivityCard` while
+// keeping click/rename interactions on the card untouched.
+const SortableActivity = ({ id, disabled, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : 'auto',
+        position: 'relative',
+      }}
+    >
+      {children(disabled ? null : { attributes, listeners })}
+    </div>
   )
 }
 
@@ -433,6 +477,42 @@ const ActivitiesBoard = () => {
     recentlyCompletedIds,
   })
 
+  // ── Drag-and-drop reordering ────────────────────────────────────────────
+  // Reordering is only unambiguous when the full board is visible — a
+  // stream filter hides siblings, which would corrupt their relative order.
+  const dndEnabled = activityFilter === 'ALL'
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const activeItem = data.activities.find((a) => a.id === active.id)
+    const overItem = data.activities.find((a) => a.id === over.id)
+    if (!activeItem || !overItem) return
+    // Only reorder within the same sibling group (top-level, or the same
+    // parent's children) — dragging never re-parents an activity.
+    if ((activeItem.parentId || null) !== (overItem.parentId || null)) return
+
+    const siblingIds = (
+      activeItem.parentId
+        ? getChildActivities(data.activities, activeItem.parentId).filter(
+            (a) => a.status === 'active' && typeMatch(a)
+          )
+        : activeTopLevel
+    ).map((a) => a.id)
+
+    const oldIndex = siblingIds.indexOf(active.id)
+    const newIndex = siblingIds.indexOf(over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(siblingIds, oldIndex, newIndex)
+    save({ ...data, activities: reorderActivities(data.activities, reordered) })
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
@@ -540,54 +620,96 @@ const ActivitiesBoard = () => {
         ) : (
           <>
             {activeTopLevel.length > 0 && (
-              <ActivityGrid>
-                {activeTopLevel.map((activity) => {
-                  const children = getChildActivities(
-                    data.activities,
-                    activity.id
-                  ).filter((c) => c.status === 'active' && typeMatch(c))
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={activeTopLevel.map((a) => a.id)}
+                  strategy={rectSortingStrategy}
+                >
+                  <ActivityGrid>
+                    {activeTopLevel.map((activity) => {
+                      const children = getChildActivities(
+                        data.activities,
+                        activity.id
+                      ).filter((c) => c.status === 'active' && typeMatch(c))
 
-                  if (children.length === 0) {
-                    return (
-                      <ActivityCard
-                        key={activity.id}
-                        {...cardPropsFor(activity)}
-                      />
-                    )
-                  }
+                      if (children.length === 0) {
+                        return (
+                          <SortableActivity
+                            key={activity.id}
+                            id={activity.id}
+                            disabled={!dndEnabled}
+                          >
+                            {(dragHandle) => (
+                              <ActivityCard
+                                dragHandle={dragHandle}
+                                {...cardPropsFor(activity)}
+                              />
+                            )}
+                          </SortableActivity>
+                        )
+                      }
 
-                  return (
-                    <Box
-                      key={activity.id}
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1.5,
-                      }}
-                    >
-                      <ActivityCard {...cardPropsFor(activity)} />
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1.5,
-                          pl: 2,
-                          ml: 1,
-                          borderLeft: '2px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        {children.map((child) => (
-                          <ActivityCard
-                            key={child.id}
-                            {...cardPropsFor(child)}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-                  )
-                })}
-              </ActivityGrid>
+                      return (
+                        <Box
+                          key={activity.id}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1.5,
+                          }}
+                        >
+                          <SortableActivity
+                            id={activity.id}
+                            disabled={!dndEnabled}
+                          >
+                            {(dragHandle) => (
+                              <ActivityCard
+                                dragHandle={dragHandle}
+                                {...cardPropsFor(activity)}
+                              />
+                            )}
+                          </SortableActivity>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 1.5,
+                              pl: 2,
+                              ml: 1,
+                              borderLeft: '2px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <SortableContext
+                              items={children.map((c) => c.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              {children.map((child) => (
+                                <SortableActivity
+                                  key={child.id}
+                                  id={child.id}
+                                  disabled={!dndEnabled}
+                                >
+                                  {(dragHandle) => (
+                                    <ActivityCard
+                                      dragHandle={dragHandle}
+                                      {...cardPropsFor(child)}
+                                    />
+                                  )}
+                                </SortableActivity>
+                              ))}
+                            </SortableContext>
+                          </Box>
+                        </Box>
+                      )
+                    })}
+                  </ActivityGrid>
+                </SortableContext>
+              </DndContext>
             )}
 
             {archivedActivities.length > 0 && (

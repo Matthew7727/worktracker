@@ -574,6 +574,13 @@ dayStatus: ${status}
       return { success: true }
     },
 
+    deleteFile: async (path) => {
+      console.log(`[Mock] deleteFile called for ${path}`)
+      const normalizedPath = path.replace(/\\/g, '/')
+      delete mockFiles[normalizedPath]
+      return { success: true }
+    },
+
     watchWorkspace: async (path) => {
       console.log(`[Mock] watchWorkspace called for ${path}`)
       return { success: true }

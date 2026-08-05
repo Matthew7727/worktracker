@@ -16,6 +16,7 @@ import {
   Edit,
   CheckCircleOutline,
   Star,
+  DragIndicator,
 } from '@mui/icons-material'
 import ConfirmDialog from './ConfirmDialog'
 import StreamTag from './StreamTag'
@@ -45,6 +46,7 @@ const ActivityCard = ({
   onDelete,
   onOpenDetails,
   recentlyCompletedIds,
+  dragHandle,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const [isRenaming, setIsRenaming] = useState(false)
@@ -92,6 +94,7 @@ const ActivityCard = ({
         transition: 'border-color 0.15s',
         '&:hover': { borderColor: 'text.secondary' },
         '&:hover .card-kebab': { opacity: 1 },
+        '&:hover .card-drag-handle': { opacity: 1 },
       }}
     >
       {/* Stream tag + kebab */}
@@ -102,7 +105,28 @@ const ActivityCard = ({
           justifyContent: 'space-between',
         }}
       >
-        <StreamTag stream={stream} label={stream?.abbrev || activity.type} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+          {dragHandle && (
+            <IconButton
+              size="small"
+              className="card-drag-handle"
+              {...dragHandle.attributes}
+              {...dragHandle.listeners}
+              sx={{
+                p: 0.25,
+                cursor: 'grab',
+                color: 'text.secondary',
+                opacity: 0,
+                transition: 'opacity 0.15s',
+                touchAction: 'none',
+                '&:focus-visible': { opacity: 1 },
+              }}
+            >
+              <DragIndicator fontSize="small" />
+            </IconButton>
+          )}
+          <StreamTag stream={stream} label={stream?.abbrev || activity.type} />
+        </Box>
         <IconButton
           size="small"
           className="card-kebab"
