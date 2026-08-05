@@ -37,7 +37,7 @@ import ConfirmDialog from './components/ConfirmDialog'
 import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
-import NoteEditorDialog from '../Notes/components/NoteEditorDialog'
+import NoteEditorInline from '../Notes/components/NoteEditorInline'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -186,8 +186,9 @@ const ActivityDetailsPage = () => {
   const [addSubOpen, setAddSubOpen] = useState(false)
   const [confirm, setConfirm] = useState(EMPTY_CONFIRM)
   const [notes, setNotes] = useState([])
-  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
-  const [editingNote, setEditingNote] = useState(null)
+  // null = no editor open; 'new' = creating a fresh note; a note object =
+  // editing that note in place, right where its card would be.
+  const [noteEditorTarget, setNoteEditorTarget] = useState(null)
   const openConfirm = (options) =>
     setConfirm({ ...EMPTY_CONFIRM, ...options, open: true })
   const closeConfirm = () => setConfirm(EMPTY_CONFIRM)
@@ -373,14 +374,16 @@ const ActivityDetailsPage = () => {
   const linkedNotes = getNotesForActivity(notes, itemId)
 
   const openNewNote = () => {
-    setEditingNote(null)
-    setNoteEditorOpen(true)
+    setNoteEditorTarget('new')
   }
 
   const openExistingNote = (note) => {
-    setEditingNote(note)
-    setNoteEditorOpen(true)
+    setNoteEditorTarget(note)
   }
+
+  const closeNoteEditor = () => setNoteEditorTarget(null)
+
+  const editingNote = noteEditorTarget === 'new' ? null : noteEditorTarget
 
   const handleSaveNote = async (fields) => {
     const base = editingNote || createNote()
@@ -392,16 +395,14 @@ const ActivityDetailsPage = () => {
       updatedAt: new Date().toISOString(),
     }
     await saveNote(selectedDirectory, updated, editingNote?.filePath)
-    setNoteEditorOpen(false)
-    setEditingNote(null)
+    closeNoteEditor()
     refreshNotes()
   }
 
   const handleDeleteNote = async () => {
     if (!editingNote) return
     await deleteNote(selectedDirectory, editingNote)
-    setNoteEditorOpen(false)
-    setEditingNote(null)
+    closeNoteEditor()
     refreshNotes()
   }
 
@@ -666,38 +667,69 @@ const ActivityDetailsPage = () => {
             <Panel label="Notes">
               {linkedNotes.length > 0 ? (
                 <Stack spacing={1.5} sx={{ mb: 1.5 }}>
-                  {linkedNotes.map((note) => (
-                    <NoteCard
-                      key={note.id}
-                      note={note}
-                      onOpen={() => openExistingNote(note)}
-                    />
-                  ))}
+                  {linkedNotes.map((note) =>
+                    noteEditorTarget &&
+                    noteEditorTarget !== 'new' &&
+                    noteEditorTarget.id === note.id ? (
+                      <NoteEditorInline
+                        key={note.id}
+                        note={note}
+                        activities={data.activities}
+                        streamById={streamById}
+                        lockActivityId={itemId}
+                        onSave={handleSaveNote}
+                        onDelete={handleDeleteNote}
+                        onClose={closeNoteEditor}
+                      />
+                    ) : (
+                      <NoteCard
+                        key={note.id}
+                        note={note}
+                        onOpen={() => openExistingNote(note)}
+                      />
+                    )
+                  )}
                 </Stack>
               ) : (
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'text.secondary', mb: 1.5 }}
-                >
-                  No notes linked yet.
-                </Typography>
+                noteEditorTarget !== 'new' && (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mb: 1.5 }}
+                  >
+                    No notes linked yet.
+                  </Typography>
+                )
               )}
-              <Button
-                onClick={openNewNote}
-                startIcon={<Add sx={{ fontSize: '1rem' }} />}
-                sx={{
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  color: 'text.secondary',
-                  pl: 0,
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    color: 'text.primary',
-                  },
-                }}
-              >
-                Add note
-              </Button>
+              {noteEditorTarget === 'new' && (
+                <Box sx={{ mb: 1.5 }}>
+                  <NoteEditorInline
+                    note={null}
+                    activities={data.activities}
+                    streamById={streamById}
+                    lockActivityId={itemId}
+                    onSave={handleSaveNote}
+                    onClose={closeNoteEditor}
+                  />
+                </Box>
+              )}
+              {noteEditorTarget === null && (
+                <Button
+                  onClick={openNewNote}
+                  startIcon={<Add sx={{ fontSize: '1rem' }} />}
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    color: 'text.secondary',
+                    pl: 0,
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                      color: 'text.primary',
+                    },
+                  }}
+                >
+                  Add note
+                </Button>
+              )}
             </Panel>
           )}
 

@@ -12,7 +12,7 @@ import {
   createNote,
 } from '../../utils/notesManager'
 import NoteCard from './components/NoteCard'
-import NoteEditorDialog from './components/NoteEditorDialog'
+import NoteEditorInline from './components/NoteEditorInline'
 
 // Small deterministic "pin" tilt per note, so the board doesn't shuffle on
 // every re-render but still reads like a corkboard.
@@ -28,8 +28,9 @@ const NotesBoard = () => {
   const [notes, setNotes] = useState([])
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [editingNote, setEditingNote] = useState(null)
+  // null = no editor open; 'new' = creating a fresh note; a note object =
+  // editing that note in place (rendered inline where its card would be).
+  const [editorTarget, setEditorTarget] = useState(null)
 
   const streamById = useMemo(
     () =>
@@ -66,14 +67,16 @@ const NotesBoard = () => {
   }
 
   const openNewNote = () => {
-    setEditingNote(null)
-    setEditorOpen(true)
+    setEditorTarget('new')
   }
 
   const openExistingNote = (note) => {
-    setEditingNote(note)
-    setEditorOpen(true)
+    setEditorTarget(note)
   }
+
+  const closeEditor = () => setEditorTarget(null)
+
+  const editingNote = editorTarget === 'new' ? null : editorTarget
 
   const handleSave = async (fields) => {
     const base = editingNote || createNote()
@@ -83,16 +86,14 @@ const NotesBoard = () => {
       updatedAt: new Date().toISOString(),
     }
     await saveNote(selectedDirectory, updated, editingNote?.filePath)
-    setEditorOpen(false)
-    setEditingNote(null)
+    closeEditor()
     refresh()
   }
 
   const handleDelete = async () => {
     if (!editingNote) return
     await deleteNote(selectedDirectory, editingNote)
-    setEditorOpen(false)
-    setEditingNote(null)
+    closeEditor()
     refresh()
   }
 
@@ -139,7 +140,17 @@ const NotesBoard = () => {
         </Box>
       </Box>
 
-      {!loading && notes.length === 0 ? (
+      {editorTarget === 'new' && (
+        <NoteEditorInline
+          note={null}
+          activities={activities}
+          streamById={streamById}
+          onSave={handleSave}
+          onClose={closeEditor}
+        />
+      )}
+
+      {!loading && notes.length === 0 && editorTarget !== 'new' ? (
         <Box
           sx={{
             py: 6,
@@ -172,33 +183,33 @@ const NotesBoard = () => {
             columnGap: '16px',
           }}
         >
-          {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              stream={streamForNote(note)}
-              rotation={rotationFor(note.id)}
-              onOpen={() => openExistingNote(note)}
-              onOpenActivity={(activityId) =>
-                navigate(`/todos/activity/${activityId}`)
-              }
-            />
-          ))}
+          {notes.map((note) =>
+            editorTarget && editorTarget !== 'new' && editorTarget.id === note.id ? (
+              <Box key={note.id} sx={{ breakInside: 'avoid' }}>
+                <NoteEditorInline
+                  note={note}
+                  activities={activities}
+                  streamById={streamById}
+                  onSave={handleSave}
+                  onDelete={handleDelete}
+                  onClose={closeEditor}
+                />
+              </Box>
+            ) : (
+              <NoteCard
+                key={note.id}
+                note={note}
+                stream={streamForNote(note)}
+                rotation={rotationFor(note.id)}
+                onOpen={() => openExistingNote(note)}
+                onOpenActivity={(activityId) =>
+                  navigate(`/todos/activity/${activityId}`)
+                }
+              />
+            )
+          )}
         </Box>
       )}
-
-      <NoteEditorDialog
-        open={editorOpen}
-        onClose={() => {
-          setEditorOpen(false)
-          setEditingNote(null)
-        }}
-        onSave={handleSave}
-        onDelete={editingNote ? handleDelete : undefined}
-        note={editingNote}
-        activities={activities}
-        streamById={streamById}
-      />
     </Box>
   )
 }
