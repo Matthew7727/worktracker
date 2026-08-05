@@ -38,7 +38,6 @@ import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
-import NoteEditorDialog from '../Notes/components/NoteEditorDialog'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -906,19 +905,6 @@ const ActivityDetailsPage = () => {
           streams={streamConfig?.streams || []}
           activities={data.activities}
           defaultParentId={item.id}
-        />
-      )}
-
-      {!isProject && (
-        <NoteEditorDialog
-          open={noteEditorTarget !== null}
-          onClose={closeNoteEditor}
-          onSave={handleSaveNote}
-          onDelete={editingNote ? handleDeleteNote : undefined}
-          note={editingNote}
-          activities={data.activities}
-          streamById={streamById}
-          lockActivityId={itemId}
         />
       )}
     </Box>
