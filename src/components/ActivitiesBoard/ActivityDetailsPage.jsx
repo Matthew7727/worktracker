@@ -38,6 +38,7 @@ import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
+import NoteEditorDialog from '../Notes/components/NoteEditorDialog'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -910,11 +911,8 @@ const ActivityDetailsPage = () => {
 
       {!isProject && (
         <NoteEditorDialog
-          open={noteEditorOpen}
-          onClose={() => {
-            setNoteEditorOpen(false)
-            setEditingNote(null)
-          }}
+          open={noteEditorTarget !== null}
+          onClose={closeNoteEditor}
           onSave={handleSaveNote}
           onDelete={editingNote ? handleDeleteNote : undefined}
           note={editingNote}

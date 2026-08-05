@@ -184,7 +184,9 @@ const NotesBoard = () => {
           }}
         >
           {notes.map((note) =>
-            editorTarget && editorTarget !== 'new' && editorTarget.id === note.id ? (
+            editorTarget &&
+            editorTarget !== 'new' &&
+            editorTarget.id === note.id ? (
               <Box key={note.id} sx={{ breakInside: 'avoid' }}>
                 <NoteEditorInline
                   note={note}
