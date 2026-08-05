@@ -179,24 +179,24 @@ const NotesBoard = () => {
       ) : (
         <Box
           sx={{
-            columns: { xs: 1, sm: 2, md: 3, lg: 4 },
-            columnGap: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            maxWidth: 480,
           }}
         >
           {notes.map((note) =>
             editorTarget &&
             editorTarget !== 'new' &&
             editorTarget.id === note.id ? (
-              <Box key={note.id} sx={{ breakInside: 'avoid' }}>
-                <NoteEditorInline
-                  note={note}
-                  activities={activities}
-                  streamById={streamById}
-                  onSave={handleSave}
-                  onDelete={handleDelete}
-                  onClose={closeEditor}
-                />
-              </Box>
+              <NoteEditorInline
+                key={note.id}
+                note={note}
+                activities={activities}
+                streamById={streamById}
+                onSave={handleSave}
+                onDelete={handleDelete}
+                onClose={closeEditor}
+              />
             ) : (
               <NoteCard
                 key={note.id}

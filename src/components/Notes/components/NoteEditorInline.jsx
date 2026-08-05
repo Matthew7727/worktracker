@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { Box, Button, TextField, Autocomplete, Typography } from '@mui/material'
+import { Box, Button, TextField, Autocomplete } from '@mui/material'
 import { getActivityStreamId } from '../../../utils/projectsManager'
 
 // Inline note editor — renders in the flow of the page (no modal), right where
@@ -48,56 +48,69 @@ const NoteEditorInline = ({
   return (
     <Box
       sx={{
-        p: 2.5,
+        p: 2,
         mb: 2,
-        borderRadius: '18px',
-        border: '2px solid',
-        borderColor: 'text.primary',
       }}
     >
       <TextField
         autoFocus
-        margin="dense"
-        label="Name"
+        placeholder="Name"
         fullWidth
-        variant="outlined"
+        variant="standard"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        sx={{ mb: 2 }}
+        InputProps={{ disableUnderline: true }}
+        sx={{
+          mb: 1.5,
+          '& .MuiInputBase-input': { fontWeight: 800, fontSize: '1rem' },
+          '& .MuiInputBase-input::placeholder': {
+            color: 'text.disabled',
+            opacity: 1,
+          },
+        }}
       />
       <TextField
-        margin="dense"
-        label="Notes"
+        placeholder="Note"
         fullWidth
         multiline
         minRows={4}
-        variant="outlined"
+        variant="standard"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        sx={{ mb: 2 }}
+        InputProps={{ disableUnderline: true }}
+        sx={{
+          mb: 1.5,
+          '& .MuiInputBase-input::placeholder': {
+            color: 'text.disabled',
+            opacity: 1,
+          },
+        }}
       />
       {!lockActivityId && (
-        <>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
-            Link to an activity (optional)
-          </Typography>
-          <Autocomplete
-            options={groupedActivities}
-            value={linkedActivity}
-            onChange={(_, val) => setLinkedActivity(val)}
-            getOptionLabel={(a) => a.title || ''}
-            groupBy={(a) => streamById[getActivityStreamId(a)]?.name || ''}
-            isOptionEqualToValue={(a, b) => a.id === b.id}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search activities…"
-                size="small"
-              />
-            )}
-            sx={{ mb: 2 }}
-          />
-        </>
+        <Autocomplete
+          options={groupedActivities}
+          value={linkedActivity}
+          onChange={(_, val) => setLinkedActivity(val)}
+          getOptionLabel={(a) => a.title || ''}
+          groupBy={(a) => streamById[getActivityStreamId(a)]?.name || ''}
+          isOptionEqualToValue={(a, b) => a.id === b.id}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="standard"
+              placeholder="Activity"
+              size="small"
+              InputProps={{ ...params.InputProps, disableUnderline: true }}
+              sx={{
+                '& .MuiInputBase-input::placeholder': {
+                  color: 'text.disabled',
+                  opacity: 1,
+                },
+              }}
+            />
+          )}
+          sx={{ mb: 1.5 }}
+        />
       )}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {note && onDelete && (
