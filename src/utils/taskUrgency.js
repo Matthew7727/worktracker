@@ -67,7 +67,8 @@ export const sortTasksByUrgency = (tasks, now = new Date()) =>
     const left = urgencyRank(a, now)
     const right = urgencyRank(b, now)
     if (left.bucket !== right.bucket) return left.bucket - right.bucket
-    if (left.dueInDays !== right.dueInDays) return left.dueInDays - right.dueInDays
+    if (left.dueInDays !== right.dueInDays)
+      return left.dueInDays - right.dueInDays
     if (left.importantRank !== right.importantRank) {
       return left.importantRank - right.importantRank
     }

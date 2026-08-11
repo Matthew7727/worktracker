@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, IconButton, Menu, MenuItem, Paper } from '@mui/material'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+} from '@mui/material'
 import {
   Add,
   Delete,
@@ -198,7 +205,11 @@ const MainGoalUrgentCard = ({ stream, projects, onOpenProject }) => {
     projects.flatMap((project) =>
       (project.tasks || [])
         .filter((task) => !task.completed)
-        .map((task) => ({ ...task, projectId: project.id, projectTitle: project.title }))
+        .map((task) => ({
+          ...task,
+          projectId: project.id,
+          projectTitle: project.title,
+        }))
     )
   ).slice(0, 3)
 
@@ -639,12 +650,18 @@ const ActivitiesBoard = () => {
             subtitle="Dated engagements with a start, an end, and a status."
           />
           <MainGoalUrgentCard
-            stream={mainFocusStream && {
-              ...mainFocusStream,
-              abbrev: getStreamAbbrev(mainFocusStream),
-            }}
-            projects={data.clientProjects.filter((project) => project.status === 'active')}
-            onOpenProject={(projectId) => navigate(`/todos/project/${projectId}`)}
+            stream={
+              mainFocusStream && {
+                ...mainFocusStream,
+                abbrev: getStreamAbbrev(mainFocusStream),
+              }
+            }
+            projects={data.clientProjects.filter(
+              (project) => project.status === 'active'
+            )}
+            onOpenProject={(projectId) =>
+              navigate(`/todos/project/${projectId}`)
+            }
           />
           <ClientProjectsList
             projects={data.clientProjects}

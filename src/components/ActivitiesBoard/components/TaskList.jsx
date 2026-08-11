@@ -305,11 +305,10 @@ const TaskRow = ({
   )
 }
 
-const sortTasks = (tasks) =>
-  [
-    ...sortTasksByUrgency(tasks.filter((task) => !task.completed)),
-    ...tasks.filter((task) => task.completed),
-  ]
+const sortTasks = (tasks) => [
+  ...sortTasksByUrgency(tasks.filter((task) => !task.completed)),
+  ...tasks.filter((task) => task.completed),
+]
 
 const TaskList = ({
   tasks,

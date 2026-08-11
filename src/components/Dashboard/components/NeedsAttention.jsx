@@ -59,7 +59,9 @@ const NeedsAttention = () => {
       const openTasks = flattenAttentionTasks(data)
       const sorted = sortTasksByUrgency(openTasks)
       const weeklyDue = sorted.filter((task) => isTaskDueThisWeek(task))
-      const overdueFirst = sorted.filter((task) => (getTaskDueInDays(task) ?? 1) < 0)
+      const overdueFirst = sorted.filter(
+        (task) => (getTaskDueInDays(task) ?? 1) < 0
+      )
       const dueFocused = [...overdueFirst, ...weeklyDue]
       setItems((dueFocused.length > 0 ? dueFocused : sorted).slice(0, 6))
     }
@@ -133,7 +135,9 @@ const NeedsAttention = () => {
               </Typography>
             </Box>
             <TodoDueChip item={item} />
-            {!item.dueDate && getItemAge(item) > 0 && <TodoAgeChip item={item} />}
+            {!item.dueDate && getItemAge(item) > 0 && (
+              <TodoAgeChip item={item} />
+            )}
           </Box>
         ))}
       </Stack>
