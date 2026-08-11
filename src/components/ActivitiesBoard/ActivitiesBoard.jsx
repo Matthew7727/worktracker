@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+} from '@mui/material'
 import {
   Add,
   Delete,
@@ -43,6 +50,9 @@ import AddClientProjectDialog from './components/AddClientProjectDialog'
 import ConfirmDialog from './components/ConfirmDialog'
 import StreamTag from './components/StreamTag'
 import { filterTabStyles } from './ActivitiesBoard.styles'
+import TodoAgeChip from '../shared/TodoAgeChip'
+import TodoDueChip from '../shared/TodoDueChip'
+import { sortTasksByUrgency } from '../../utils/taskUrgency'
 
 // Keep just-completed todos visible briefly so users can catch and undo mistakes.
 const COMPLETED_TODO_GRACE_MS = 5000
@@ -189,6 +199,99 @@ const ActivityGrid = ({ children }) => (
     {children}
   </Box>
 )
+
+const MainGoalUrgentCard = ({ stream, projects, onOpenProject }) => {
+  const openTasks = sortTasksByUrgency(
+    projects.flatMap((project) =>
+      (project.tasks || [])
+        .filter((task) => !task.completed)
+        .map((task) => ({
+          ...task,
+          projectId: project.id,
+          projectTitle: project.title,
+        }))
+    )
+  ).slice(0, 3)
+
+  if (openTasks.length === 0) return null
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2.5,
+        borderRadius: '18px',
+        border: '1.5px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+        mb: 2,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1.5,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box>
+          <Typography sx={{ fontSize: '1.05rem', fontWeight: 800 }}>
+            {stream?.name || 'Main goal'} urgent todos
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Due date first, then longest-open work.
+          </Typography>
+        </Box>
+        <StreamTag stream={stream} label={stream?.abbrev || 'MG'} />
+      </Box>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        {openTasks.map((task) => (
+          <Box
+            key={task.id}
+            onClick={() => onOpenProject(task.projectId)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              cursor: 'pointer',
+              borderRadius: '12px',
+              px: 0.5,
+              py: 0.75,
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: task.important ? 800 : 600,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {task.text}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', display: 'block' }}
+              >
+                {task.projectTitle}
+              </Typography>
+            </Box>
+            <TodoDueChip item={task} />
+            {!task.dueDate && <TodoAgeChip item={task} />}
+          </Box>
+        ))}
+      </Box>
+    </Paper>
+  )
+}
 
 const CompletedActivityRow = ({
   activity,
@@ -545,6 +648,20 @@ const ActivitiesBoard = () => {
               data.clientProjects.length === 1 ? 'project' : 'projects'
             }
             subtitle="Dated engagements with a start, an end, and a status."
+          />
+          <MainGoalUrgentCard
+            stream={
+              mainFocusStream && {
+                ...mainFocusStream,
+                abbrev: getStreamAbbrev(mainFocusStream),
+              }
+            }
+            projects={data.clientProjects.filter(
+              (project) => project.status === 'active'
+            )}
+            onOpenProject={(projectId) =>
+              navigate(`/todos/project/${projectId}`)
+            }
           />
           <ClientProjectsList
             projects={data.clientProjects}
