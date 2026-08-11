@@ -7,6 +7,7 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Checkbox,
 } from '@mui/material'
 import {
   Add,
@@ -200,7 +201,12 @@ const ActivityGrid = ({ children }) => (
   </Box>
 )
 
-const MainGoalUrgentCard = ({ stream, projects, onOpenProject }) => {
+const MainGoalUrgentCard = ({
+  stream,
+  projects,
+  onOpenProject,
+  onToggleProjectTask,
+}) => {
   const openTasks = sortTasksByUrgency(
     projects.flatMap((project) =>
       (project.tasks || [])
@@ -284,6 +290,19 @@ const MainGoalUrgentCard = ({ stream, projects, onOpenProject }) => {
                 {task.projectTitle}
               </Typography>
             </Box>
+            {onToggleProjectTask && (
+              <Checkbox
+                size="small"
+                checked={task.completed}
+                onClick={(event) => event.stopPropagation()}
+                onChange={() => onToggleProjectTask(task.projectId, task.id)}
+                sx={{
+                  p: 0.5,
+                  color: 'text.secondary',
+                  '&.Mui-checked': { color: 'primary.main' },
+                }}
+              />
+            )}
             <TodoDueChip item={task} />
             {!task.dueDate && <TodoAgeChip item={task} />}
           </Box>
@@ -541,6 +560,33 @@ const ActivitiesBoard = () => {
     })
   }
 
+  const updateClientProjectTasks = (projectId, updateFn) => {
+    save({
+      ...data,
+      clientProjects: data.clientProjects.map((project) =>
+        project.id === projectId
+          ? { ...project, tasks: updateFn(project.tasks || []) }
+          : project
+      ),
+    })
+  }
+
+  const handleToggleClientProjectTask = (projectId, taskId) => {
+    updateClientProjectTasks(projectId, (tasks) =>
+      tasks.map((task) => {
+        if (task.id !== taskId) return task
+        const nextCompleted = !task.completed
+        return {
+          ...task,
+          completed: nextCompleted,
+          completedAt: nextCompleted
+            ? new Date().toISOString().split('T')[0]
+            : null,
+        }
+      })
+    )
+  }
+
   const handleRenameClientProject = (projectId, newTitle) => {
     save({
       ...data,
@@ -662,6 +708,7 @@ const ActivitiesBoard = () => {
             onOpenProject={(projectId) =>
               navigate(`/todos/project/${projectId}`)
             }
+            onToggleProjectTask={handleToggleClientProjectTask}
           />
           <ClientProjectsList
             projects={data.clientProjects}

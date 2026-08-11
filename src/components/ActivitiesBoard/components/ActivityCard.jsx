@@ -28,7 +28,7 @@ import { sortTasksByUrgency } from '../../../utils/taskUrgency'
 
 // Cards show, detail manages: at most this many open todos per card.
 const MAX_VISIBLE_TODOS = 3
-const DETAIL_NAVIGATION_DELAY_MS = 180
+const DETAIL_NAVIGATION_DELAY_MS = 320
 
 const EMPTY_CONFIRM = {
   open: false,
@@ -154,6 +154,7 @@ const ActivityCard = ({
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={() => setAnchorEl(null)}
+          disableRestoreFocus
         >
           <MenuItem
             onClick={() => {
