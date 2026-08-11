@@ -10,6 +10,7 @@ import {
 } from '@mui/material'
 import {
   Add,
+  CalendarToday,
   Delete,
   ChevronRight,
   ExpandMore,
@@ -17,7 +18,9 @@ import {
   StarBorder,
 } from '@mui/icons-material'
 import TodoAgeChip from '../../shared/TodoAgeChip'
+import TodoDueChip from '../../shared/TodoDueChip'
 import GhostAddRow from './GhostAddRow'
+import { sortTasksByUrgency } from '../../../utils/taskUrgency'
 
 const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
   const [text, setText] = useState('')
@@ -75,11 +78,13 @@ const TaskRow = ({
   onToggle,
   onDelete,
   onToggleImportant,
+  onSetDueDate,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
 }) => {
   const [expanded, setExpanded] = useState(false)
+  const [editingDueDate, setEditingDueDate] = useState(false)
   const subtasks = task.subtasks || []
   const visibleSubtasks = hideCompleted
     ? subtasks.filter((s) => !s.completed || recentlyCompletedIds?.has?.(s.id))
@@ -133,6 +138,7 @@ const TaskRow = ({
         >
           {task.text}
         </Typography>
+        {!task.completed && <TodoDueChip item={task} />}
         {subtasks.length > 0 && (
           <Typography
             variant="caption"
@@ -148,6 +154,23 @@ const TaskRow = ({
           </Typography>
         )}
         {!task.completed && <TodoAgeChip item={task} />}
+        {!readOnly && !task.completed && (
+          <Tooltip
+            title={task.dueDate ? 'Change due date' : 'Add due date'}
+            placement="top"
+          >
+            <IconButton
+              size="small"
+              onClick={() => setEditingDueDate((open) => !open)}
+              sx={{
+                p: 0.25,
+                color: task.dueDate ? 'text.primary' : 'text.disabled',
+              }}
+            >
+              <CalendarToday sx={{ fontSize: '0.85rem' }} />
+            </IconButton>
+          </Tooltip>
+        )}
         {!readOnly && (
           <Tooltip
             title={task.important ? 'Unpin' : 'Mark as important'}
@@ -201,6 +224,20 @@ const TaskRow = ({
           )}
         </IconButton>
       </Box>
+
+      {editingDueDate && !readOnly && !task.completed && (
+        <Box sx={{ pl: 4.5, pr: 0.5, pb: 1 }}>
+          <TextField
+            size="small"
+            type="date"
+            label="Due date"
+            value={task.dueDate || ''}
+            onChange={(e) => onSetDueDate?.(e.target.value || null)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ minWidth: 190 }}
+          />
+        </Box>
+      )}
 
       {expanded && (
         <Box sx={{ pl: 4.5, pr: 0.5, pb: 1 }}>
@@ -269,11 +306,10 @@ const TaskRow = ({
 }
 
 const sortTasks = (tasks) =>
-  [...tasks].sort((a, b) => {
-    if (a.completed !== b.completed) return a.completed ? 1 : -1
-    if (a.important !== b.important) return a.important ? -1 : 1
-    return 0
-  })
+  [
+    ...sortTasksByUrgency(tasks.filter((task) => !task.completed)),
+    ...tasks.filter((task) => task.completed),
+  ]
 
 const TaskList = ({
   tasks,
@@ -288,6 +324,7 @@ const TaskList = ({
   onToggleTask,
   onDeleteTask,
   onToggleTaskImportant,
+  onSetTaskDueDate,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -319,6 +356,7 @@ const TaskList = ({
       onToggle={() => onToggleTask?.(task.id)}
       onDelete={() => onDeleteTask?.(task.id)}
       onToggleImportant={() => onToggleTaskImportant?.(task.id)}
+      onSetDueDate={(date) => onSetTaskDueDate?.(task.id, date)}
       onAddSubtask={(text) => onAddSubtask?.(task.id, text)}
       onToggleSubtask={(subtaskId) => onToggleSubtask?.(task.id, subtaskId)}
       onDeleteSubtask={(subtaskId) => onDeleteSubtask?.(task.id, subtaskId)}

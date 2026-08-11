@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import {
   Box,
   Paper,
@@ -23,9 +23,12 @@ import StreamTag from './StreamTag'
 import ProgressStrip from './ProgressStrip'
 import GhostAddRow from './GhostAddRow'
 import TodoAgeChip from '../../shared/TodoAgeChip'
+import TodoDueChip from '../../shared/TodoDueChip'
+import { sortTasksByUrgency } from '../../../utils/taskUrgency'
 
 // Cards show, detail manages: at most this many open todos per card.
 const MAX_VISIBLE_TODOS = 3
+const DETAIL_NAVIGATION_DELAY_MS = 180
 
 const EMPTY_CONFIRM = {
   open: false,
@@ -52,6 +55,7 @@ const ActivityCard = ({
   const [isRenaming, setIsRenaming] = useState(false)
   const [renameText, setRenameText] = useState(activity.title)
   const [confirm, setConfirm] = useState(EMPTY_CONFIRM)
+  const clickTimerRef = useRef(null)
   const openConfirm = (options) =>
     setConfirm({ ...EMPTY_CONFIRM, ...options, open: true })
   const closeConfirm = () => setConfirm(EMPTY_CONFIRM)
@@ -62,12 +66,9 @@ const ActivityCard = ({
 
   // Open todos, starred first; just-completed stay visible during the grace
   // period so a mis-click can be undone in place.
-  const openTasks = tasks
-    .filter((t) => !t.completed || recentlyCompletedIds?.has?.(t.id))
-    .sort((a, b) => {
-      if (a.important !== b.important) return a.important ? -1 : 1
-      return 0
-    })
+  const openTasks = sortTasksByUrgency(
+    tasks.filter((t) => !t.completed || recentlyCompletedIds?.has?.(t.id))
+  )
   const visibleTasks = openTasks.slice(0, MAX_VISIBLE_TODOS)
   const hiddenCount = openTasks.length - visibleTasks.length
 
@@ -78,6 +79,15 @@ const ActivityCard = ({
       setRenameText(activity.title)
     }
     setIsRenaming(false)
+  }
+
+  const openDetailsWithClickDelay = () => {
+    if (!onOpenDetails || isRenaming) return
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+    clickTimerRef.current = setTimeout(() => {
+      onOpenDetails()
+      clickTimerRef.current = null
+    }, DETAIL_NAVIGATION_DELAY_MS)
   }
 
   return (
@@ -206,7 +216,12 @@ const ActivityCard = ({
         />
       ) : (
         <Typography
-          onClick={onOpenDetails}
+          onDoubleClick={() => {
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+            setIsRenaming(true)
+            setRenameText(activity.title)
+          }}
+          onClick={openDetailsWithClickDelay}
           sx={{
             fontSize: '1.05rem',
             fontWeight: 800,
@@ -255,6 +270,7 @@ const ActivityCard = ({
               )}
               <Typography
                 variant="body2"
+                onClick={onOpenDetails}
                 sx={{
                   flex: 1,
                   fontWeight: task.completed ? 400 : task.important ? 800 : 600,
@@ -263,10 +279,12 @@ const ActivityCard = ({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  cursor: onOpenDetails ? 'pointer' : 'default',
                 }}
               >
                 {task.text}
               </Typography>
+              {!task.completed && <TodoDueChip item={task} />}
               {!task.completed && <TodoAgeChip item={task} />}
             </Box>
           ))}
