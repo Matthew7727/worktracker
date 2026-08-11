@@ -291,6 +291,10 @@ const ActivityDetailsPage = () => {
           t.id === taskId ? { ...t, important: !t.important } : t
         )
       ),
+    onSetTaskDueDate: (taskId, dueDate) =>
+      updateTasks((tasks) =>
+        tasks.map((t) => (t.id === taskId ? { ...t, dueDate } : t))
+      ),
     onAddSubtask: (taskId, text) =>
       updateTasks((tasks) =>
         tasks.map((t) =>
@@ -555,6 +559,9 @@ const ActivityDetailsPage = () => {
               }
               onToggleTaskImportant={
                 itemReadOnly ? undefined : taskHandlers.onToggleTaskImportant
+              }
+              onSetTaskDueDate={
+                itemReadOnly ? undefined : taskHandlers.onSetTaskDueDate
               }
               onAddSubtask={
                 itemReadOnly ? undefined : taskHandlers.onAddSubtask

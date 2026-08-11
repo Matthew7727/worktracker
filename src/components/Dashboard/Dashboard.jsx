@@ -174,6 +174,7 @@ const Dashboard = () => {
                 taskTotals={taskTotals}
                 wellbeing={wellbeing}
               />
+              <NeedsAttention />
               <VitalSigns tiles={tiles} />
             </>
           )}
@@ -196,9 +197,6 @@ const Dashboard = () => {
             <SectionDivider />
           </>
         )}
-
-        {/* ── Needs Attention (important + ageing todos) ── */}
-        <NeedsAttention />
 
         {/* ── Task Throughput (NEW) ── */}
         {!loading && hasTasks && (

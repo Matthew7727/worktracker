@@ -129,6 +129,7 @@ export const createTask = (text) => ({
   completed: false,
   important: false,
   createdAt: new Date().toISOString().split('T')[0],
+  dueDate: null,
   completedAt: null,
   subtasks: [],
 })
