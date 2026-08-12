@@ -36,8 +36,11 @@ jobs:
           echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Ensure tag exists for this RC
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.ver.outputs.tag }}"
+          SHA=$(git rev-parse HEAD)
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -47,12 +50,22 @@ jobs:
             npm version "${{ steps.ver.outputs.version }}" --no-git-tag-version
             git add package.json package-lock.json
             git commit -m "chore: bump version to ${{ steps.ver.outputs.version }}"
-            git push --force-with-lease origin HEAD:${{ github.head_ref }}
+            SHA=$(git rev-parse HEAD)
+            gh api -X PATCH "repos/${{ github.repository }}/git/refs/heads/${{ github.head_ref }}" \
+              -f sha="$SHA" \
+              -F force=true
           fi
 
-          # Force-push the tag so it tracks the latest commit on the PR branch
-          git tag -f "$TAG"
-          git push -f origin "$TAG"
+          # Force-update the tag so it tracks the latest commit on the PR branch
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${{ github.repository }}/git/refs/tags/$TAG" \
+              -f sha="$SHA" \
+              -F force=true
+          else
+            gh api -X POST "repos/${{ github.repository }}/git/refs" \
+              -f ref="refs/tags/$TAG" \
+              -f sha="$SHA"
+          fi
 
   build:
     needs: prepare

@@ -37,12 +37,22 @@ jobs:
             npm version "$VERSION" --no-git-tag-version
             git add package.json package-lock.json
             git commit -m "chore: bump version to ${VERSION}"
-            git push origin HEAD:main
+            gh api -X PATCH "repos/${{ github.repository }}/git/refs/heads/main" \
+              -f sha="$(git rev-parse HEAD)" \
+              -F force=true
           fi
 
           # Move tag to the HEAD of main
-          git tag -f "$TAG"
-          git push -f origin "$TAG"
+          SHA=$(git rev-parse HEAD)
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${{ github.repository }}/git/refs/tags/$TAG" \
+              -f sha="$SHA" \
+              -F force=true
+          else
+            gh api -X POST "repos/${{ github.repository }}/git/refs" \
+              -f ref="refs/tags/$TAG" \
+              -f sha="$SHA"
+          fi
 
           # Promote the pre-release to a full published release marked as latest
           RELEASE_ID=$(gh api "repos/${{ github.repository }}/releases" \
