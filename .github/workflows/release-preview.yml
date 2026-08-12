@@ -6,25 +6,69 @@ on:
       - main
     types: [opened, synchronize, reopened]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-  pull-requests: write
-
 concurrency:
   group: release-preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  build-preview:
+  prepare:
     if: startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN || github.token }}
 
-      - name: Setup Node
+      - name: Extract version
+        id: ver
+        run: |
+          VERSION=${GITHUB_HEAD_REF#release/}
+          VERSION="${VERSION#v}"
+          VERSION="${VERSION#V}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure tag exists for this RC
+        run: |
+          TAG="${{ steps.ver.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Update package.json if needed
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" != "${{ steps.ver.outputs.version }}" ]; then
+            npm version "${{ steps.ver.outputs.version }}" --no-git-tag-version
+            git add package.json package-lock.json
+            git commit -m "chore: bump version to ${{ steps.ver.outputs.version }}"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
+          # Force-push the tag so it tracks the latest commit on the PR branch
+          git tag -f "$TAG"
+          git push -f origin "$TAG"
+
+  build:
+    needs: prepare
+    if: startsWith(github.head_ref, 'release/')
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -33,36 +77,56 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build preview
-        run: npm run build
+      - name: Build and upload (macOS)
+        if: matrix.os == 'macos-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npx vite build && npx electron-builder --publish always
 
-      - name: Upload preview artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
+      - name: Build and upload (Windows)
+        if: matrix.os == 'windows-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx vite build && npx electron-builder --publish always
 
-  deploy-preview:
-    if: startsWith(github.head_ref, 'release/')
-    needs: build-preview
+  publish-prerelease:
+    needs: [prepare, build]
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish as pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.prepare.outputs.tag }}"
+          RELEASE_ID=$(gh api "repos/${{ github.repository }}/releases" \
+            --jq "[.[] | select(.tag_name == \"$TAG\")][0].id")
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "No release found for $TAG"
+            exit 1
+          fi
+          gh api -X PATCH "repos/${{ github.repository }}/releases/$RELEASE_ID" \
+            -F draft=false \
+            -F prerelease=true \
+            -F make_latest=false
+          echo "Published pre-release for $TAG"
 
-      - name: Comment preview URL
+      - name: Comment on PR
         uses: actions/github-script@v7
         with:
           script: |
-            const body = `✅ Release preview is live: ${process.env.PREVIEW_URL}`
+            const tag = '${{ needs.prepare.outputs.tag }}'
+            const url = `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}`
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body
+              body: `🚀 Pre-release builds ready: [${tag}](${url})`
             })
-        env:
-          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}
