@@ -2,7 +2,7 @@
   "name": "work-tracker",
   "productName": "Work Tracker",
   "private": true,
-  "version": "1.8.6",
+  "version": "1.8.7",
   "description": "A minimalist daily work tracking application.",
   "author": "Matt H",
   "repository": {
