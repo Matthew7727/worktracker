@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  tag:
+  promote:
     if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     permissions:
@@ -19,30 +19,40 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
 
-      - name: Bump package.json version and push tag
-        shell: bash
+      - name: Extract version and promote release
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           VERSION=${GITHUB_HEAD_REF#release/}
-          # Strip leading V or v prefix so both release/V1.5.0 and release/1.5.0 work
           VERSION="${VERSION#v}"
           VERSION="${VERSION#V}"
           TAG="v${VERSION}"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+          # Ensure package.json is at the right version on main
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" != "$VERSION" ]; then
             npm version "$VERSION" --no-git-tag-version
             git add package.json package-lock.json
             git commit -m "chore: bump version to ${VERSION}"
             git push origin HEAD:main
-          else
-            echo "package.json already at ${VERSION}, skipping bump commit"
           fi
 
-          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "$TAG"; then
-            echo "Tag ${TAG} already exists, skipping"
-          else
-            git tag "$TAG"
-            git push origin "$TAG"
+          # Move tag to the HEAD of main
+          git tag -f "$TAG"
+          git push -f origin "$TAG"
+
+          # Promote the pre-release to a full published release marked as latest
+          RELEASE_ID=$(gh api "repos/${{ github.repository }}/releases" \
+            --jq "[.[] | select(.tag_name == \"$TAG\")][0].id")
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "No release found for $TAG — nothing to promote"
+            exit 1
           fi
+          gh api -X PATCH "repos/${{ github.repository }}/releases/$RELEASE_ID" \
+            -F draft=false \
+            -F prerelease=false \
+            -F make_latest=true
+          echo "Promoted $TAG to latest release"
