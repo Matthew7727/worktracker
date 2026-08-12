@@ -103,11 +103,12 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           # This workflow only runs for release/* branches within this same
           # repository (never for untrusted forks), so it's safe to force
-          # electron-builder to publish even though GITHUB_BASE_REF makes it
-          # think this is a fork pull request build. Without this,
-          # electron-builder silently skips publishing and the
-          # publish-prerelease job below can never find a release to publish.
+          # electron-builder to publish and sign even though GITHUB_BASE_REF
+          # makes it think this is a fork pull request build. Without these,
+          # electron-builder silently skips publishing and code signing, and
+          # the publish-prerelease job below can never find a release to publish.
           PUBLISH_FOR_PULL_REQUEST: 'true'
+          CSC_FOR_PULL_REQUEST: 'true'
         run: npx vite build && npx electron-builder --publish always
 
       - name: Build and upload (Windows)
