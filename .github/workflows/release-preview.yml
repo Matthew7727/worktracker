@@ -50,10 +50,11 @@ jobs:
             npm version "${{ steps.ver.outputs.version }}" --no-git-tag-version
             git add package.json package-lock.json
             git commit -m "chore: bump version to ${{ steps.ver.outputs.version }}"
+            # Push the commit itself so the object exists on GitHub before
+            # any ref manipulation is attempted (the API refuses to move a
+            # ref to a SHA that hasn't been pushed yet).
+            git push origin "HEAD:refs/heads/${{ github.head_ref }}"
             SHA=$(git rev-parse HEAD)
-            gh api -X PATCH "repos/${{ github.repository }}/git/refs/heads/${{ github.head_ref }}" \
-              -f sha="$SHA" \
-              -F force=true
           fi
 
           # Force-update the tag so it tracks the latest commit on the PR branch
