@@ -101,12 +101,21 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # This workflow only runs for release/* branches within this same
+          # repository (never for untrusted forks), so it's safe to force
+          # electron-builder to publish even though GITHUB_BASE_REF makes it
+          # think this is a fork pull request build. Without this,
+          # electron-builder silently skips publishing and the
+          # publish-prerelease job below can never find a release to publish.
+          PUBLISH_FOR_PULL_REQUEST: 'true'
         run: npx vite build && npx electron-builder --publish always
 
       - name: Build and upload (Windows)
         if: matrix.os == 'windows-latest'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # See comment above (macOS step) for why this is required and safe.
+          PUBLISH_FOR_PULL_REQUEST: 'true'
         run: npx vite build && npx electron-builder --publish always
 
   publish-prerelease:
