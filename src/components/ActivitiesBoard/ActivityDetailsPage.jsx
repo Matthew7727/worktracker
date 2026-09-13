@@ -30,6 +30,7 @@ import {
   deleteNote,
   createNote,
   getNotesForActivity,
+  getNotesForProject,
 } from '../../utils/notesManager'
 import TaskList from './components/TaskList'
 import StreamTag from './components/StreamTag'
@@ -375,7 +376,9 @@ const ActivityDetailsPage = () => {
 
   // ── Linked notes ─────────────────────────────────────────────────────
 
-  const linkedNotes = getNotesForActivity(notes, itemId)
+  const linkedNotes = isProject
+    ? getNotesForProject(notes, itemId)
+    : getNotesForActivity(notes, itemId)
 
   const openNewNote = () => {
     setNoteEditorTarget('new')
@@ -394,8 +397,10 @@ const ActivityDetailsPage = () => {
     const updated = {
       ...base,
       ...fields,
-      activityId: itemId,
-      activityTitle: item?.title || null,
+      activityId: isProject ? null : itemId,
+      activityTitle: isProject ? null : item?.title || null,
+      projectId: isProject ? itemId : null,
+      projectTitle: isProject ? item?.title || null : null,
       updatedAt: new Date().toISOString(),
     }
     await saveNote(selectedDirectory, updated, editingNote?.filePath)
@@ -670,75 +675,77 @@ const ActivityDetailsPage = () => {
             />
           </Panel>
 
-          {!isProject && (
-            <Panel label="Notes">
-              {linkedNotes.length > 0 ? (
-                <Stack spacing={1.5} sx={{ mb: 1.5 }}>
-                  {linkedNotes.map((note) =>
-                    noteEditorTarget &&
-                    noteEditorTarget !== 'new' &&
-                    noteEditorTarget.id === note.id ? (
-                      <NoteEditorInline
-                        key={note.id}
-                        note={note}
-                        activities={data.activities}
-                        streamById={streamById}
-                        lockActivityId={itemId}
-                        onSave={handleSaveNote}
-                        onDelete={handleDeleteNote}
-                        onClose={closeNoteEditor}
-                      />
-                    ) : (
-                      <NoteCard
-                        key={note.id}
-                        note={note}
-                        onOpen={() => openExistingNote(note)}
-                      />
-                    )
-                  )}
-                </Stack>
-              ) : (
-                noteEditorTarget !== 'new' && (
-                  <Typography
-                    variant="body2"
-                    sx={{ color: 'text.secondary', mb: 1.5 }}
-                  >
-                    No notes linked yet.
-                  </Typography>
-                )
-              )}
-              {noteEditorTarget === 'new' && (
-                <Box sx={{ mb: 1.5 }}>
-                  <NoteEditorInline
-                    note={null}
-                    activities={data.activities}
-                    streamById={streamById}
-                    lockActivityId={itemId}
-                    onSave={handleSaveNote}
-                    onClose={closeNoteEditor}
-                  />
-                </Box>
-              )}
-              {noteEditorTarget === null && (
-                <Button
-                  onClick={openNewNote}
-                  startIcon={<Add sx={{ fontSize: '1rem' }} />}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    color: 'text.secondary',
-                    pl: 0,
-                    '&:hover': {
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                    },
-                  }}
+          <Panel label="Notes">
+            {linkedNotes.length > 0 ? (
+              <Stack spacing={1.5} sx={{ mb: 1.5 }}>
+                {linkedNotes.map((note) =>
+                  noteEditorTarget &&
+                  noteEditorTarget !== 'new' &&
+                  noteEditorTarget.id === note.id ? (
+                    <NoteEditorInline
+                      key={note.id}
+                      note={note}
+                      activities={data.activities}
+                      projects={data.clientProjects}
+                      streamById={streamById}
+                      lockActivityId={isProject ? null : itemId}
+                      lockProjectId={isProject ? itemId : null}
+                      onSave={handleSaveNote}
+                      onDelete={handleDeleteNote}
+                      onClose={closeNoteEditor}
+                    />
+                  ) : (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      onOpen={() => openExistingNote(note)}
+                    />
+                  )
+                )}
+              </Stack>
+            ) : (
+              noteEditorTarget !== 'new' && (
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mb: 1.5 }}
                 >
-                  Add note
-                </Button>
-              )}
-            </Panel>
-          )}
+                  No notes linked yet.
+                </Typography>
+              )
+            )}
+            {noteEditorTarget === 'new' && (
+              <Box sx={{ mb: 1.5 }}>
+                <NoteEditorInline
+                  note={null}
+                  activities={data.activities}
+                  projects={data.clientProjects}
+                  streamById={streamById}
+                  lockActivityId={isProject ? null : itemId}
+                  lockProjectId={isProject ? itemId : null}
+                  onSave={handleSaveNote}
+                  onClose={closeNoteEditor}
+                />
+              </Box>
+            )}
+            {noteEditorTarget === null && (
+              <Button
+                onClick={openNewNote}
+                startIcon={<Add sx={{ fontSize: '1rem' }} />}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  color: 'text.secondary',
+                  pl: 0,
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    color: 'text.primary',
+                  },
+                }}
+              >
+                Add note
+              </Button>
+            )}
+          </Panel>
 
           <Panel label="Team">
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
