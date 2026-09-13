@@ -1,25 +1,27 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import { RULE, FONT } from '../../../styles/tokens'
 
+// One reading on the panel: the figure set in the data face, the thing it
+// measures underneath it.
 const Tile = ({ value, label, sub, valueColor, subColor }) => (
   <Box
     sx={{
-      border: '3px solid',
-      borderColor: 'text.primary',
-      borderRadius: '14px',
       bgcolor: 'background.paper',
       p: 2.5,
       display: 'flex',
       flexDirection: 'column',
       gap: 0.5,
+      minWidth: 0,
     }}
   >
     <Typography
       sx={{
-        fontFamily: '"JetBrains Mono", monospace',
+        fontFamily: FONT.data,
         fontWeight: 700,
-        fontSize: 34,
+        fontSize: 40,
         lineHeight: 1,
+        letterSpacing: '-0.04em',
         color: valueColor || 'text.primary',
       }}
     >
@@ -28,10 +30,9 @@ const Tile = ({ value, label, sub, valueColor, subColor }) => (
     <Typography
       sx={{
         fontWeight: 700,
-        textTransform: 'uppercase',
-        fontSize: 11,
-        letterSpacing: '0.06em',
-        opacity: 0.6,
+        fontSize: 13,
+        letterSpacing: '-0.01em',
+        color: 'text.secondary',
         mt: 0.5,
       }}
     >
@@ -40,7 +41,8 @@ const Tile = ({ value, label, sub, valueColor, subColor }) => (
     {sub && (
       <Typography
         sx={{
-          fontWeight: 700,
+          fontFamily: FONT.data,
+          fontWeight: 400,
           fontSize: 12,
           color: subColor || 'text.secondary',
         }}
@@ -62,7 +64,10 @@ const VitalSigns = ({ tiles }) => {
     <Box
       sx={{
         display: 'grid',
-        gap: 2,
+        gap: `${RULE.base}px`,
+        bgcolor: 'text.primary',
+        border: `${RULE.base}px solid`,
+        borderColor: 'text.primary',
         gridTemplateColumns: {
           xs: 'repeat(2, 1fr)',
           sm: 'repeat(auto-fit, minmax(150px, 1fr))',

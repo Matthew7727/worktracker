@@ -2,16 +2,20 @@ import React from 'react'
 import { Box, Typography, Stack, LinearProgress, Skeleton } from '@mui/material'
 import WeeklyChart from '../WeeklyChart'
 import { useAppContext } from '../../../context/AppContext'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const StreamBar = ({ label, value, total, color }) => {
   const percentage = total > 0 ? (value / total) * 100 : 0
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 900 }}>
+        <Typography variant="body2" sx={{ fontWeight: 800 }}>
           {label}
         </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 900 }}>
+        <Typography
+          variant="body2"
+          sx={{ fontFamily: FONT.data, fontWeight: 800 }}
+        >
           {Math.round(percentage)}%
         </Typography>
       </Stack>
@@ -20,11 +24,10 @@ const StreamBar = ({ label, value, total, color }) => {
         value={percentage}
         sx={{
           height: 12,
-          borderRadius: 6,
-          border: '2px solid',
+          border: `${RULE.hair}px solid`,
           borderColor: 'text.primary',
           bgcolor: 'background.paper',
-          '& .MuiLinearProgress-bar': { bgcolor: color },
+          '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 0 },
         }}
       />
       <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.6 }}>
@@ -35,10 +38,9 @@ const StreamBar = ({ label, value, total, color }) => {
 }
 
 const sectionLabel = {
-  fontWeight: 900,
+  fontWeight: 800,
   mb: 3,
-  textTransform: 'uppercase',
-  letterSpacing: 1,
+  letterSpacing: '-0.02em',
   opacity: 0.7,
 }
 
@@ -61,14 +63,14 @@ const StreamAlignment = ({ entries, stats, loading }) => {
       {/* Weekly Intensity */}
       <Box sx={{ flex: 2, width: '100%' }}>
         <Typography variant="h6" sx={sectionLabel}>
-          Weekly Intensity
+          Weekly intensity
         </Typography>
         <Box sx={{ minHeight: 250 }}>
           {loading ? (
             <Skeleton
               variant="rectangular"
               height={250}
-              sx={{ borderRadius: 4 }}
+              sx={{ borderRadius: 0 }}
             />
           ) : (
             <WeeklyChart entries={entries} streams={streams} />
@@ -79,14 +81,14 @@ const StreamAlignment = ({ entries, stats, loading }) => {
       {/* Stream Alignment */}
       <Box sx={{ flex: 1, width: '100%' }}>
         <Typography variant="h6" sx={sectionLabel}>
-          Stream Alignment
+          Stream alignment
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {loading ? (
             <Skeleton
               variant="rectangular"
               height={150}
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 0 }}
             />
           ) : totalMentions === 0 ? (
             <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>

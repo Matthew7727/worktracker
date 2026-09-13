@@ -25,6 +25,7 @@ import GhostAddRow from './GhostAddRow'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
 import { sortTasksByUrgency } from '../../../utils/taskUrgency'
+import { RULE } from '../../../styles/tokens'
 
 // Cards show, detail manages: at most this many open todos per card.
 const MAX_VISIBLE_TODOS = 3
@@ -95,13 +96,11 @@ const ActivityCard = ({
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: '18px',
-        border: '1.5px solid',
+        border: `${RULE.base}px solid`,
         borderColor: 'divider',
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,
-        transition: 'border-color 0.15s',
         '&:hover': { borderColor: 'text.secondary' },
         '&:hover .card-kebab': { opacity: 1 },
         '&:hover .card-drag-handle': { opacity: 1 },
@@ -127,7 +126,6 @@ const ActivityCard = ({
                 cursor: 'grab',
                 color: 'text.secondary',
                 opacity: 0,
-                transition: 'opacity 0.15s',
                 touchAction: 'none',
                 '&:focus-visible': { opacity: 1 },
               }}
@@ -144,7 +142,6 @@ const ActivityCard = ({
           sx={{
             p: 0.25,
             opacity: 0,
-            transition: 'opacity 0.15s',
             '&:focus-visible': { opacity: 1 },
           }}
         >
@@ -313,7 +310,7 @@ const ActivityCard = ({
         label="Add todo"
         onAdd={onAddTask}
         sx={{
-          borderTop: '1px dashed',
+          borderTop: `${RULE.hair}px dashed`,
           borderColor: 'divider',
           pt: 1,
           mt: 'auto',

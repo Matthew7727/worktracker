@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Typography, LinearProgress } from '@mui/material'
 import { Lock } from '@mui/icons-material'
+import { FONT, RULE } from '../../../styles/tokens'
 
 /**
  * Placeholder for widgets that unlock as the workspace grows.
@@ -17,14 +18,13 @@ const LockedTile = ({ title, requirement, current, target }) => {
         flexDirection: 'column',
         alignItems: 'center',
         gap: 1.5,
-        border: '2px dashed',
+        border: `${RULE.hair}px dashed`,
         borderColor: 'divider',
-        borderRadius: 3,
         opacity: 0.8,
       }}
     >
       <Lock sx={{ fontSize: 28, opacity: 0.4 }} />
-      <Typography variant="body1" sx={{ fontWeight: 900, opacity: 0.7 }}>
+      <Typography variant="body1" sx={{ fontWeight: 800, opacity: 0.7 }}>
         {title}
       </Typography>
       <Typography
@@ -39,10 +39,10 @@ const LockedTile = ({ title, requirement, current, target }) => {
           value={progress}
           sx={{
             height: 10,
-            borderRadius: 5,
-            border: '2px solid',
+            border: `${RULE.hair}px solid`,
             borderColor: 'text.primary',
             bgcolor: 'background.paper',
+            '& .MuiLinearProgress-bar': { borderRadius: 0 },
           }}
         />
         <Typography
@@ -51,6 +51,7 @@ const LockedTile = ({ title, requirement, current, target }) => {
             display: 'block',
             textAlign: 'center',
             mt: 0.5,
+            fontFamily: FONT.data,
             fontWeight: 800,
             opacity: 0.6,
           }}

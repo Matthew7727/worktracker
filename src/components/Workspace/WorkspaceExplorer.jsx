@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Box, Paper, Typography, Button, Fade } from '@mui/material'
+import { Box, Paper, Typography, Fade } from '@mui/material'
 import { useAppContext } from '../../context/AppContext'
 import DirectoryTree from './components/DirectoryTree'
 import EntryViewer from './components/EntryViewer'
+import { hardShadow, OFFSET, RULE } from '../../styles/tokens'
 
 const WorkspaceExplorer = () => {
   const { selectedDirectory, setProjectDirectory } = useAppContext()
@@ -30,8 +31,7 @@ const WorkspaceExplorer = () => {
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 950,
-            textTransform: 'uppercase',
+            fontWeight: 800,
             letterSpacing: '-0.02em',
           }}
         >
@@ -46,47 +46,27 @@ const WorkspaceExplorer = () => {
             alignItems: 'center',
             gap: 0.75,
             mr: 1.5,
-            fontFamily: 'inherit',
             fontSize: '0.85rem',
-            fontWeight: 900,
+            fontWeight: 800,
             px: 2.5,
             py: 1,
-            borderRadius: '25px',
-            border: '3px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
             color: 'text.primary',
             bgcolor: 'background.paper',
             cursor: 'pointer',
-            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            position: 'relative',
-            overflow: 'hidden',
+            transition:
+              'transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease, color 0.12s ease',
             '&:hover': {
-              transform: 'scale(1.05)',
-              boxShadow: (theme) => `6px 6px 0px ${theme.palette.text.primary}`,
-              '& .shine-layer': {
-                opacity: 1,
-                transform: 'translateX(100%) skewX(-15deg)',
-              },
+              bgcolor: 'text.primary',
+              color: 'background.paper',
+              transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
             },
           }}
         >
           SWITCH WORKSPACE
-          <Box
-            className="shine-layer"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '200%',
-              height: '100%',
-              opacity: 0,
-              transition: 'all 0.8s ease',
-              background:
-                'linear-gradient(90deg, transparent, #80b621, #00d2ff, #eb8449, transparent)',
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-          />
         </Box>
       </Box>
 
@@ -104,13 +84,14 @@ const WorkspaceExplorer = () => {
         <Paper
           sx={{
             width: selectedEntry ? '35%' : '100%',
-            transition: 'width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            transition: 'width 0.2s ease',
             flexShrink: 0,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: 'none',
-            borderRadius: '24px',
+            border: `${RULE.base}px solid`,
+            borderColor: 'text.primary',
           }}
         >
           <DirectoryTree

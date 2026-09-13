@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeRaw from 'rehype-raw'
 import { resolveEntryStreamId } from '../../../utils/markdownParser'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
   const hasProjectEntries = projectEntries?.some((p) => p.content?.trim())
@@ -16,11 +17,10 @@ const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
         <Paper
           sx={{
             p: 6,
-            borderRadius: '40px',
-            border: '5px solid',
+            border: `${RULE.heavy}px solid`,
             borderColor: 'text.primary',
             boxShadow: (theme) =>
-              `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+              hardShadow(OFFSET.lift, theme.palette.text.primary),
             mb: 10,
           }}
         >
@@ -32,9 +32,9 @@ const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
           >
             <Typography
               variant="h2"
-              sx={{ fontWeight: 950, letterSpacing: '-2px' }}
+              sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
             >
-              JOURNAL SUMMARY
+              Journal summary
             </Typography>
             <Button
               variant="contained"
@@ -43,7 +43,7 @@ const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
               sx={{
                 bgcolor: 'text.primary',
                 color: 'background.paper',
-                fontWeight: 900,
+                fontWeight: 800,
                 px: 4,
                 '&:hover': { bgcolor: '#333' },
               }}
@@ -67,24 +67,24 @@ const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
                     <Typography
                       variant="h5"
                       sx={{
-                        fontWeight: 950,
+                        fontWeight: 800,
+                        letterSpacing: '-0.03em',
                         color: typeColor,
                         mb: 2,
-                        letterSpacing: '1px',
                       }}
                     >
-                      {stream.name.toUpperCase()}
+                      {stream.name}
                     </Typography>
                     <Stack spacing={3}>
                       {entries.map((project) => (
                         <Box key={project.title}>
                           <Typography
                             sx={{
-                              fontWeight: 900,
+                              fontWeight: 800,
                               fontSize: '1rem',
                               mb: 1,
                               pl: 3,
-                              borderLeft: `4px solid`,
+                              borderLeft: `${RULE.hair}px solid`,
                               borderColor: typeColor,
                             }}
                           >
@@ -120,14 +120,19 @@ const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
                 <Box key={stream.id}>
                   <Typography
                     variant="h4"
-                    sx={{ fontWeight: 950, color: stream.color, mb: 2 }}
+                    sx={{
+                      fontWeight: 800,
+                      letterSpacing: '-0.03em',
+                      color: stream.color,
+                      mb: 2,
+                    }}
                   >
-                    {stream.name.toUpperCase()}
+                    {stream.name}
                   </Typography>
                   <Box
                     sx={{
                       pl: 4,
-                      borderLeft: `4px solid ${stream.color}22`,
+                      borderLeft: `${RULE.hair}px solid ${stream.color}`,
                       fontSize: '1.25rem',
                       lineHeight: 1.6,
                       color: 'text.secondary',

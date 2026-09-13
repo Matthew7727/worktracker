@@ -12,7 +12,7 @@ const StartView = ({ onStart }) => (
       mt: 4,
     }}
   >
-    <Typography variant="h3" sx={{ fontWeight: 900 }}>
+    <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}>
       Ready to log your achievements?
     </Typography>
     <Box component="button" onClick={onStart} sx={flowStyles.startButton}>

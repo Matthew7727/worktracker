@@ -24,6 +24,7 @@ import TagInsights from './components/TagInsights'
 import Collaborators from './components/Collaborators'
 import Wellbeing from './components/Wellbeing'
 import LockedTile from './components/LockedTile'
+import { RULE } from '../../styles/tokens'
 
 // The dashboard grows with the workspace: widgets unlock as more days are
 // logged, so a fresh workspace stays simple and a mature one gets richer.
@@ -33,22 +34,13 @@ const UNLOCKS = {
 }
 
 const SectionLabel = ({ children }) => (
-  <Typography
-    variant="h6"
-    sx={{
-      fontWeight: 900,
-      mb: 3,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      opacity: 0.7,
-    }}
-  >
+  <Typography variant="h5" sx={{ mb: 3 }}>
     {children}
   </Typography>
 )
 
 const SectionDivider = () => (
-  <Divider sx={{ borderBottomWidth: 3, borderColor: 'text.primary' }} />
+  <Divider sx={{ borderBottomWidth: RULE.base, borderColor: 'text.primary' }} />
 )
 
 const Dashboard = () => {
@@ -148,7 +140,7 @@ const Dashboard = () => {
           flexDirection: 'column',
           gap: 6,
           pb: 10,
-          maxWidth: 1000,
+          maxWidth: 1040,
           mx: 'auto',
           width: '100%',
           pt: 4,
@@ -157,11 +149,7 @@ const Dashboard = () => {
         {/* ── Hero + vital signs ── */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {loading ? (
-            <Skeleton
-              variant="rectangular"
-              height={160}
-              sx={{ borderRadius: '24px' }}
-            />
+            <Skeleton variant="rectangular" height={160} />
           ) : (
             <>
               <HeroStatement
@@ -276,11 +264,7 @@ const Dashboard = () => {
         <Box>
           <SectionLabel>The Journey</SectionLabel>
           {loading ? (
-            <Skeleton
-              variant="rectangular"
-              height={150}
-              sx={{ borderRadius: '24px' }}
-            />
+            <Skeleton variant="rectangular" height={150} />
           ) : journeyUnlocked ? (
             <ContributionGraph
               entries={allEntries}
@@ -301,11 +285,7 @@ const Dashboard = () => {
         {/* ── Recent Accomplishments ── */}
         <Box>
           {loading ? (
-            <Skeleton
-              variant="rectangular"
-              height={200}
-              sx={{ borderRadius: 2 }}
-            />
+            <Skeleton variant="rectangular" height={200} />
           ) : (
             <RecentAccomplishments projects={projects} />
           )}

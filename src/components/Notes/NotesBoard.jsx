@@ -13,14 +13,7 @@ import {
 } from '../../utils/notesManager'
 import NoteCard from './components/NoteCard'
 import NoteEditorInline from './components/NoteEditorInline'
-
-// Small deterministic "pin" tilt per note, so the board doesn't shuffle on
-// every re-render but still reads like a corkboard.
-const rotationFor = (id) => {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0
-  return ((hash % 5) - 2) * 0.6 // -1.2deg .. 1.2deg
-}
+import { hardShadow, OFFSET, RULE } from '../../styles/tokens'
 
 const NotesBoard = () => {
   const navigate = useNavigate()
@@ -107,7 +100,7 @@ const NotesBoard = () => {
           mb: 4,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 900 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800 }}>
           Notes
         </Typography>
         <Box
@@ -117,21 +110,23 @@ const NotesBoard = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.75,
-            fontFamily: 'inherit',
             fontSize: '0.85rem',
-            fontWeight: 900,
+            fontWeight: 800,
             px: 2.5,
             py: 1,
-            borderRadius: '25px',
-            border: '2px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
             color: 'text.primary',
             bgcolor: 'background.paper',
             cursor: 'pointer',
-            transition: 'all 0.15s ease',
+            transition:
+              'transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease, color 0.12s ease',
             '&:hover': {
-              boxShadow: '4px 4px 0px',
-              transform: 'translate(-1px, -1px)',
+              bgcolor: 'text.primary',
+              color: 'background.paper',
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
+              transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
             },
           }}
         >
@@ -155,9 +150,8 @@ const NotesBoard = () => {
           sx={{
             py: 6,
             textAlign: 'center',
-            border: '2px dashed',
-            borderColor: 'divider',
-            borderRadius: '20px',
+            border: `${RULE.base}px dashed`,
+            borderColor: 'text.primary',
             color: 'text.secondary',
           }}
         >
@@ -202,7 +196,6 @@ const NotesBoard = () => {
                 key={note.id}
                 note={note}
                 stream={streamForNote(note)}
-                rotation={rotationFor(note.id)}
                 onOpen={() => openExistingNote(note)}
                 onOpenActivity={(activityId) =>
                   navigate(`/todos/activity/${activityId}`)

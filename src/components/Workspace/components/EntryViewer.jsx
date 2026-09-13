@@ -4,6 +4,7 @@ import { Close } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const ACCENT = '#00d2ff'
 
@@ -22,14 +23,14 @@ const markdownComponents = {
   h1: ({ children }) => (
     <h1
       style={{
-        fontSize: '0.9rem',
-        fontWeight: 900,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        borderBottom: `2px solid ${getH1Color(children)}`,
+        fontSize: '1rem',
+        fontWeight: 800,
+        letterSpacing: '-0.01em',
+        borderBottom: `${RULE.hair}px solid ${getH1Color(children)}`,
         paddingBottom: '4px',
         marginTop: '20px',
         marginBottom: '10px',
+        lineHeight: 1.2,
       }}
     >
       {children}
@@ -58,7 +59,8 @@ const EntryViewer = ({ entry, onClose }) => {
         display: 'flex',
         flexDirection: 'column',
         boxShadow: 'none',
-        borderRadius: '24px',
+        border: `${RULE.base}px solid`,
+        borderColor: 'text.primary',
         overflow: 'hidden',
       }}
     >
@@ -67,8 +69,8 @@ const EntryViewer = ({ entry, onClose }) => {
         sx={{
           px: 2.5,
           py: 1.25,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderBottom: `${RULE.hair}px solid`,
+          borderColor: 'text.primary',
           flexShrink: 0,
         }}
       >
@@ -76,10 +78,9 @@ const EntryViewer = ({ entry, onClose }) => {
           <Typography
             sx={{
               fontSize: '0.65rem',
-              fontWeight: 800,
-              letterSpacing: '0.08em',
+              fontWeight: 700,
               color: 'text.secondary',
-              fontFamily: '"JetBrains Mono", monospace',
+              fontFamily: FONT.data,
               flex: 1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -123,10 +124,9 @@ const EntryViewer = ({ entry, onClose }) => {
                     fontWeight: 800,
                     fontSize: '0.6rem',
                     height: 18,
-                    border: '1.5px solid',
+                    border: `${RULE.hair}px solid`,
                     borderColor: color,
-                    borderRadius: 0,
-                    bgcolor: `${color}22`,
+                    bgcolor: 'transparent',
                     color: color,
                     '& .MuiChip-label': { px: '6px' },
                   }}
@@ -147,9 +147,13 @@ const EntryViewer = ({ entry, onClose }) => {
           '&::-webkit-scrollbar': { width: 4 },
           '&::-webkit-scrollbar-thumb': { bgcolor: ACCENT },
           // Markdown typography
+          '& h1, & h2, & h3, & p, & ul, & ol, & blockquote': {
+            maxWidth: '68ch',
+          },
           '& h2': {
             fontSize: '0.82rem',
             fontWeight: 800,
+            letterSpacing: '-0.01em',
             marginTop: '14px',
             marginBottom: '6px',
           },
@@ -161,25 +165,26 @@ const EntryViewer = ({ entry, onClose }) => {
           },
           '& p': {
             fontSize: '0.82rem',
-            lineHeight: 1.75,
+            lineHeight: 1.6,
+            fontWeight: 400,
             marginBottom: '10px',
           },
           '& ul, & ol': { paddingLeft: '20px', marginBottom: '10px' },
-          '& li': { fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '2px' },
+          '& li': { fontSize: '0.82rem', lineHeight: 1.6, marginBottom: '2px' },
           '& strong': { fontWeight: 800 },
           '& em': { fontStyle: 'italic' },
           '& code': {
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: FONT.data,
             fontSize: '0.72rem',
             bgcolor: 'action.hover',
             px: '4px',
             py: '1px',
-            border: '1px solid',
+            border: `${RULE.hair}px solid`,
             borderColor: 'divider',
           },
           '& pre': {
             bgcolor: 'action.hover',
-            border: '2px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
             p: '12px',
             overflowX: 'auto',
@@ -187,14 +192,14 @@ const EntryViewer = ({ entry, onClose }) => {
             '& code': { border: 'none', bgcolor: 'transparent', p: 0 },
           },
           '& blockquote': {
-            borderLeft: `3px solid ${ACCENT}`,
+            borderLeft: `${RULE.base}px solid ${ACCENT}`,
             paddingLeft: '12px',
             marginLeft: 0,
             color: 'text.secondary',
           },
           '& hr': {
             border: 'none',
-            borderTop: '2px solid',
+            borderTop: `${RULE.hair}px solid`,
             borderColor: 'text.primary',
             my: '16px',
           },

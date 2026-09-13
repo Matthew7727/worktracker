@@ -8,16 +8,17 @@ import {
 } from '@mui/material'
 import { SystemUpdateAlt } from '@mui/icons-material'
 import { useUpdate } from '../../context/UpdateContext'
+import { RULE, OFFSET, hardShadow, SIGNAL } from '../../styles/tokens'
 
 const actionButtonSx = {
-  fontWeight: 900,
+  fontWeight: 800,
   backgroundImage: 'none',
-  border: '2px solid',
+  border: `${RULE.hair}px solid`,
   borderColor: 'text.primary',
-  boxShadow: (theme) => `3px 3px 0px ${theme.palette.text.primary}`,
+  boxShadow: (theme) => hardShadow(OFFSET.base, theme.palette.text.primary),
   '&:hover': {
-    boxShadow: (theme) => `1px 1px 0px ${theme.palette.text.primary}`,
-    transform: 'translate(2px, 2px)',
+    boxShadow: (theme) => hardShadow(OFFSET.press, theme.palette.text.primary),
+    transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
   },
 }
 
@@ -53,15 +54,15 @@ const UpdateSnackbar = () => {
           p: 3,
           minWidth: 320,
           maxWidth: 420,
-          borderRadius: '20px',
-          border: '3px solid',
+          border: `${RULE.base}px solid`,
           borderColor: 'text.primary',
-          boxShadow: (theme) => `6px 6px 0px ${theme.palette.text.primary}`,
+          boxShadow: (theme) =>
+            hardShadow(OFFSET.lift, theme.palette.text.primary),
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
           <SystemUpdateAlt />
-          <Typography sx={{ fontWeight: 900 }}>
+          <Typography sx={{ fontWeight: 800 }}>
             {status === 'available' && `${version} is available`}
             {status === 'downloading' &&
               `Downloading ${version}… ${Math.floor(progress?.percent || 0)}%`}
@@ -75,18 +76,17 @@ const UpdateSnackbar = () => {
             value={progress?.percent || 0}
             sx={{
               height: 12,
-              borderRadius: 6,
-              border: '2px solid',
+              border: `${RULE.hair}px solid`,
               borderColor: 'text.primary',
               bgcolor: 'background.paper',
-              '& .MuiLinearProgress-bar': { bgcolor: '#4caf50' },
+              '& .MuiLinearProgress-bar': { bgcolor: SIGNAL.go },
             }}
           />
         ) : (
           <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button
               onClick={dismiss}
-              sx={{ fontWeight: 900, color: 'text.primary' }}
+              sx={{ fontWeight: 800, color: 'text.primary' }}
             >
               LATER
             </Button>
@@ -113,11 +113,11 @@ const UpdateSnackbar = () => {
                 onClick={installUpdate}
                 sx={{
                   ...actionButtonSx,
-                  bgcolor: '#4caf50',
+                  bgcolor: SIGNAL.go,
                   color: '#fff',
                   '&:hover': {
                     ...actionButtonSx['&:hover'],
-                    bgcolor: '#388e3c',
+                    bgcolor: SIGNAL.goDark,
                   },
                 }}
               >

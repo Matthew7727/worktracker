@@ -54,6 +54,7 @@ import { filterTabStyles } from './ActivitiesBoard.styles'
 import TodoAgeChip from '../shared/TodoAgeChip'
 import TodoDueChip from '../shared/TodoDueChip'
 import { sortTasksByUrgency } from '../../utils/taskUrgency'
+import { FONT, OFFSET, RULE, hardShadow } from '../../styles/tokens'
 
 // Keep just-completed todos visible briefly so users can catch and undo mistakes.
 const COMPLETED_TODO_GRACE_MS = 5000
@@ -63,19 +64,20 @@ const COMPLETED_TODO_GRACE_MS = 5000
 const SectionHeader = ({ title, count, countLabel, subtitle }) => (
   <Box sx={{ mb: 2.5 }}>
     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
-      <Typography variant="h5" sx={{ fontWeight: 900 }}>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}
+      >
         {title}
       </Typography>
       {count !== undefined && (
         <Typography
           component="span"
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: FONT.data,
             fontSize: '0.68rem',
             fontWeight: 600,
-            letterSpacing: '0.08em',
             color: 'text.secondary',
-            textTransform: 'uppercase',
           }}
         >
           {count} {countLabel}
@@ -111,21 +113,19 @@ const NewButton = ({ onAddProject, onAddActivity, showProjects }) => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: 0.75,
-          fontFamily: 'inherit',
           fontSize: '0.85rem',
-          fontWeight: 900,
+          fontWeight: 800,
           px: 2.5,
           py: 1,
-          borderRadius: '25px',
-          border: '2px solid',
+          border: `${RULE.base}px solid`,
           borderColor: 'text.primary',
           color: 'text.primary',
           bgcolor: 'background.paper',
           cursor: 'pointer',
-          transition: 'all 0.15s ease',
           '&:hover': {
-            boxShadow: '4px 4px 0px',
-            transform: 'translate(-1px, -1px)',
+            boxShadow: (theme) =>
+              hardShadow(OFFSET.base, theme.palette.text.primary),
+            transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
           },
         }}
       >
@@ -226,8 +226,7 @@ const MainGoalUrgentCard = ({
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: '18px',
-        border: '1.5px solid',
+        border: `${RULE.base}px solid`,
         borderColor: 'divider',
         display: 'flex',
         flexDirection: 'column',
@@ -265,7 +264,6 @@ const MainGoalUrgentCard = ({
               alignItems: 'center',
               gap: 0.75,
               cursor: 'pointer',
-              borderRadius: '12px',
               px: 0.5,
               py: 0.75,
               '&:hover': { bgcolor: 'action.hover' },
@@ -328,7 +326,7 @@ const CompletedActivityRow = ({
         gap: 1.5,
         py: 1,
         px: 0.75,
-        borderBottom: '1px solid',
+        borderBottom: `${RULE.hair}px solid`,
         borderColor: 'divider',
         '&:last-of-type': { borderBottom: 'none' },
         '&:hover .row-delete': { opacity: 1 },
@@ -357,7 +355,7 @@ const CompletedActivityRow = ({
       {activity.completedAt && (
         <Typography
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: FONT.data,
             fontSize: '0.66rem',
             color: 'text.disabled',
             fontVariantNumeric: 'tabular-nums',
@@ -370,7 +368,7 @@ const CompletedActivityRow = ({
         size="small"
         className="row-delete"
         onClick={() => setConfirmOpen(true)}
-        sx={{ opacity: 0, transition: 'opacity 0.15s', p: 0.25 }}
+        sx={{ opacity: 0, p: 0.25 }}
       >
         <Delete sx={{ fontSize: '0.9rem' }} />
       </IconButton>
@@ -674,7 +672,10 @@ const ActivitiesBoard = () => {
           mb: 4,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 900 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 800, letterSpacing: '-0.03em' }}
+        >
           Projects & Activities
         </Typography>
         <NewButton
@@ -760,9 +761,8 @@ const ActivitiesBoard = () => {
             sx={{
               py: 6,
               textAlign: 'center',
-              border: '2px dashed',
+              border: `${RULE.base}px dashed`,
               borderColor: 'divider',
-              borderRadius: '20px',
               color: 'text.secondary',
             }}
           >
@@ -844,7 +844,7 @@ const ActivitiesBoard = () => {
                               gap: 1.5,
                               pl: 2,
                               ml: 1,
-                              borderLeft: '2px solid',
+                              borderLeft: `${RULE.hair}px solid`,
                               borderColor: 'divider',
                             }}
                           >
@@ -889,10 +889,8 @@ const ActivitiesBoard = () => {
                     background: 'none',
                     p: 0.5,
                     mb: 0.5,
-                    fontFamily: 'inherit',
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
                     fontWeight: 800,
-                    letterSpacing: '0.1em',
                     color: 'text.secondary',
                     cursor: 'pointer',
                   }}
@@ -902,11 +900,11 @@ const ActivitiesBoard = () => {
                   ) : (
                     <ChevronRight sx={{ fontSize: '0.9rem' }} />
                   )}
-                  COMPLETED
+                  Completed
                   <Typography
                     component="span"
                     sx={{
-                      fontFamily: '"JetBrains Mono", monospace',
+                      fontFamily: FONT.data,
                       fontSize: '0.66rem',
                       color: 'text.disabled',
                     }}

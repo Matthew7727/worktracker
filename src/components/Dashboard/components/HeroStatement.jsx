@@ -3,15 +3,23 @@ import { Box, Typography } from '@mui/material'
 import { useAppContext } from '../../../context/AppContext'
 import { getActivityStreamId } from '../../../utils/projectsManager'
 import { getGreeting } from '../../../utils/dashboardInsights'
+import { RULE } from '../../../styles/tokens'
 
+// Emphasis is stamped, not tinted: the phrase sits in a solid block of the
+// stream's colour so the headline reads as a printed record.
 const B = ({ children, color }) => (
-  <Typography
+  <Box
     component="span"
-    variant="h3"
-    sx={{ fontWeight: 900, color: color || 'text.primary' }}
+    sx={{
+      bgcolor: color || 'primary.main',
+      color: '#000',
+      px: '0.15em',
+      boxDecorationBreak: 'clone',
+      WebkitBoxDecorationBreak: 'clone',
+    }}
   >
     {children}
-  </Typography>
+  </Box>
 )
 
 const joinNodes = (nodes) =>
@@ -259,15 +267,29 @@ const HeroStatement = ({
   }
 
   const spotlight = pool.length > 0 ? pool[seed % pool.length] : null
-  const hStyle = { fontWeight: 800, lineHeight: 1.4, color: 'text.primary' }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Typography variant="h3" sx={hStyle}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Typography
+        variant="h2"
+        sx={{ lineHeight: 1.06, color: 'text.primary', maxWidth: '22ch' }}
+      >
         {anchor}
       </Typography>
+      {/* The spotlight is an annotation on the headline, so it hangs off a
+          rule rather than competing at the same size. */}
       {spotlight && (
-        <Typography variant="h3" sx={hStyle}>
+        <Typography
+          sx={{
+            fontSize: '1.15rem',
+            fontWeight: 500,
+            lineHeight: 1.5,
+            maxWidth: '62ch',
+            pl: 2.5,
+            borderLeft: `${RULE.heavy}px solid`,
+            borderColor: 'text.primary',
+          }}
+        >
           {spotlight}
         </Typography>
       )}

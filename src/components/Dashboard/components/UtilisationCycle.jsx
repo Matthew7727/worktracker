@@ -1,18 +1,17 @@
 import React from 'react'
 import { Box, Typography, Stack } from '@mui/material'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const cardSx = {
-  border: '3px solid',
+  border: `${RULE.base}px solid`,
   borderColor: 'text.primary',
-  borderRadius: '24px',
   bgcolor: 'background.paper',
   p: 3,
 }
 
 const label = {
-  fontWeight: 900,
-  textTransform: 'uppercase',
-  letterSpacing: 1,
+  fontWeight: 800,
+  letterSpacing: '-0.02em',
   opacity: 0.7,
   fontSize: 12,
 }
@@ -50,10 +49,12 @@ const UtilisationCycle = ({
         alignItems="baseline"
         sx={{ mb: 1.5 }}
       >
-        <Typography sx={{ fontWeight: 900, fontSize: 17 }}>
+        <Typography
+          sx={{ fontWeight: 800, fontSize: 17, letterSpacing: '-0.02em' }}
+        >
           Fiscal cycle · Jun {cycleYear} → May {cycleYear + 1}
         </Typography>
-        <Typography sx={{ ...label, opacity: 0.5 }}>
+        <Typography sx={{ ...label, fontFamily: FONT.data, opacity: 0.5 }}>
           week {weekNumber} of {totalWeeks}
         </Typography>
       </Stack>
@@ -70,13 +71,19 @@ const UtilisationCycle = ({
               Predicted{' '}
               <Box
                 component="span"
-                sx={{ color: 'text.primary', fontWeight: 900 }}
+                sx={{
+                  color: 'text.primary',
+                  fontFamily: FONT.data,
+                  fontWeight: 800,
+                }}
               >
                 {utilisationPrediction}%
               </Box>{' '}
               · Target {utilisationTarget}%
             </Typography>
-            <Typography sx={{ fontWeight: 900, color: diffColor }}>
+            <Typography
+              sx={{ fontFamily: FONT.data, fontWeight: 800, color: diffColor }}
+            >
               {diff >= 0 ? `▲ +${diff}% ahead` : `▼ ${Math.abs(diff)}% behind`}
             </Typography>
           </Stack>
@@ -84,8 +91,7 @@ const UtilisationCycle = ({
             sx={{
               position: 'relative',
               height: 20,
-              borderRadius: 2,
-              border: '2px solid',
+              border: `${RULE.hair}px solid`,
               borderColor: 'text.primary',
               bgcolor: 'background.subtle',
               overflow: 'hidden',
@@ -105,7 +111,7 @@ const UtilisationCycle = ({
                 top: -3,
                 bottom: -3,
                 left: `${Math.min(100, utilisationTarget)}%`,
-                width: 3,
+                width: RULE.base,
                 bgcolor: 'text.primary',
               }}
             />
@@ -150,9 +156,10 @@ const UtilisationCycle = ({
                       : full
                         ? '#80b621'
                         : '#aedd4d',
-                    border: empty ? '2px dashed' : '2px solid',
+                    border: empty
+                      ? `${RULE.hair}px dashed`
+                      : `${RULE.hair}px solid`,
                     borderColor: empty ? 'divider' : 'text.primary',
-                    borderRadius: '6px 6px 0 0',
                   }}
                 />
               )

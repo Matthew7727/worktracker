@@ -44,6 +44,7 @@ import {
   toolbarBtnStyles,
 } from '../DailyEditor.styles'
 import { injectMarkdown } from '../../../utils/markdownHelpers'
+import { RULE } from '../../../styles/tokens'
 
 const EntryCard = ({
   entry,
@@ -110,6 +111,7 @@ const EntryCard = ({
     <Paper
       sx={{
         ...cardStyles,
+        borderWidth: isStreamMode ? `${RULE.heavy}px` : `${RULE.base}px`,
         borderColor:
           borderColor || (entry.isNew ? 'primary.main' : 'text.primary'),
       }}
@@ -129,10 +131,10 @@ const EntryCard = ({
                 icon={<AccessTime sx={{ fontSize: '1.2rem !important' }} />}
                 label={entry.time}
                 sx={{
-                  bgcolor: 'rgba(128, 182, 33, 0.15)',
+                  bgcolor: 'background.paper',
                   color: 'primary.main',
-                  border: '1px solid currentColor',
-                  fontWeight: 900,
+                  border: `${RULE.hair}px solid currentColor`,
+                  fontWeight: 800,
                   fontSize: '1rem',
                 }}
               />
@@ -159,14 +161,15 @@ const EntryCard = ({
                     height: '32px',
                     fontSize: '0.85rem',
                     fontWeight: 800,
-                    borderRadius: '8px',
-                    bgcolor: 'rgba(0,0,0,0.03)',
+                    border: `${RULE.hair}px solid`,
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
                     '& fieldset': {
                       border: 'none',
                       borderColor: 'transparent',
                     },
-                    '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.1)' },
-                    '&.Mui-focused fieldset': { borderColor: 'primary.main' },
+                    '&:hover': { borderColor: 'text.primary' },
+                    '&.Mui-focused': { borderColor: 'primary.main' },
                   },
                 }}
                 sx={{ width: '130px' }}
@@ -183,9 +186,9 @@ const EntryCard = ({
                   color="secondary"
                   variant="outlined"
                   sx={{
-                    borderWidth: '2px',
-                    fontWeight: 900,
-                    '&:hover': { borderWidth: '2px' },
+                    borderWidth: `${RULE.hair}px`,
+                    fontWeight: 800,
+                    '&:hover': { borderWidth: `${RULE.hair}px` },
                   }}
                 />
               ))}
@@ -197,7 +200,7 @@ const EntryCard = ({
                 onClick={() => setIsEditing(true)}
                 aria-label="Edit contribution"
                 sx={{
-                  border: '2px solid',
+                  border: `${RULE.hair}px solid`,
                   borderColor: 'text.primary',
                   '&:hover': {
                     bgcolor: 'primary.main',
@@ -211,7 +214,7 @@ const EntryCard = ({
             <IconButton
               onClick={() => onDelete(entry)}
               sx={{
-                border: '2px solid',
+                border: `${RULE.hair}px solid`,
                 borderColor: 'text.primary',
                 color: 'error.main',
                 '&:hover': { bgcolor: 'error.main', color: 'background.paper' },
@@ -278,9 +281,9 @@ const EntryCard = ({
           </Tooltip>
           <Box
             sx={{
-              width: '2px',
+              width: `${RULE.hair}px`,
               height: '20px',
-              bgcolor: 'rgba(0,0,0,0.1)',
+              bgcolor: 'divider',
               mx: 0.5,
             }}
           />
@@ -313,9 +316,9 @@ const EntryCard = ({
           </Tooltip>
           <Box
             sx={{
-              width: '2px',
+              width: `${RULE.hair}px`,
               height: '20px',
-              bgcolor: 'rgba(0,0,0,0.1)',
+              bgcolor: 'divider',
               mx: 0.5,
             }}
           />

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { Box } from '@mui/material'
+import { RULE, OFFSET, hardShadow } from '../../styles/tokens'
 
 const flowStyles = {
   container: {
@@ -10,46 +11,37 @@ const flowStyles = {
     height: '100vh',
     width: '100vw',
     m: 0,
-    p: 0,
+    p: `${OFFSET.press}px`,
     bgcolor: 'transparent',
     overflow: 'hidden',
   },
   startButton: {
-    fontFamily: 'inherit',
-    fontSize: '1.5rem',
-    fontWeight: 950,
-    px: 4,
-    py: 2,
-    borderRadius: '25px',
-    border: '4px solid',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: `calc(100vw - ${OFFSET.lift}px)`,
+    height: `calc(100vh - ${OFFSET.lift}px)`,
+    appearance: 'none',
+    fontSize: '1.25rem',
+    fontWeight: 800,
+    letterSpacing: '-0.03em',
+    px: 3,
+    py: 1.5,
+    borderRadius: 0,
+    border: `${RULE.base}px solid`,
     borderColor: 'text.primary',
-    color: 'text.primary',
-    bgcolor: 'background.paper',
+    color: 'background.paper',
+    bgcolor: 'text.primary',
+    boxShadow: (theme) => hardShadow(OFFSET.press, theme.palette.primary.main),
     cursor: 'pointer',
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-    position: 'relative',
-    overflow: 'hidden',
+    transition:
+      'background-color 120ms linear, color 120ms linear, box-shadow 120ms linear, transform 120ms linear',
     '&:hover': {
-      transform: 'scale(1.05)',
-      boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary}`,
-      '& .shine-layer': {
-        opacity: 1,
-        transform: 'translateX(100%) skewX(-15deg)',
-      },
+      color: 'text.primary',
+      bgcolor: 'background.paper',
+      boxShadow: (theme) => hardShadow(OFFSET.base, theme.palette.text.primary),
+      transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
     },
-  },
-  shineLayer: {
-    position: 'absolute',
-    top: 0,
-    left: '-100%',
-    width: '200%',
-    height: '100%',
-    opacity: 0,
-    transition: 'all 0.8s ease',
-    background:
-      'linear-gradient(90deg, transparent, #80b621, #00d2ff, #eb8449, transparent)',
-    pointerEvents: 'none',
-    zIndex: 1,
   },
 }
 
@@ -71,7 +63,6 @@ const TrayWidget = () => {
     <Box sx={flowStyles.container}>
       <Box component="button" onClick={handleClick} sx={flowStyles.startButton}>
         START FLOW
-        <Box className="shine-layer" sx={flowStyles.shineLayer} />
       </Box>
     </Box>
   )

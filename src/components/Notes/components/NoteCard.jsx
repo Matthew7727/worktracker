@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Paper, Typography } from '@mui/material'
 import { PushPin } from '@mui/icons-material'
-import StreamTag from '../../ActivitiesBoard/components/StreamTag'
+import { FONT, hardShadow, OFFSET, RULE } from '../../../styles/tokens'
 
 const formatDate = (isoStr) => {
   if (!isoStr) return ''
@@ -10,9 +10,42 @@ const formatDate = (isoStr) => {
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 }
 
-// A single "pinned" note on the board. Rotation alternates slightly so the
-// board reads like a real corkboard without undermining the app's look.
-const NoteCard = ({ note, stream, onOpen, onOpenActivity, rotation = 0 }) => (
+const StreamSignal = ({ stream, label }) => {
+  const color = stream?.color || '#9e9e9e'
+  const text = label || stream?.abbrev || '—'
+
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.75,
+        px: 1,
+        py: 0.25,
+        border: `${RULE.hair}px solid`,
+        borderColor: color,
+        color,
+        fontSize: '0.64rem',
+        fontWeight: 800,
+        flexShrink: 0,
+      }}
+    >
+      <Box
+        component="span"
+        sx={{
+          width: 7,
+          height: 7,
+          bgcolor: color,
+          flexShrink: 0,
+        }}
+      />
+      {text}
+    </Box>
+  )
+}
+
+const NoteCard = ({ note, stream, onOpen, onOpenActivity }) => (
   <Paper
     elevation={0}
     onClick={onOpen}
@@ -20,15 +53,17 @@ const NoteCard = ({ note, stream, onOpen, onOpenActivity, rotation = 0 }) => (
       p: 2.25,
       mb: 2,
       breakInside: 'avoid',
-      borderRadius: '16px',
-      border: '1.5px solid',
-      borderColor: 'divider',
+      border: `${RULE.base}px solid`,
+      borderColor: 'text.primary',
+      boxShadow: (theme) => hardShadow(OFFSET.base, theme.palette.text.primary),
       cursor: 'pointer',
-      transform: `rotate(${rotation}deg)`,
-      transition: 'border-color 0.15s, transform 0.15s',
+      transition:
+        'border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease',
       '&:hover': {
-        borderColor: 'text.secondary',
-        transform: `rotate(0deg)`,
+        borderColor: 'text.primary',
+        transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+        boxShadow: (theme) =>
+          hardShadow(OFFSET.lift, theme.palette.text.primary),
       },
     }}
   >
@@ -42,7 +77,7 @@ const NoteCard = ({ note, stream, onOpen, onOpenActivity, rotation = 0 }) => (
     >
       <PushPin sx={{ fontSize: '1rem', color: 'text.disabled' }} />
       {stream && (
-        <StreamTag stream={stream} label={stream.abbrev || stream.name} />
+        <StreamSignal stream={stream} label={stream.abbrev || stream.name} />
       )}
     </Box>
 
@@ -97,7 +132,7 @@ const NoteCard = ({ note, stream, onOpen, onOpenActivity, rotation = 0 }) => (
       )}
       <Typography
         sx={{
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: FONT.data,
           fontSize: '0.66rem',
           color: 'text.disabled',
         }}

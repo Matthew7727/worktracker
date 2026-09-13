@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
   const [title, setTitle] = useState('')
@@ -36,16 +37,17 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '24px',
-          border: '4px solid',
+          border: `${RULE.heavy}px solid`,
           borderColor: 'text.primary',
           boxShadow: (theme) =>
-            `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
+            hardShadow(OFFSET.hero, theme.palette.text.primary),
           p: 2,
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 900 }}>New Client Project</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+        New Client Project
+      </DialogTitle>
       <DialogContent>
         <TextField
           margin="dense"
@@ -71,7 +73,7 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
         <Button
           onClick={handleClose}
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             color: 'text.secondary',
             '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
           }}
@@ -83,26 +85,27 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
           variant="contained"
           disabled={!title.trim()}
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             px: 3,
             py: 1,
-            borderRadius: '16px',
             backgroundImage: 'none',
             bgcolor: 'background.paper',
             color: 'text.primary',
-            border: '3px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
-            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
+            boxShadow: (theme) =>
+              hardShadow(OFFSET.base, theme.palette.text.primary),
             '&:hover': {
               bgcolor: 'action.hover',
-              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
-              transform: 'translate(2px, 2px)',
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
+              transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
             },
             '&.Mui-disabled': {
               opacity: 0.5,
               boxShadow: 'none',
               transform: 'none',
-              border: '3px solid #ccc',
+              border: `${RULE.base}px solid #ccc`,
             },
           }}
         >

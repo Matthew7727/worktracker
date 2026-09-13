@@ -1,19 +1,19 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const Tile = ({ value, label, color }) => (
   <Box
     sx={{
-      border: '3px solid',
+      border: `${RULE.base}px solid`,
       borderColor: 'text.primary',
-      borderRadius: '14px',
       bgcolor: 'background.paper',
       p: 2.5,
     }}
   >
     <Typography
       sx={{
-        fontFamily: '"JetBrains Mono", monospace',
+        fontFamily: FONT.data,
         fontWeight: 700,
         fontSize: 34,
         lineHeight: 1,
@@ -24,10 +24,8 @@ const Tile = ({ value, label, color }) => (
     </Typography>
     <Typography
       sx={{
-        fontWeight: 700,
-        textTransform: 'uppercase',
+        fontWeight: 800,
         fontSize: 11,
-        letterSpacing: '0.06em',
         opacity: 0.6,
         mt: 1,
       }}

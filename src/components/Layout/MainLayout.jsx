@@ -26,7 +26,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 
 // Sub-components
 import Brand from './components/Brand'
-import FloatingPillNav from './components/FloatingPillNav'
+import NavRail from './components/NavRail'
 import FeedbackSystem from './components/FeedbackSystem'
 import { fabStyles, toolbarIconStyles } from './MainLayout.styles'
 
@@ -108,49 +108,28 @@ const MainLayout = ({ children }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div id="back-to-top-anchor" style={{ position: 'absolute', top: 0 }} />
 
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          height: '5rem',
-          display: 'flex',
-          alignItems: 'center',
-          px: '4rem',
-          pointerEvents: 'none',
-        }}
-      >
-        <Box sx={{ pointerEvents: 'auto' }}>
-          <Brand onClick={() => navigate('/')} />
-        </Box>
-        <Box sx={{ flexGrow: 1 }} />
-        <Tooltip
-          title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-          arrow
-        >
-          <IconButton
-            onClick={toggleTheme}
-            size="small"
-            sx={{ ...toolbarIconStyles, pointerEvents: 'auto', p: 1 }}
-          >
-            {mode === 'light' ? (
-              <DarkMode fontSize="small" />
-            ) : (
-              <LightMode fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      <FloatingPillNav
+      <NavRail
         items={navItems}
         currentPath={location.pathname}
         onNavigate={navigate}
         actions={actionItems}
         searchRootDir={selectedDirectory}
         onSearchResultClick={handleSearchResultClick}
+        brand={<Brand onClick={() => navigate('/')} />}
+        trailing={
+          <Tooltip
+            title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+            arrow
+          >
+            <IconButton
+              onClick={toggleTheme}
+              sx={toolbarIconStyles}
+              aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {mode === 'light' ? <DarkMode /> : <LightMode />}
+            </IconButton>
+          </Tooltip>
+        }
       />
 
       <Box
@@ -162,7 +141,7 @@ const MainLayout = ({ children }) => {
           bgcolor: 'background.default',
         }}
       >
-        <Box sx={{ py: 6, px: '4rem' }}>{children}</Box>
+        <Box sx={{ py: 6, px: { xs: 3, md: 6 } }}>{children}</Box>
       </Box>
 
       <ScrollTop>
@@ -172,9 +151,7 @@ const MainLayout = ({ children }) => {
           aria-label="scroll back to top"
           sx={fabStyles}
         >
-          <KeyboardArrowUpIcon
-            sx={{ fontSize: '2rem', color: 'background.paper' }}
-          />
+          <KeyboardArrowUpIcon sx={{ fontSize: '2rem', color: '#000' }} />
         </Fab>
       </ScrollTop>
 

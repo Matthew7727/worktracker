@@ -38,6 +38,7 @@ import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
+import { FONT, RULE } from '../../styles/tokens'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -83,7 +84,7 @@ const ProgressRing = ({ done, total, color }) => {
           fill="none"
           strokeWidth="7"
           style={{
-            stroke: 'var(--mui-palette-action-hover, rgba(0,0,0,0.06))',
+            stroke: 'var(--mui-palette-divider, #000000)',
           }}
         />
         <circle
@@ -93,7 +94,6 @@ const ProgressRing = ({ done, total, color }) => {
           fill="none"
           stroke={color}
           strokeWidth="7"
-          strokeLinecap="round"
           strokeDasharray={`${pct * circumference} ${circumference}`}
         />
       </svg>
@@ -104,7 +104,7 @@ const ProgressRing = ({ done, total, color }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: FONT.data,
           fontSize: '0.7rem',
           fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
@@ -121,18 +121,15 @@ const Panel = ({ label, children, sx = {} }) => (
     elevation={0}
     sx={{
       p: 2.5,
-      borderRadius: '18px',
-      border: '1.5px solid',
+      border: `${RULE.base}px solid`,
       borderColor: 'divider',
       ...sx,
     }}
   >
     <Typography
       sx={{
-        fontSize: '0.66rem',
+        fontSize: '0.72rem',
         fontWeight: 800,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
         color: 'text.secondary',
         mb: 1.5,
       }}
@@ -151,13 +148,16 @@ const StatusPill = ({ label, tone }) => (
       fontWeight: 800,
       px: 1.5,
       py: 0.4,
-      borderRadius: '999px',
       flexShrink: 0,
+      border: `${RULE.hair}px solid`,
       ...(tone === 'active'
-        ? { bgcolor: 'primary.main', color: '#fff' }
+        ? {
+            bgcolor: 'primary.main',
+            borderColor: 'primary.dark',
+            color: '#fff',
+          }
         : {
             bgcolor: 'transparent',
-            border: '1.5px solid',
             borderColor: 'divider',
             color: 'text.disabled',
           }),
@@ -442,13 +442,12 @@ const ActivityDetailsPage = () => {
           startIcon={<ArrowBack />}
           onClick={() => navigate('/todos')}
           sx={{
-            fontWeight: 900,
-            borderRadius: '999px',
-            borderWidth: '2px',
+            fontWeight: 800,
+            borderWidth: RULE.hair,
             borderColor: 'text.primary',
             color: 'text.primary',
             px: 2,
-            '&:hover': { borderWidth: '2px' },
+            '&:hover': { borderWidth: RULE.hair },
           }}
         >
           Back
@@ -491,7 +490,7 @@ const ActivityDetailsPage = () => {
           )}
           <Typography
             variant="h4"
-            sx={{ fontWeight: 900, letterSpacing: '-0.02em', mb: 0.75 }}
+            sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 0.75 }}
           >
             {item.title}
           </Typography>
@@ -500,11 +499,9 @@ const ActivityDetailsPage = () => {
               display: 'flex',
               gap: 2,
               flexWrap: 'wrap',
-              fontFamily: '"JetBrains Mono", monospace',
+              fontFamily: FONT.data,
               fontSize: '0.7rem',
               color: 'text.secondary',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
               fontVariantNumeric: 'tabular-nums',
             }}
           >
@@ -595,8 +592,7 @@ const ActivityDetailsPage = () => {
                         onClick={() => navigate(`/todos/activity/${child.id}`)}
                         sx={{
                           p: 1.5,
-                          borderRadius: '12px',
-                          border: '1px solid',
+                          border: `${RULE.base}px solid`,
                           borderColor: 'divider',
                           cursor: 'pointer',
                           '&:hover': { borderColor: 'text.secondary' },
@@ -751,6 +747,7 @@ const ActivityDetailsPage = () => {
                   }
                   avatar={
                     <Avatar
+                      variant="square"
                       sx={{
                         bgcolor: accentColor,
                         color: '#fff',
@@ -830,9 +827,10 @@ const ActivityDetailsPage = () => {
                   }
                   sx={{
                     fontWeight: 800,
-                    borderRadius: '12px',
                     bgcolor: 'primary.main',
                     color: '#fff',
+                    border: `${RULE.base}px solid`,
+                    borderColor: 'primary.dark',
                     py: 1.1,
                     '&:hover': { bgcolor: 'primary.dark' },
                   }}
@@ -845,7 +843,8 @@ const ActivityDetailsPage = () => {
                     sx={{
                       px: 1.5,
                       py: 1,
-                      borderRadius: '10px',
+                      border: `${RULE.hair}px solid`,
+                      borderColor: 'divider',
                       bgcolor: 'action.hover',
                       fontSize: '0.8rem',
                       fontWeight: 700,
@@ -863,8 +862,7 @@ const ActivityDetailsPage = () => {
                     onClick={reopen}
                     sx={{
                       fontWeight: 800,
-                      borderRadius: '12px',
-                      border: '1.5px solid',
+                      border: `${RULE.hair}px solid`,
                       borderColor: 'divider',
                       color: 'text.primary',
                       py: 1,

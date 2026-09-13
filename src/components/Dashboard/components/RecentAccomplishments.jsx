@@ -4,6 +4,7 @@ import { EmojiEvents } from '@mui/icons-material'
 import { useAppContext } from '../../../context/AppContext'
 import { getActivityStreamId } from '../../../utils/projectsManager'
 import { getStreamAbbrev } from '../../../utils/streamConfig'
+import { FONT, OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const RecentAccomplishments = ({ projects }) => {
   const { streamConfig, mainFocusStream } = useAppContext()
@@ -33,13 +34,12 @@ const RecentAccomplishments = ({ projects }) => {
         <Typography
           variant="body1"
           sx={{
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
             opacity: 0.7,
           }}
         >
-          Recent Accomplishments
+          Recent accomplishments
         </Typography>
       </Stack>
       {completed.length === 0 ? (
@@ -60,12 +60,11 @@ const RecentAccomplishments = ({ projects }) => {
                 key={item.id}
                 sx={{
                   p: 1.5,
-                  border: '2px solid',
+                  border: `${RULE.hair}px solid`,
                   borderColor: 'text.primary',
-                  borderRadius: 2,
                   boxShadow: (theme) =>
-                    `3px 3px 0px ${theme.palette.text.primary}`,
-                  borderLeft: `5px solid ${color}`,
+                    hardShadow(OFFSET.base, theme.palette.text.primary),
+                  borderLeft: `${RULE.heavy}px solid ${color}`,
                 }}
               >
                 <Stack
@@ -78,11 +77,12 @@ const RecentAccomplishments = ({ projects }) => {
                       label={label}
                       size="small"
                       sx={{
-                        fontWeight: 900,
+                        fontWeight: 800,
                         fontSize: '0.65rem',
                         bgcolor: color,
                         color: 'background.paper',
-                        border: '1.5px solid black',
+                        border: `${RULE.hair}px solid`,
+                        borderColor: 'text.primary',
                         height: 20,
                       }}
                     />
@@ -93,7 +93,11 @@ const RecentAccomplishments = ({ projects }) => {
                   {dateStr && (
                     <Typography
                       variant="caption"
-                      sx={{ fontWeight: 700, opacity: 0.5 }}
+                      sx={{
+                        fontFamily: FONT.data,
+                        fontWeight: 700,
+                        opacity: 0.5,
+                      }}
                     >
                       {dateStr}
                     </Typography>

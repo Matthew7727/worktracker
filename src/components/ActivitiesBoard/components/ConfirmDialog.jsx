@@ -25,7 +25,9 @@ const ConfirmDialog = ({
     maxWidth="xs"
     fullWidth
   >
-    <DialogTitle sx={{ fontWeight: 900 }}>{title}</DialogTitle>
+    <DialogTitle sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+      {title}
+    </DialogTitle>
     {message && (
       <DialogContent>
         <Typography variant="body2">{message}</Typography>

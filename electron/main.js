@@ -346,6 +346,9 @@ function createWidgetWindow() {
     frame: false,
     resizable: false,
     transparent: true,
+    // The widget is a hard-edged bar; opt out of the OS corner rounding that
+    // frameless windows get by default.
+    roundedCorners: false,
     alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

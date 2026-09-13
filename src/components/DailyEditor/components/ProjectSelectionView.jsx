@@ -11,6 +11,7 @@ import {
 import { ArrowForward, CheckCircle } from '@mui/icons-material'
 import { DAY_STATUSES } from '../constants'
 import { flowStyles } from '../DailyEditor.styles'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const ProjectSelectionView = ({
   dayStatus,
@@ -42,17 +43,24 @@ const ProjectSelectionView = ({
                   onClick={() => onStatusChange(status.id)}
                   sx={{
                     fontFamily: 'inherit',
-                    fontWeight: 900,
+                    fontWeight: 800,
                     fontSize: '1rem',
                     px: 3,
                     py: 1.5,
-                    border: '3px solid',
+                    border: `${isActive ? RULE.heavy : RULE.base}px solid`,
                     borderColor: 'text.primary',
-                    borderRadius: '14px',
                     cursor: 'pointer',
                     bgcolor: isActive ? status.color : 'transparent',
                     color: isActive ? 'text.primary' : 'text.secondary',
-                    transition: 'all 0.15s',
+                    transition:
+                      'transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease',
+                    '&:hover': {
+                      bgcolor: isActive ? status.color : 'text.primary',
+                      color: isActive ? 'text.primary' : 'background.paper',
+                      transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                      boxShadow: (theme) =>
+                        hardShadow(OFFSET.base, theme.palette.text.primary),
+                    },
                   }}
                 >
                   {status.label}
@@ -88,10 +96,11 @@ const ProjectSelectionView = ({
                       color="success"
                       sx={{
                         '& .MuiBadge-badge': {
-                          fontWeight: 900,
+                          fontWeight: 800,
                           fontSize: '0.65rem',
-                          border: '2px solid',
+                          border: `${RULE.hair}px solid`,
                           borderColor: 'background.default',
+                          borderRadius: 0,
                         },
                       }}
                     >
@@ -101,17 +110,25 @@ const ProjectSelectionView = ({
                         sx={{
                           fontWeight: 800,
                           fontSize: '0.85rem',
-                          border: '2px solid',
+                          border: `${
+                            isSelected ? RULE.heavy : RULE.hair
+                          }px solid`,
                           borderColor: 'text.primary',
                           borderRadius: 0,
                           bgcolor: isSelected ? project.color : 'transparent',
                           color: isSelected ? 'text.primary' : 'text.secondary',
                           cursor: 'pointer',
-                          transition: 'all 0.15s',
+                          transition:
+                            'transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease',
                           '&:hover': {
                             bgcolor: project.color,
                             color: 'text.primary',
-                            opacity: 0.85,
+                            transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                            boxShadow: (theme) =>
+                              hardShadow(
+                                OFFSET.base,
+                                theme.palette.text.primary
+                              ),
                           },
                           '& .MuiChip-label': { px: 1.5 },
                         }}

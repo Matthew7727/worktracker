@@ -3,6 +3,7 @@ import { Box, Paper, Typography, IconButton, TextField } from '@mui/material'
 import { Delete } from '@mui/icons-material'
 import ConfirmDialog from './ConfirmDialog'
 import ProgressStrip from './ProgressStrip'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const DETAIL_NAVIGATION_DELAY_MS = 180
 
@@ -32,24 +33,22 @@ const StatusPill = ({ isDone, onClick }) => (
     onClick={onClick}
     title={isDone ? 'Click to reopen' : 'Click to mark done'}
     sx={{
-      fontFamily: 'inherit',
       fontSize: '0.66rem',
       fontWeight: 800,
       px: 1.5,
       py: 0.4,
-      borderRadius: '999px',
       cursor: 'pointer',
       flexShrink: 0,
+      border: `${RULE.hair}px solid`,
       ...(isDone
         ? {
             bgcolor: 'transparent',
-            border: '1.5px solid',
             borderColor: 'divider',
             color: 'text.disabled',
           }
         : {
             bgcolor: 'primary.main',
-            border: '1.5px solid transparent',
+            borderColor: 'primary.dark',
             color: '#fff',
           }),
     }}
@@ -100,11 +99,9 @@ const ProjectCard = ({
         gap: 2,
         px: 2.5,
         py: 1.5,
-        borderRadius: '16px',
-        border: '1.5px solid',
+        border: `${RULE.base}px solid`,
         borderColor: 'divider',
         opacity: isDone ? 0.6 : 1,
-        transition: 'border-color 0.15s, opacity 0.2s',
         '&:hover': { borderColor: 'text.secondary' },
         '&:hover .row-delete': { opacity: 1 },
       }}
@@ -164,7 +161,7 @@ const ProjectCard = ({
 
       <Typography
         sx={{
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: FONT.data,
           fontSize: '0.68rem',
           color: 'text.secondary',
           fontVariantNumeric: 'tabular-nums',
@@ -180,7 +177,7 @@ const ProjectCard = ({
         size="small"
         className="row-delete"
         onClick={() => setConfirmOpen(true)}
-        sx={{ opacity: 0, transition: 'opacity 0.15s', flexShrink: 0, p: 0.25 }}
+        sx={{ opacity: 0, flexShrink: 0, p: 0.25 }}
       >
         <Delete fontSize="small" />
       </IconButton>
@@ -220,9 +217,8 @@ const ClientProjectsList = ({
           py: 2.5,
           px: 2,
           textAlign: 'center',
-          border: '2px dashed',
+          border: `${RULE.base}px dashed`,
           borderColor: 'divider',
-          borderRadius: '16px',
         }}
       >
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>

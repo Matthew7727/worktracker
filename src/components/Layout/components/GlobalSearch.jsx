@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material'
 import { searchDialogStyles, toolbarIconStyles } from '../MainLayout.styles'
+import { RULE, FONT } from '../../../styles/tokens'
 
 const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -94,17 +95,19 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
       >
         <DialogTitle
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             fontSize: '2rem',
+            letterSpacing: '-0.03em',
+            px: 0,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '2px solid',
+            borderBottom: `${RULE.base}px solid`,
             borderColor: 'text.primary',
             mb: 2,
           }}
         >
-          GLOBAL SEARCH
+          Search entries
           <IconButton
             onClick={() => setIsOpen(false)}
             aria-label="Close search"
@@ -112,11 +115,11 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ px: 0 }}>
           <TextField
             fullWidth
             autoFocus
-            placeholder="Type keywords to find logs..."
+            placeholder="Search every entry"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             variant="outlined"
@@ -124,10 +127,10 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
               mt: 2,
               '& .MuiOutlinedInput-root': {
                 fontSize: '1.5rem',
+                fontWeight: 600,
                 height: '4rem',
-                borderRadius: '16px',
                 '& fieldset': {
-                  borderWidth: '3px',
+                  borderWidth: RULE.base,
                   borderColor: 'text.primary !important',
                 },
               },
@@ -135,30 +138,29 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
           />
           <Box sx={{ mt: 5, maxHeight: '500px', overflowY: 'auto', pr: 2 }}>
             {isSearching ? (
-              <Typography sx={{ textAlign: 'center', p: 4, fontWeight: 800 }}>
-                SEARCHING...
-              </Typography>
+              <Typography sx={{ p: 4, fontWeight: 700 }}>Searching…</Typography>
             ) : results.length > 0 ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderTop: `${RULE.base}px solid`,
+                  borderColor: 'text.primary',
+                }}
+              >
                 {results.map((res, i) => (
                   <Paper
                     key={i}
                     onClick={() => handleSelect(res.date)}
                     data-testid={`search-result-${res.date}`}
                     sx={{
-                      p: 3,
+                      p: 2.5,
                       cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                      borderRadius: '16px',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: (theme) =>
-                          `0 8px 0 ${theme.palette.text.primary}`,
-                      },
-                      boxShadow: (theme) =>
-                        `0 4px 0 ${theme.palette.text.primary}`,
+                      border: 0,
+                      borderBottom: `${RULE.hair}px solid`,
+                      borderColor: 'divider',
+                      transition: 'background-color 0.1s linear',
+                      '&:hover': { bgcolor: 'background.subtle' },
                     }}
                   >
                     <Box
@@ -170,18 +172,19 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                     >
                       <Typography
                         sx={{
-                          fontWeight: 900,
-                          color: 'primary.main',
-                          fontSize: '1.25rem',
+                          fontFamily: FONT.data,
+                          fontWeight: 700,
+                          fontSize: '1.1rem',
                         }}
                       >
                         {res.date}
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          opacity: 0.5,
+                          fontFamily: FONT.data,
+                          fontSize: '0.8rem',
+                          fontWeight: 400,
+                          color: 'text.secondary',
                         }}
                       >
                         {res.fileName}
@@ -189,10 +192,10 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                     </Box>
                     <Typography
                       sx={{
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        fontStyle: 'italic',
-                        lineHeight: '1.5',
+                        fontSize: '1rem',
+                        fontWeight: 400,
+                        lineHeight: 1.55,
+                        maxWidth: '68ch',
                       }}
                     >
                       "{res.snippet}"
@@ -203,15 +206,15 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
             ) : (
               <Typography
                 sx={{
-                  opacity: 0.6,
-                  textAlign: 'center',
-                  p: 4,
-                  fontWeight: 800,
+                  py: 4,
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  maxWidth: '68ch',
                 }}
               >
                 {query.length >= 3
-                  ? `NO RESULTS FOR "${query.toUpperCase()}"`
-                  : 'TYPE AT LEAST 3 CHARACTERS...'}
+                  ? `No entry mentions “${query}”. Try a shorter or different word.`
+                  : 'Type at least three characters to search every entry in your workspace.'}
               </Typography>
             )}
           </Box>

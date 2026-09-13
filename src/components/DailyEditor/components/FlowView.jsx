@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material'
 import { flowStyles } from '../DailyEditor.styles'
 import EntryCard from './EntryCard'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const FlowView = ({
   selectedFlowProjects,
@@ -32,7 +33,12 @@ const FlowView = ({
       >
         <Typography
           variant="h4"
-          sx={{ mb: 4, fontWeight: 900, color: 'text.secondary' }}
+          sx={{
+            mb: 4,
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
+            color: 'text.secondary',
+          }}
         >
           No projects selected — nothing to log.
         </Typography>
@@ -71,7 +77,7 @@ const FlowView = ({
   const project = selectedFlowProjects[currentStep]
   const isLastStep = currentStep === selectedFlowProjects.length - 1
   const color = project.color || 'primary.main'
-  const typeLabel = project.streamName ? project.streamName.toUpperCase() : ''
+  const typeLabel = project.streamName || ''
   const completedTodos = completedTodosByTitle?.[project.title] || []
 
   return (
@@ -82,8 +88,7 @@ const FlowView = ({
           value={((currentStep + 1) / selectedFlowProjects.length) * 100}
           sx={{
             height: 16,
-            borderRadius: 8,
-            border: '4px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
             bgcolor: 'background.paper',
             '& .MuiLinearProgress-bar': { bgcolor: color },
@@ -93,11 +98,12 @@ const FlowView = ({
           sx={{
             mt: 1,
             textAlign: 'right',
-            fontWeight: 950,
+            fontFamily: FONT.data,
+            fontWeight: 800,
             fontSize: '1.1rem',
           }}
         >
-          STEP {currentStep + 1} OF {selectedFlowProjects.length}
+          Step {currentStep + 1} of {selectedFlowProjects.length}
         </Typography>
       </Box>
 
@@ -107,9 +113,8 @@ const FlowView = ({
             <Typography
               sx={{
                 mb: 0.5,
-                fontWeight: 900,
+                fontWeight: 800,
                 fontSize: '0.8rem',
-                letterSpacing: '2px',
                 color,
               }}
             >
@@ -119,7 +124,12 @@ const FlowView = ({
 
           <Typography
             variant="h3"
-            sx={{ mb: completedTodos.length ? 2 : 4, fontWeight: 950, color }}
+            sx={{
+              mb: completedTodos.length ? 2 : 4,
+              fontWeight: 800,
+              letterSpacing: '-0.04em',
+              color,
+            }}
           >
             What did you do on {project.title} today?
           </Typography>

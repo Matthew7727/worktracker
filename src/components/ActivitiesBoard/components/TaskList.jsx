@@ -21,6 +21,7 @@ import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
 import GhostAddRow from './GhostAddRow'
 import { sortTasksByUrgency } from '../../../utils/taskUrgency'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
   const [text, setText] = useState('')
@@ -42,7 +43,6 @@ const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
         onKeyDown={(e) => e.key === 'Enter' && submit()}
         sx={{
           '& .MuiInputBase-root': {
-            borderRadius: '10px',
             fontSize: size === 'small' ? '0.85rem' : undefined,
           },
         }}
@@ -53,9 +53,8 @@ const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
         onClick={submit}
         disabled={!text.trim()}
         sx={{
-          border: '2px solid',
+          border: `${RULE.hair}px solid`,
           borderColor: 'divider',
-          borderRadius: '10px',
           width: 38,
           height: 38,
           flexShrink: 0,
@@ -95,7 +94,7 @@ const TaskRow = ({
   return (
     <Box
       sx={{
-        borderBottom: divided ? '1px solid' : 'none',
+        borderBottom: divided ? `${RULE.hair}px solid` : 'none',
         borderColor: 'divider',
         '&:last-of-type': { borderBottom: 'none' },
       }}
@@ -143,7 +142,7 @@ const TaskRow = ({
           <Typography
             variant="caption"
             sx={{
-              fontFamily: '"JetBrains Mono", monospace',
+              fontFamily: FONT.data,
               color: 'text.secondary',
               fontWeight: 600,
               fontSize: '0.64rem',
@@ -201,7 +200,7 @@ const TaskRow = ({
             size="small"
             className="task-delete"
             onClick={() => onDelete?.()}
-            sx={{ opacity: 0, transition: 'opacity 0.15s', p: 0.25 }}
+            sx={{ opacity: 0, p: 0.25 }}
           >
             <Delete sx={{ fontSize: '0.9rem' }} />
           </IconButton>
@@ -284,7 +283,7 @@ const TaskRow = ({
                       size="small"
                       className="subtask-delete"
                       onClick={() => onDeleteSubtask?.(subtask.id)}
-                      sx={{ opacity: 0, transition: 'opacity 0.15s', p: 0.2 }}
+                      sx={{ opacity: 0, p: 0.2 }}
                     >
                       <Delete sx={{ fontSize: '0.8rem' }} />
                     </IconButton>
@@ -369,7 +368,7 @@ const TaskList = ({
           label="Add a todo"
           onAdd={onAddTask}
           sx={{
-            borderBottom: '1px dashed',
+            borderBottom: `${RULE.hair}px dashed`,
             borderColor: 'divider',
             pb: 0.75,
             mb: 0.5,
@@ -395,10 +394,8 @@ const TaskList = ({
               border: 'none',
               background: 'none',
               p: 0.5,
-              fontFamily: 'inherit',
-              fontSize: '0.7rem',
+              fontSize: '0.72rem',
               fontWeight: 800,
-              letterSpacing: '0.1em',
               color: 'text.secondary',
               cursor: 'pointer',
             }}
@@ -408,11 +405,11 @@ const TaskList = ({
             ) : (
               <ChevronRight sx={{ fontSize: '0.9rem' }} />
             )}
-            COMPLETED
+            Completed
             <Typography
               component="span"
               sx={{
-                fontFamily: '"JetBrains Mono", monospace',
+                fontFamily: FONT.data,
                 fontSize: '0.66rem',
                 fontWeight: 400,
                 color: 'text.disabled',

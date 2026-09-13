@@ -2,6 +2,7 @@ import React from 'react'
 import { Box, Typography, Fade, Stack, Paper, Button } from '@mui/material'
 import { Edit as EditIcon } from '@mui/icons-material'
 import { DAY_STATUSES } from '../constants'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const DayOffSummary = ({ dayStatus, dayNote, onEdit }) => {
   const status = DAY_STATUSES.find((s) => s.id === dayStatus) || DAY_STATUSES[0]
@@ -12,11 +13,10 @@ const DayOffSummary = ({ dayStatus, dayNote, onEdit }) => {
         <Paper
           sx={{
             p: 6,
-            borderRadius: '40px',
-            border: '5px solid',
+            border: `${RULE.heavy}px solid`,
             borderColor: 'text.primary',
             boxShadow: (theme) =>
-              `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+              hardShadow(OFFSET.lift, theme.palette.text.primary),
             mb: 10,
           }}
         >
@@ -28,9 +28,9 @@ const DayOffSummary = ({ dayStatus, dayNote, onEdit }) => {
           >
             <Typography
               variant="h2"
-              sx={{ fontWeight: 950, letterSpacing: '-2px' }}
+              sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
             >
-              {status.label.toUpperCase()} DAY
+              {status.label} day
             </Typography>
             <Button
               variant="contained"
@@ -39,7 +39,7 @@ const DayOffSummary = ({ dayStatus, dayNote, onEdit }) => {
               sx={{
                 bgcolor: 'text.primary',
                 color: 'background.paper',
-                fontWeight: 900,
+                fontWeight: 800,
                 px: 4,
                 '&:hover': { bgcolor: '#333' },
               }}

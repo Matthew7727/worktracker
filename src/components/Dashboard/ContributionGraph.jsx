@@ -1,6 +1,7 @@
 import React from 'react'
 import { Tooltip, Box, Typography, Stack } from '@mui/material'
 import { getStreamAbbrev } from '../../utils/streamConfig'
+import { OFFSET, RULE, hardShadow } from '../../styles/tokens'
 
 const NEUTRAL_COLORS = {
   mixed: '#777',
@@ -106,9 +107,8 @@ const ContributionGraph = ({ entries, streams = [] }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '2px dashed',
+          border: `${RULE.hair}px dashed`,
           borderColor: 'divider',
-          borderRadius: 3,
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
@@ -150,13 +150,20 @@ const ContributionGraph = ({ entries, streams = [] }) => {
                       width: `${blockSize}px`,
                       height: `${blockSize}px`,
                       backgroundColor: info.color,
-                      borderRadius: '3px',
-                      border: date ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                      transition: 'all 0.1s',
+                      border: date
+                        ? `${RULE.hair}px solid rgba(0,0,0,0.16)`
+                        : 'none',
+                      transition: 'transform 0.1s, box-shadow 0.1s',
                       '&:hover': {
-                        transform: 'scale(1.4)',
+                        transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
                         zIndex: 1,
-                        boxShadow: date ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
+                        boxShadow: date
+                          ? (theme) =>
+                              hardShadow(
+                                OFFSET.press,
+                                theme.palette.text.primary
+                              )
+                          : 'none',
                         borderColor: 'text.primary',
                       },
                     }}
@@ -192,13 +199,12 @@ const LegendItem = ({ color, label }) => (
       sx={{
         width: 12,
         height: 12,
-        borderRadius: '2px',
         bgcolor: color,
-        border: '1px solid',
+        border: `${RULE.hair}px solid`,
         borderColor: 'text.primary',
       }}
     />
-    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.65rem' }}>
+    <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.65rem' }}>
       {label}
     </Typography>
   </Stack>

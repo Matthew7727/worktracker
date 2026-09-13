@@ -8,6 +8,7 @@ import {
   CalendarMonth,
 } from '@mui/icons-material'
 import { loadAllEntries } from '../../../utils/DataManager'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const ACCENT = '#00d2ff'
 
@@ -66,13 +67,22 @@ const TreeRow = ({
       pr: 1,
       pl: `${depth * 16 + 8}px`,
       cursor: 'pointer',
-      borderLeft: isSelected ? `3px solid ${ACCENT}` : '3px solid transparent',
-      bgcolor: isSelected ? `${ACCENT}18` : 'transparent',
+      borderLeft: `${RULE.base}px solid`,
+      borderLeftColor: isSelected ? ACCENT : 'transparent',
+      borderBottom: (theme) => `${RULE.hair}px solid ${theme.palette.divider}`,
+      bgcolor: 'transparent',
+      backgroundImage: (theme) =>
+        depth > 0
+          ? Array.from({ length: depth }, (_, index) => {
+              const x = index * 16 + 8
+              return `linear-gradient(90deg, transparent ${x}px, ${theme.palette.divider} ${x}px, ${theme.palette.divider} ${x + RULE.hair}px, transparent ${x + RULE.hair}px)`
+            }).join(',')
+          : 'none',
       '&:hover': {
-        bgcolor: isSelected ? `${ACCENT}28` : 'action.hover',
         borderLeftColor: ACCENT,
+        borderBottomColor: ACCENT,
       },
-      transition: 'all 0.12s ease',
+      transition: 'border-color 0.12s ease',
       userSelect: 'none',
     }}
   >
@@ -87,14 +97,23 @@ const TreeRow = ({
         ))}
     </Box>
     {icon}
+    <Box
+      component="span"
+      sx={{
+        width: 8,
+        height: 8,
+        border: `${RULE.hair}px solid`,
+        borderColor: isSelected || isExpanded ? ACCENT : 'text.secondary',
+        bgcolor: isSelected || isExpanded ? ACCENT : 'transparent',
+        flexShrink: 0,
+      }}
+    />
     <Typography
       sx={{
         fontSize: '0.78rem',
         fontWeight: isLeaf ? 500 : 700,
         color: 'text.primary',
-        textTransform: isLeaf ? 'none' : 'uppercase',
-        letterSpacing: isLeaf ? 0 : '0.06em',
-        fontFamily: isLeaf ? '"JetBrains Mono", monospace' : 'inherit',
+        fontFamily: isLeaf ? FONT.data : undefined,
         flex: 1,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -110,7 +129,7 @@ const TreeRow = ({
           color: 'text.secondary',
           fontWeight: 700,
           flexShrink: 0,
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: FONT.data,
         }}
       >
         {rightLabel}
@@ -168,8 +187,8 @@ const DirectoryTree = ({ rootDir, selectedEntry, onSelectEntry }) => {
         sx={{
           px: 2,
           py: 1.25,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderBottom: `${RULE.hair}px solid`,
+          borderColor: 'text.primary',
           flexShrink: 0,
           bgcolor: 'background.paper',
         }}
@@ -177,11 +196,9 @@ const DirectoryTree = ({ rootDir, selectedEntry, onSelectEntry }) => {
         <Typography
           sx={{
             fontSize: '0.62rem',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            fontWeight: 700,
             color: 'text.secondary',
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: FONT.data,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',

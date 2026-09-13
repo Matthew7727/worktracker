@@ -16,6 +16,7 @@ import {
 import { Download } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { loadAllEntries } from '../../utils/DataManager'
+import { hardShadow, OFFSET, RULE } from '../../styles/tokens'
 
 const Reports = () => {
   const { selectedDirectory, showNotification } = useAppContext()
@@ -123,9 +124,10 @@ const Reports = () => {
             <Paper
               sx={{
                 p: 6,
-                borderRadius: '24px',
-                border: '3px solid',
+                border: `${RULE.base}px solid`,
                 borderColor: 'text.primary',
+                boxShadow: (theme) =>
+                  hardShadow(OFFSET.base, theme.palette.text.primary),
               }}
             >
               <Typography variant="h4" sx={{ mb: 4 }}>
@@ -135,7 +137,7 @@ const Reports = () => {
               <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
                 <InputLabel
                   id="export-range-label"
-                  sx={{ fontWeight: 900, color: 'text.primary' }}
+                  sx={{ fontWeight: 800, color: 'text.primary' }}
                 >
                   DATE RANGE
                 </InputLabel>
@@ -145,10 +147,9 @@ const Reports = () => {
                   label="DATE RANGE"
                   onChange={(e) => setRange(e.target.value)}
                   sx={{
-                    borderRadius: '16px',
-                    fontWeight: 900,
+                    fontWeight: 800,
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderWidth: '3px',
+                      borderWidth: `${RULE.base}px`,
                       borderColor: 'text.primary',
                     },
                   }}
@@ -192,7 +193,7 @@ const Reports = () => {
                     <CircularProgress size={20} color="secondary" />
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 900, color: 'secondary.main' }}
+                      sx={{ fontWeight: 800, color: 'secondary.main' }}
                     >
                       {exportStatus}
                     </Typography>
@@ -210,10 +211,9 @@ const Reports = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '3px dashed',
+                border: `${RULE.base}px dashed`,
                 borderColor: 'text.primary',
-                borderRadius: '24px',
-                bgcolor: 'rgba(0,0,0,0.02)',
+                bgcolor: 'background.paper',
               }}
             >
               <Typography
@@ -224,7 +224,7 @@ const Reports = () => {
                 <br />
                 <Box
                   component="span"
-                  sx={{ color: 'primary.main', fontWeight: 950 }}
+                  sx={{ color: 'primary.main', fontWeight: 800 }}
                 >
                   NOTION & OBSIDIAN.
                 </Box>

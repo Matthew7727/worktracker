@@ -38,6 +38,7 @@ import {
   getArchivedStreams,
   nextPaletteColor,
 } from '../../utils/streamConfig'
+import { RULE, OFFSET, hardShadow } from '../../styles/tokens'
 
 const ColorSwatch = ({ stream, onPick }) => {
   const [anchorEl, setAnchorEl] = useState(null)
@@ -50,14 +51,20 @@ const ColorSwatch = ({ stream, onPick }) => {
           sx={{
             width: 28,
             height: 28,
-            borderRadius: '50%',
+            appearance: 'none',
+            borderRadius: 0,
             bgcolor: stream.color,
-            border: '3px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
             cursor: 'pointer',
             flexShrink: 0,
-            '&:hover': { transform: 'scale(1.15)' },
-            transition: 'all 0.15s',
+            transition:
+              'box-shadow 120ms linear, transform 120ms linear, border-color 120ms linear',
+            '&:hover': {
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
+              transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+            },
           }}
         />
       </Tooltip>
@@ -78,14 +85,20 @@ const ColorSwatch = ({ stream, onPick }) => {
               sx={{
                 width: 26,
                 height: 26,
-                borderRadius: '50%',
+                appearance: 'none',
+                borderRadius: 0,
                 bgcolor: c,
-                border: '3px solid',
+                border: `${RULE.base}px solid`,
                 borderColor:
                   stream.color === c ? 'text.primary' : 'transparent',
                 cursor: 'pointer',
-                '&:hover': { transform: 'scale(1.15)' },
-                transition: 'all 0.15s',
+                transition:
+                  'box-shadow 120ms linear, transform 120ms linear, border-color 120ms linear',
+                '&:hover': {
+                  boxShadow: (theme) =>
+                    hardShadow(OFFSET.press, theme.palette.text.primary),
+                  transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+                },
               }}
             />
           ))}
@@ -116,9 +129,11 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
         gap: 2,
         p: 2.5,
         bgcolor: 'action.hover',
-        borderRadius: '16px',
-        border: '3px solid',
+        border: `${RULE.hair}px solid`,
         borderColor: 'text.primary',
+        '& + &': {
+          borderTop: 0,
+        },
       }}
     >
       <ColorSwatch
@@ -165,7 +180,7 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
           alignItems="center"
           sx={{ flex: 1, minWidth: 0 }}
         >
-          <Typography sx={{ fontWeight: 900, wordBreak: 'break-word' }}>
+          <Typography sx={{ fontWeight: 800, wordBreak: 'break-word' }}>
             {stream.name}
           </Typography>
           {stream.mainFocus && (
@@ -174,10 +189,12 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
               size="small"
               sx={{
                 height: 20,
-                fontWeight: 900,
+                fontWeight: 800,
                 fontSize: '0.6rem',
                 bgcolor: stream.color,
                 color: '#000',
+                border: `${RULE.hair}px solid`,
+                borderColor: 'text.primary',
               }}
             />
           )}
@@ -233,13 +250,15 @@ const FeatureToggle = ({ title, description, checked, onChange }) => (
       alignItems: 'center',
       p: 2.5,
       bgcolor: 'action.hover',
-      borderRadius: '16px',
-      border: '3px solid',
+      border: `${RULE.hair}px solid`,
       borderColor: 'text.primary',
+      '& + &': {
+        borderTop: 0,
+      },
     }}
   >
     <Box sx={{ pr: 2 }}>
-      <Typography sx={{ fontWeight: 900 }}>{title}</Typography>
+      <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
       <Typography variant="body2" sx={{ fontWeight: 600, opacity: 0.7 }}>
         {description}
       </Typography>
@@ -289,15 +308,18 @@ const StreamSettings = () => {
     <Paper
       sx={{
         p: 6,
-        borderRadius: '40px',
-        border: '4px solid',
+        border: `${RULE.base}px solid`,
         borderColor: 'text.primary',
-        boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary}`,
+        boxShadow: (theme) =>
+          hardShadow(OFFSET.hero, theme.palette.text.primary),
       }}
     >
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
         <Tune sx={{ fontSize: '2.5rem' }} />
-        <Typography variant="h3" sx={{ fontWeight: 950 }}>
+        <Typography
+          variant="h3"
+          sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
+        >
           Work Streams
         </Typography>
       </Stack>
@@ -308,7 +330,7 @@ const StreamSettings = () => {
         the dashboard follows your priorities.
       </Typography>
 
-      <Stack spacing={2} sx={{ mb: 3 }}>
+      <Stack spacing={0} sx={{ mb: 3 }}>
         {active.map((s) => (
           <StreamRow
             key={s.id}
@@ -334,11 +356,11 @@ const StreamSettings = () => {
           <Button
             variant="contained"
             onClick={handleAdd}
-            sx={{ fontWeight: 900 }}
+            sx={{ fontWeight: 800 }}
           >
             Add
           </Button>
-          <Button onClick={() => setAdding(false)} sx={{ fontWeight: 900 }}>
+          <Button onClick={() => setAdding(false)} sx={{ fontWeight: 800 }}>
             Cancel
           </Button>
         </Stack>
@@ -347,7 +369,7 @@ const StreamSettings = () => {
           startIcon={<Add />}
           onClick={() => setAdding(true)}
           disabled={active.length >= MAX_STREAMS}
-          sx={{ mb: 3, fontWeight: 900 }}
+          sx={{ mb: 3, fontWeight: 800 }}
         >
           Add Stream{active.length >= MAX_STREAMS ? ' (max reached)' : ''}
         </Button>
@@ -357,11 +379,11 @@ const StreamSettings = () => {
         <Box sx={{ mb: 4 }}>
           <Typography
             variant="body2"
-            sx={{ fontWeight: 900, opacity: 0.6, mb: 1.5, letterSpacing: 1 }}
+            sx={{ fontWeight: 800, opacity: 0.7, mb: 1.5 }}
           >
-            ARCHIVED
+            Archived
           </Typography>
-          <Stack spacing={1}>
+          <Stack spacing={0}>
             {archived.map((s) => (
               <Box
                 key={s.id}
@@ -370,17 +392,18 @@ const StreamSettings = () => {
                   alignItems: 'center',
                   gap: 2,
                   p: 1.5,
-                  borderRadius: '12px',
-                  border: '2px dashed',
+                  border: `${RULE.hair}px dashed`,
                   borderColor: 'divider',
                   opacity: 0.7,
+                  '& + &': {
+                    borderTop: 0,
+                  },
                 }}
               >
                 <Box
                   sx={{
                     width: 18,
                     height: 18,
-                    borderRadius: '50%',
                     bgcolor: s.color,
                     flexShrink: 0,
                   }}
@@ -411,11 +434,11 @@ const StreamSettings = () => {
 
       <Typography
         variant="body2"
-        sx={{ fontWeight: 900, opacity: 0.6, mb: 1.5, letterSpacing: 1 }}
+        sx={{ fontWeight: 800, opacity: 0.7, mb: 1.5 }}
       >
-        OPTIONAL FEATURES
+        Optional features
       </Typography>
-      <Stack spacing={2}>
+      <Stack spacing={0}>
         <FeatureToggle
           title="Utilisation target"
           description={`Track what % of your logged work goes to ${mainFocusStream?.name || 'your main goal'}.`}

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Typography, Stack, Chip } from '@mui/material'
 import { Schedule, Warning } from '@mui/icons-material'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const STALE_THRESHOLD = 30
 const COLORS = { CW: '#80b621', PD: '#ffd166', BD: '#eb8449' }
@@ -40,13 +41,12 @@ const ProjectDurationsWidget = ({ projects }) => {
         <Typography
           variant="body1"
           sx={{
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
             opacity: 0.7,
           }}
         >
-          Work Lifecycle
+          Work lifecycle
         </Typography>
       </Stack>
       <Stack spacing={1.5}>
@@ -71,11 +71,11 @@ const ProjectDurationsWidget = ({ projects }) => {
                     label={item.category}
                     size="small"
                     sx={{
-                      fontWeight: 900,
+                      fontWeight: 800,
                       fontSize: '0.6rem',
                       bgcolor: isStale ? 'error.main' : color,
                       color: 'background.paper',
-                      border: '1.5px solid',
+                      border: `${RULE.hair}px solid`,
                       borderColor: 'text.primary',
                       height: 18,
                     }}
@@ -92,7 +92,11 @@ const ProjectDurationsWidget = ({ projects }) => {
                 </Stack>
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: 900, opacity: 0.7 }}
+                  sx={{
+                    fontFamily: FONT.data,
+                    fontWeight: 800,
+                    opacity: 0.7,
+                  }}
                 >
                   {item.age}d
                 </Typography>
@@ -100,8 +104,7 @@ const ProjectDurationsWidget = ({ projects }) => {
               <Box
                 sx={{
                   height: 6,
-                  borderRadius: 3,
-                  border: '1.5px solid',
+                  border: `${RULE.hair}px solid`,
                   borderColor: 'text.primary',
                   bgcolor: 'background.paper',
                   overflow: 'hidden',
@@ -112,7 +115,6 @@ const ProjectDurationsWidget = ({ projects }) => {
                     height: '100%',
                     width: `${barWidth}%`,
                     bgcolor: isStale ? 'error.main' : color,
-                    borderRadius: 3,
                   }}
                 />
               </Box>

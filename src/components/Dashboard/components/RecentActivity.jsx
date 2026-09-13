@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from '@mui/material'
 import { Delete } from '@mui/icons-material'
+import { FONT, OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const STREAM_COLORS = {
   clientWork: '#80b621',
@@ -36,9 +37,8 @@ const StreamMiniBar = ({ streamCounts, totalWords }) => {
       sx={{
         display: 'flex',
         height: 8,
-        borderRadius: 4,
         overflow: 'hidden',
-        border: '2px solid',
+        border: `${RULE.hair}px solid`,
         borderColor: 'text.primary',
         width: '100%',
       }}
@@ -73,9 +73,9 @@ const RecentActivityContent = ({
   if (loading) {
     return (
       <Stack spacing={2}>
-        <Skeleton height={72} sx={{ borderRadius: 2 }} />
-        <Skeleton height={72} sx={{ borderRadius: 2 }} />
-        <Skeleton height={72} sx={{ borderRadius: 2 }} />
+        <Skeleton variant="rectangular" height={72} sx={{ borderRadius: 0 }} />
+        <Skeleton variant="rectangular" height={72} sx={{ borderRadius: 0 }} />
+        <Skeleton variant="rectangular" height={72} sx={{ borderRadius: 0 }} />
       </Stack>
     )
   }
@@ -90,7 +90,7 @@ const RecentActivityContent = ({
           variant="outlined"
           sx={{
             fontWeight: 700,
-            border: '2px solid',
+            border: `${RULE.hair}px solid`,
             borderColor: 'text.primary',
             color: 'text.primary',
           }}
@@ -125,16 +125,17 @@ const RecentActivityContent = ({
               alignItems: 'center',
               gap: 2,
               p: 2,
-              border: '2px solid',
+              border: `${RULE.hair}px solid`,
               borderColor: 'text.primary',
-              borderRadius: 2,
-              boxShadow: '3px 3px 0px #000',
-              borderLeft: `5px solid ${dominantColor}`,
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.base, theme.palette.text.primary),
+              borderLeft: `${RULE.heavy}px solid ${dominantColor}`,
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'transform 0.15s, box-shadow 0.15s',
               '&:hover': {
-                transform: 'translate(-1px, -1px)',
-                boxShadow: '4px 4px 0px #000',
+                transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                boxShadow: (theme) =>
+                  hardShadow(OFFSET.lift, theme.palette.text.primary),
               },
             }}
           >
@@ -142,7 +143,7 @@ const RecentActivityContent = ({
             <Box sx={{ minWidth: 90 }}>
               <Typography
                 variant="body2"
-                sx={{ fontWeight: 900, lineHeight: 1 }}
+                sx={{ fontFamily: FONT.data, fontWeight: 800, lineHeight: 1 }}
               >
                 {entry.date}
               </Typography>
@@ -193,7 +194,10 @@ const RecentActivityContent = ({
 
             {/* Total words */}
             <Box sx={{ textAlign: 'right', minWidth: 60 }}>
-              <Typography variant="body2" sx={{ fontWeight: 900 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontFamily: FONT.data, fontWeight: 800 }}
+              >
                 {entry.totalWords?.toLocaleString()}
               </Typography>
               <Typography
@@ -212,8 +216,9 @@ const RecentActivityContent = ({
                 onDeleteClick(entry)
               }}
               sx={{
-                border: '2px solid',
+                border: `${RULE.hair}px solid`,
                 borderColor: 'text.primary',
+                borderRadius: 0,
                 '&:hover': {
                   bgcolor: 'error.main',
                   color: 'background.paper',

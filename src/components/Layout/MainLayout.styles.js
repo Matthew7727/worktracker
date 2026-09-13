@@ -1,94 +1,109 @@
+import { RULE, OFFSET, FONT, hardShadow } from '../../styles/tokens'
+
 export const appBarStyles = {
   zIndex: 1100,
-  bgcolor: 'transparent',
+  bgcolor: 'background.default',
   color: 'text.primary',
   boxShadow: 'none',
 }
 
 export const toolbarStyles = {
-  height: '4rem',
-  minHeight: '4rem !important',
-  px: '4rem !important',
+  height: '4.5rem',
+  minHeight: '4.5rem !important',
+  px: '0 !important',
   display: 'flex',
-  gap: 4,
-  bgcolor: 'transparent',
+  gap: 0,
+  bgcolor: 'background.default',
+}
+
+export const brandCellStyles = {
+  display: 'flex',
+  alignItems: 'center',
+  flexShrink: 0,
+  px: 3,
+  cursor: 'pointer',
+  borderRight: `${RULE.base}px solid`,
+  borderColor: 'divider',
+  '&:hover span span': { color: 'text.primary' },
 }
 
 export const brandStyles = {
-  cursor: 'pointer',
-  fontWeight: 950,
-  mr: 4,
-  letterSpacing: '-0.05em',
-  '& span': { color: 'primary.main' },
+  fontWeight: 800,
+  letterSpacing: '-0.04em',
+  lineHeight: 1,
   whiteSpace: 'nowrap',
+  '& span': { color: 'primary.main' },
 }
 
 export const navItemStyles = (isActive) => ({
   display: 'flex',
   alignItems: 'center',
   gap: 1,
-  px: 2,
+  px: 2.5,
   height: '100%',
   cursor: 'pointer',
-  fontWeight: 900,
-  fontSize: '1rem',
-  color: isActive ? 'primary.main' : 'text.primary',
-  borderBottom: '4px solid',
-  borderColor: isActive ? 'primary.main' : 'transparent',
-  transition: 'all 0.2s',
+  fontWeight: 700,
+  fontSize: '0.82rem',
   whiteSpace: 'nowrap',
-  '&:hover': {
-    bgcolor: 'rgba(0,0,0,0.04)',
-  },
+  bgcolor: isActive ? 'text.primary' : 'transparent',
+  color: isActive ? 'background.default' : 'text.primary',
+  borderRight: `${RULE.hair}px solid`,
+  borderColor: 'divider',
+  '&:hover': { bgcolor: isActive ? 'text.primary' : 'action.hover' },
 })
 
 export const searchFieldStyles = {
-  borderRadius: '12px',
   bgcolor: 'background.paper',
-  '& fieldset': { borderWidth: '2px', borderColor: 'text.primary' },
+  '& fieldset': { borderWidth: RULE.hair, borderColor: 'text.primary' },
   maxWidth: '400px',
   minWidth: '200px',
 }
 
 export const searchDialogStyles = {
-  p: 2,
-  borderRadius: '24px',
-  border: '4px solid',
+  p: 3,
+  border: `${RULE.heavy}px solid`,
   borderColor: 'text.primary',
   bgcolor: 'background.paper',
 }
 
 export const alertStyles = {
   width: '100%',
-  fontWeight: 900,
-  border: '3px solid',
+  fontWeight: 700,
+  border: `${RULE.base}px solid`,
   borderColor: 'text.primary',
-  borderRadius: '16px',
-  boxShadow: '0 8px 0', // Shadow color inherits or needs specific handling
-  color: 'text.primary', // Ensure text is visible
-  '& .MuiAlert-icon': { fontSize: '1.5rem' },
+  boxShadow: (theme) => hardShadow(OFFSET.lift, theme.palette.text.primary),
+  color: 'text.primary',
+  '& .MuiAlert-icon': { fontSize: '1.4rem' },
 }
 
+// Back-to-top: a stamped square that presses into the page when clicked.
 export const fabStyles = {
-  border: '3px solid',
+  border: `${RULE.base}px solid`,
   borderColor: 'text.primary',
-  boxShadow: '0 6px 0',
-  color: 'text.primary', // Just in case
-  '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 0' },
-}
-
-export const toolbarIconStyles = {
-  border: '3px solid',
-  borderColor: 'text.primary',
-  borderRadius: '50%',
-  p: 1.5,
-  transition: 'all 0.2s',
+  boxShadow: (theme) => hardShadow(OFFSET.lift, theme.palette.text.primary),
   color: 'text.primary',
   '&:hover': {
-    bgcolor: 'primary.main',
-    color: 'background.paper',
-    borderColor: 'primary.main', // Match border on hover
-    transform: 'translateY(-2px)',
+    transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+    boxShadow: (theme) => hardShadow(OFFSET.hero, theme.palette.text.primary),
+  },
+  '&:active': {
+    transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+    boxShadow: (theme) => hardShadow(OFFSET.base, theme.palette.text.primary),
+  },
+}
+
+// Square tool button sized to sit flush inside the rail.
+export const toolbarIconStyles = {
+  width: '3.25rem',
+  height: '100%',
+  borderRadius: 0,
+  borderLeft: `${RULE.hair}px solid`,
+  borderColor: 'divider',
+  color: 'text.primary',
+  transition: 'background-color 0.1s linear, color 0.1s linear',
+  '&:hover': {
+    bgcolor: 'text.primary',
+    color: 'background.default',
   },
 }
 
@@ -113,53 +128,58 @@ export const docsContentStyles = {
   minWidth: 0,
   textAlign: 'left',
   '& h1': {
-    fontWeight: 950,
-    fontSize: '3rem',
+    fontWeight: 800,
+    fontSize: '3.5rem',
+    lineHeight: 0.95,
     mb: 4,
-    letterSpacing: '-0.02em',
+    letterSpacing: '-0.04em',
     color: 'text.primary',
   },
   '& h2': {
-    fontWeight: 900,
+    fontWeight: 800,
     fontSize: '2rem',
+    letterSpacing: '-0.03em',
     mt: 6,
     mb: 3,
-    borderBottom: '3px solid',
+    borderBottom: `${RULE.base}px solid`,
     borderColor: 'divider',
     pb: 1,
     color: 'text.primary',
   },
   '& h3': {
-    fontWeight: 900,
-    fontSize: '1.5rem',
+    fontWeight: 800,
+    fontSize: '1.35rem',
+    letterSpacing: '-0.02em',
     mt: 4,
     mb: 2,
     color: 'text.primary',
   },
   '& p': {
-    fontSize: '1.1rem',
+    fontSize: '1.05rem',
     lineHeight: 1.6,
     mb: 3,
-    opacity: 0.8,
-    color: 'text.primary',
+    maxWidth: '68ch',
+    color: 'text.secondary',
   },
-  '& ul, & ol': { mb: 3, pl: 4, color: 'text.primary' },
-  '& li': { mb: 1.5, fontSize: '1.1rem', opacity: 0.8 },
+  '& ul, & ol': { mb: 3, pl: 4, color: 'text.primary', maxWidth: '68ch' },
+  '& li': { mb: 1.5, fontSize: '1.05rem', color: 'text.secondary' },
   '& code': {
-    bgcolor: 'action.hover',
+    bgcolor: 'background.subtle',
     px: 1,
-    borderRadius: '4px',
+    borderRadius: 0,
     fontWeight: 700,
-    fontFamily: '"JetBrains Mono", monospace',
+    fontFamily: FONT.data,
   },
   '& blockquote': {
-    borderLeft: '5px solid',
+    borderLeft: `${RULE.heavy}px solid`,
     borderColor: 'primary.main',
     pl: 3,
     py: 1,
     my: 3,
-    bgcolor: 'action.hover',
+    ml: 0,
+    bgcolor: 'background.subtle',
     fontWeight: 600,
+    maxWidth: '68ch',
     color: 'text.primary',
   },
 }

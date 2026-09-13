@@ -1,5 +1,6 @@
 import { Box, Tooltip, Typography } from '@mui/material'
 import { getTaskDueLabel, getTaskDueSeverity } from '../../utils/taskUrgency'
+import { RULE, FONT } from '../../styles/tokens'
 
 const TONE = {
   overdue: {
@@ -33,8 +34,7 @@ const TodoDueChip = ({ item }) => {
           alignItems: 'center',
           px: 0.9,
           py: 0.2,
-          borderRadius: '999px',
-          border: '1px solid',
+          border: `${RULE.hair}px solid`,
           borderColor: TONE[severity].borderColor,
           bgcolor: TONE[severity].bg,
           color: TONE[severity].color,
@@ -44,7 +44,7 @@ const TodoDueChip = ({ item }) => {
         <Typography
           component="span"
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: FONT.data,
             fontSize: '0.62rem',
             fontWeight: 700,
             color: 'inherit',

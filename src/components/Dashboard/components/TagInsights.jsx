@@ -1,10 +1,10 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import { RULE } from '../../../styles/tokens'
 
 const cardSx = {
-  border: '3px solid',
+  border: `${RULE.base}px solid`,
   borderColor: 'text.primary',
-  borderRadius: '24px',
   bgcolor: 'background.paper',
   p: 3,
   flex: 1,
@@ -27,7 +27,9 @@ const TagInsights = ({ tagCounts }) => {
 
   return (
     <Box sx={cardSx}>
-      <Typography sx={{ fontWeight: 900, fontSize: 16, mb: 2 }}>
+      <Typography
+        sx={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em', mb: 2 }}
+      >
         Most-used tags · last 90 days
       </Typography>
       <Box
@@ -43,13 +45,12 @@ const TagInsights = ({ tagCounts }) => {
             key={t.tag}
             title={`${t.count} ${t.count === 1 ? 'entry' : 'entries'}`}
             sx={{
-              border: '2px solid',
+              border: `${RULE.hair}px solid`,
               borderColor: 'text.primary',
-              borderRadius: '12px',
               px: 1.5,
               py: 0.5,
               bgcolor: 'background.subtle',
-              fontWeight: 900,
+              fontWeight: 800,
               fontSize: sizeFor(t.count),
               lineHeight: 1.2,
             }}

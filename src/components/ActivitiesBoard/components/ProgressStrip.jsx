@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { FONT } from '../../../styles/tokens'
 
 /** Thin progress bar + "done/total" fraction. Replaces the "1/3 todos complete" sentence. */
 const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
@@ -11,7 +12,6 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
         sx={{
           flex: 1,
           height: 5,
-          borderRadius: '3px',
           bgcolor: 'action.hover',
           overflow: 'hidden',
         }}
@@ -20,16 +20,14 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
           sx={{
             width: `${pct}%`,
             height: '100%',
-            borderRadius: '3px',
             bgcolor: color,
-            transition: 'width 0.3s ease',
           }}
         />
       </Box>
       <Typography
         component="span"
         sx={{
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: FONT.data,
           fontSize: '0.68rem',
           fontWeight: 600,
           color: 'text.secondary',

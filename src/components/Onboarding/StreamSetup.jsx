@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { Add, Delete, RocketLaunch } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
+import { RULE, OFFSET, hardShadow } from '../../styles/tokens'
 import {
   STREAM_PALETTE,
   MAX_STREAMS,
@@ -29,15 +30,21 @@ const ColorDot = ({ color, selected, onClick, size = 28 }) => (
     sx={{
       width: size,
       height: size,
-      borderRadius: '50%',
+      appearance: 'none',
+      borderRadius: 0,
       bgcolor: color,
-      border: '3px solid',
+      border: `${RULE.base}px solid`,
       borderColor: selected ? 'text.primary' : 'transparent',
-      outline: '2px solid',
+      outline: `${RULE.hair}px solid`,
       outlineColor: selected ? color : 'transparent',
       cursor: 'pointer',
-      transition: 'all 0.15s',
-      '&:hover': { transform: 'scale(1.15)' },
+      transition:
+        'border-color 120ms linear, box-shadow 120ms linear, transform 120ms linear',
+      '&:hover': {
+        boxShadow: (theme) =>
+          hardShadow(OFFSET.press, theme.palette.text.primary),
+        transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+      },
     }}
   />
 )
@@ -63,13 +70,15 @@ const ToggleRow = ({ title, description, checked, onChange }) => (
       alignItems: 'center',
       p: 2.5,
       bgcolor: 'action.hover',
-      borderRadius: '16px',
-      border: '3px solid',
+      border: `${RULE.hair}px solid`,
       borderColor: 'text.primary',
+      '& + &': {
+        borderTop: 0,
+      },
     }}
   >
     <Box sx={{ pr: 2 }}>
-      <Typography sx={{ fontWeight: 900 }}>{title}</Typography>
+      <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
       <Typography variant="body2" sx={{ fontWeight: 600, opacity: 0.7 }}>
         {description}
       </Typography>
@@ -157,12 +166,16 @@ const StreamSetup = () => {
           p: { xs: 4, md: 6 },
           maxWidth: '720px',
           width: '100%',
-          borderRadius: '32px',
-          border: '4px solid',
+          border: `${RULE.base}px solid`,
           borderColor: 'text.primary',
+          boxShadow: (theme) =>
+            hardShadow(OFFSET.lift, theme.palette.text.primary),
         }}
       >
-        <Typography variant="h2" sx={{ mb: 1, fontWeight: 950 }}>
+        <Typography
+          variant="h2"
+          sx={{ mb: 1, fontWeight: 800, letterSpacing: '-0.04em' }}
+        >
           Shape your day
         </Typography>
         <Typography sx={{ mb: 5, opacity: 0.7, fontWeight: 700 }}>
@@ -175,10 +188,8 @@ const StreamSetup = () => {
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             mb: 1.5,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
           }}
         >
           Your main focus
@@ -198,10 +209,8 @@ const StreamSetup = () => {
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             mb: 1.5,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
           }}
         >
           Other streams
@@ -240,7 +249,7 @@ const StreamSetup = () => {
           startIcon={<Add />}
           onClick={addOther}
           disabled={1 + others.length >= MAX_STREAMS}
-          sx={{ mb: 5, fontWeight: 900 }}
+          sx={{ mb: 5, fontWeight: 800 }}
         >
           Add another stream
         </Button>
@@ -249,15 +258,13 @@ const StreamSetup = () => {
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             mb: 1.5,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
           }}
         >
           Optional features
         </Typography>
-        <Stack spacing={2} sx={{ mb: 5 }}>
+        <Stack spacing={0} sx={{ mb: 5 }}>
           <ToggleRow
             title="Utilisation target"
             description="Track what % of your logged work goes to your main focus (great for billable work)."
@@ -282,10 +289,16 @@ const StreamSetup = () => {
           sx={{
             py: 2,
             fontSize: '1.15rem',
-            boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
+            fontWeight: 800,
+            backgroundImage: 'none',
+            border: `${RULE.hair}px solid`,
+            borderColor: 'text.primary',
+            boxShadow: (theme) =>
+              hardShadow(OFFSET.base, theme.palette.text.primary),
             '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: (theme) => `0 10px 0 ${theme.palette.text.primary}`,
+              transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
             },
           }}
         >

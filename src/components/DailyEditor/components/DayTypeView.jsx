@@ -3,6 +3,7 @@ import { Box, Typography, Fade, Stack, TextField } from '@mui/material'
 import { ArrowForward, ArrowBack, CheckCircle } from '@mui/icons-material'
 import { DAY_STATUSES } from '../constants'
 import { flowStyles } from '../DailyEditor.styles'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const DayTypeView = ({
   initialStatus = 'working',
@@ -21,7 +22,10 @@ const DayTypeView = ({
     <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
       <Fade in={true}>
         <Box>
-          <Typography variant="h3" sx={{ mb: 4, fontWeight: 950 }}>
+          <Typography
+            variant="h3"
+            sx={{ mb: 4, fontWeight: 800, letterSpacing: '-0.04em' }}
+          >
             What kind of day is this?
           </Typography>
 
@@ -35,17 +39,24 @@ const DayTypeView = ({
                   onClick={() => setSelected(status.id)}
                   sx={{
                     fontFamily: 'inherit',
-                    fontWeight: 900,
+                    fontWeight: 800,
                     fontSize: '1rem',
                     px: 3,
                     py: 1.5,
-                    border: '3px solid',
+                    border: `${isActive ? RULE.heavy : RULE.base}px solid`,
                     borderColor: 'text.primary',
-                    borderRadius: '14px',
                     cursor: 'pointer',
                     bgcolor: isActive ? status.color : 'transparent',
                     color: isActive ? 'text.primary' : 'text.secondary',
-                    transition: 'all 0.15s',
+                    transition:
+                      'transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease',
+                    '&:hover': {
+                      bgcolor: isActive ? status.color : 'text.primary',
+                      color: isActive ? 'text.primary' : 'background.paper',
+                      transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                      boxShadow: (theme) =>
+                        hardShadow(OFFSET.base, theme.palette.text.primary),
+                    },
                   }}
                 >
                   {status.label}

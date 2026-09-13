@@ -1,11 +1,11 @@
 import React from 'react'
 import { Box, Typography, Stack, Avatar } from '@mui/material'
 import { getInitials } from '../../../utils/dashboardInsights'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const cardSx = {
-  border: '3px solid',
+  border: `${RULE.base}px solid`,
   borderColor: 'text.primary',
-  borderRadius: '24px',
   bgcolor: 'background.paper',
   p: 3,
   flex: 1,
@@ -35,7 +35,9 @@ const Collaborators = ({ collaborators }) => {
   const top = collaborators.slice(0, 6)
   return (
     <Box sx={cardSx}>
-      <Typography sx={{ fontWeight: 900, fontSize: 16, mb: 2 }}>
+      <Typography
+        sx={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em', mb: 2 }}
+      >
         Who you work with most
       </Typography>
       <Stack spacing={1.5}>
@@ -48,22 +50,31 @@ const Collaborators = ({ collaborators }) => {
           >
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar
+                variant="square"
                 sx={{
                   width: 38,
                   height: 38,
                   bgcolor: colorFor(c.name),
                   color: '#fff',
-                  fontWeight: 900,
+                  fontWeight: 800,
                   fontSize: 14,
-                  border: '3px solid',
+                  border: `${RULE.base}px solid`,
                   borderColor: 'text.primary',
+                  borderRadius: 0,
                 }}
               >
                 {getInitials(c.name)}
               </Avatar>
               <Typography sx={{ fontWeight: 800 }}>{c.name}</Typography>
             </Stack>
-            <Typography sx={{ fontWeight: 700, opacity: 0.6, fontSize: 13 }}>
+            <Typography
+              sx={{
+                fontFamily: FONT.data,
+                fontWeight: 700,
+                opacity: 0.6,
+                fontSize: 13,
+              }}
+            >
               {c.count} {c.count === 1 ? 'project' : 'projects'}
             </Typography>
           </Stack>

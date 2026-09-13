@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Box, InputBase } from '@mui/material'
 import { Add } from '@mui/icons-material'
+import { OFFSET, RULE } from '../../../styles/tokens'
 
 /**
  * A quiet "+ Add todo" row that becomes an input on click and reverts on
@@ -60,7 +61,6 @@ const GhostAddRow = ({ label = 'Add todo', onAdd, sx = {} }) => {
             border: 'none',
             background: 'none',
             p: 0,
-            fontFamily: 'inherit',
             fontSize: '0.82rem',
             fontWeight: 600,
             color: 'text.secondary',
@@ -68,10 +68,9 @@ const GhostAddRow = ({ label = 'Add todo', onAdd, sx = {} }) => {
             textAlign: 'left',
             '&:hover': { color: 'text.primary' },
             '&:focus-visible': {
-              outline: '2px solid',
+              outline: `${RULE.hair}px solid`,
               outlineColor: 'primary.main',
-              outlineOffset: 2,
-              borderRadius: '6px',
+              outlineOffset: OFFSET.press,
             },
           }}
         >
@@ -80,8 +79,7 @@ const GhostAddRow = ({ label = 'Add todo', onAdd, sx = {} }) => {
             sx={{
               width: 18,
               height: 18,
-              borderRadius: '50%',
-              border: '1.5px solid',
+              border: `${RULE.hair}px solid`,
               borderColor: 'text.secondary',
               display: 'inline-flex',
               alignItems: 'center',

@@ -8,16 +8,11 @@ import {
   InputBase,
 } from '@mui/material'
 import { MoreHoriz } from '@mui/icons-material'
-import { keyframes } from '@emotion/react'
 import { getWeekDays } from '../utils/weekDays'
 import { DAY_STATUSES } from '../constants'
+import { FONT, OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-
-const shineLoop = keyframes`
-  0%   { transform: translateX(-150%) skewX(-15deg); }
-  100% { transform: translateX(250%) skewX(-15deg); }
-`
 
 const formatDate = (date) =>
   date.toLocaleDateString('en-US', {
@@ -45,9 +40,9 @@ const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
           zIndex: 3,
           display: 'flex',
           p: 0.25,
-          borderRadius: '50%',
-          color: 'text.disabled',
-          '&:hover': { color: 'text.primary' },
+          color: 'currentColor',
+          opacity: 0.7,
+          '&:hover': { opacity: 1 },
         }}
       >
         <MoreHoriz sx={{ fontSize: '0.9rem' }} />
@@ -58,6 +53,17 @@ const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
         onClose={(e) => {
           e?.stopPropagation?.()
           setAnchorEl(null)
+        }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              border: `${RULE.base}px solid`,
+              borderColor: 'text.primary',
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.base, theme.palette.text.primary),
+            },
+          },
         }}
       >
         {DAY_STATUSES.map((status) => (
@@ -99,9 +105,8 @@ const StaffitHoursBox = ({ hours, onSave }) => {
         px: 3,
         py: 1.5,
         fontFamily: 'inherit',
-        border: '4px solid',
+        border: `${RULE.base}px solid`,
         borderColor: 'text.primary',
-        borderRadius: 0,
         cursor: editing ? 'text' : 'pointer',
         bgcolor: 'background.paper',
         color: 'text.primary',
@@ -110,16 +115,21 @@ const StaffitHoursBox = ({ hours, onSave }) => {
         alignItems: 'center',
         gap: 1,
         minWidth: 96,
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        '&:hover': {
+          transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+          boxShadow: (theme) =>
+            hardShadow(OFFSET.base, theme.palette.text.primary),
+        },
       }}
     >
       <Typography
         sx={{
-          fontWeight: 950,
+          fontWeight: 800,
           fontSize: '0.65rem',
-          letterSpacing: '0.06em',
         }}
       >
-        STAFFIT / WK
+        Staffit / wk
       </Typography>
       {editing ? (
         <InputBase
@@ -141,7 +151,8 @@ const StaffitHoursBox = ({ hours, onSave }) => {
             min: 0,
             style: {
               textAlign: 'center',
-              fontWeight: 950,
+              fontFamily: FONT.data,
+              fontWeight: 800,
               fontSize: '1rem',
               width: 56,
               padding: 0,
@@ -149,7 +160,9 @@ const StaffitHoursBox = ({ hours, onSave }) => {
           }}
         />
       ) : (
-        <Typography sx={{ fontWeight: 950, fontSize: '1rem' }}>
+        <Typography
+          sx={{ fontFamily: FONT.data, fontWeight: 800, fontSize: '1rem' }}
+        >
           {hours != null && hours !== '' ? hours : '—'}
         </Typography>
       )}
@@ -170,7 +183,15 @@ const WeekDayPicker = ({
 
   return (
     <Stack alignItems="center" sx={{ mt: 2, mb: 4 }} spacing={2}>
-      <Typography variant="h2" sx={{ fontWeight: 950, textAlign: 'center' }}>
+      <Typography
+        variant="h2"
+        sx={{
+          fontFamily: FONT.data,
+          fontWeight: 800,
+          letterSpacing: '-0.04em',
+          textAlign: 'center',
+        }}
+      >
         {formatDate(currentDate)}
       </Typography>
 
@@ -192,57 +213,48 @@ const WeekDayPicker = ({
                 px: 3,
                 py: 1.5,
                 fontFamily: 'inherit',
-                fontWeight: 950,
+                fontWeight: 800,
                 fontSize: '1rem',
-                border: '4px solid',
+                border: `${isSelected ? RULE.heavy : RULE.base}px solid`,
                 borderColor: 'text.primary',
-                borderRadius: '16px',
                 cursor: 'pointer',
-                bgcolor: isNonWorking
-                  ? `${statusConfig.color}33`
-                  : 'background.paper',
-                color: 'text.primary',
+                bgcolor: isSelected
+                  ? 'text.primary'
+                  : isNonWorking
+                    ? statusConfig.color
+                    : 'background.paper',
+                color: isSelected ? 'background.paper' : 'text.primary',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 1,
                 position: 'relative',
                 overflow: 'hidden',
-                transition: 'all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                transform: isSelected ? 'translate(-2px, -2px)' : 'none',
+                transition:
+                  'transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                transform: isSelected
+                  ? `translate(-${OFFSET.press}px, -${OFFSET.press}px)`
+                  : 'none',
                 boxShadow: isSelected
-                  ? (theme) => `4px 4px 0px ${theme.palette.text.primary}`
+                  ? (theme) =>
+                      hardShadow(OFFSET.base, theme.palette.text.primary)
                   : 'none',
                 '&:hover': {
-                  transform: 'translate(-2px, -2px)',
+                  transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
                   boxShadow: (theme) =>
-                    `4px 4px 0px ${theme.palette.text.primary}`,
-                  ...(!isSelected && {
-                    '& .shine-swipe': {
-                      animation: `${shineLoop} 1.2s linear infinite`,
-                      opacity: 1,
-                    },
-                  }),
+                    hardShadow(OFFSET.base, theme.palette.text.primary),
+                  bgcolor: isSelected
+                    ? 'text.primary'
+                    : isNonWorking
+                      ? statusConfig.color
+                      : 'text.primary',
+                  color:
+                    isSelected || !isNonWorking
+                      ? 'background.paper'
+                      : 'text.primary',
                 },
               }}
             >
-              {/* Shine sweep layer — only animates on hover when not selected */}
-              <Box
-                className="shine-swipe"
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '50%',
-                  height: '100%',
-                  opacity: 0,
-                  background:
-                    'linear-gradient(90deg, transparent, #80b621, transparent)',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
-              />
-
               {onQuickSetDayStatus && (
                 <DayStatusMenu
                   day={day}
@@ -257,12 +269,11 @@ const WeekDayPicker = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    fontWeight: 900,
+                    fontWeight: 800,
                     fontSize: '0.6rem',
-                    letterSpacing: '0.05em',
                   }}
                 >
-                  {statusConfig.label.toUpperCase()}
+                  {statusConfig.label}
                 </Typography>
               ) : (
                 <Stack direction="row" spacing={0.5} alignItems="center">
@@ -274,13 +285,12 @@ const WeekDayPicker = ({
                         <Box
                           key={stream.id}
                           sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
+                            width: 10,
+                            height: 10,
                             bgcolor: isFilled ? stream.color : 'transparent',
-                            border: isFilled ? 'none' : '2px solid',
+                            border: `${RULE.hair}px solid`,
                             borderColor: isFilled
-                              ? 'transparent'
+                              ? stream.color
                               : 'text.disabled',
                             position: 'relative',
                             zIndex: 2,

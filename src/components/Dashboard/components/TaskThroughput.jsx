@@ -1,10 +1,10 @@
 import React from 'react'
 import { Box, Typography, Stack, LinearProgress } from '@mui/material'
+import { FONT, RULE } from '../../../styles/tokens'
 
 const cardSx = {
-  border: '3px solid',
+  border: `${RULE.base}px solid`,
   borderColor: 'text.primary',
-  borderRadius: '24px',
   bgcolor: 'background.paper',
   p: 3,
   flex: 1,
@@ -14,7 +14,7 @@ const MiniStat = ({ value, label, color }) => (
   <Box>
     <Typography
       sx={{
-        fontFamily: '"JetBrains Mono", monospace',
+        fontFamily: FONT.data,
         fontWeight: 700,
         fontSize: 26,
         lineHeight: 1,
@@ -25,10 +25,8 @@ const MiniStat = ({ value, label, color }) => (
     </Typography>
     <Typography
       sx={{
-        fontWeight: 700,
-        textTransform: 'uppercase',
+        fontWeight: 800,
         fontSize: 10,
-        letterSpacing: '0.05em',
         opacity: 0.6,
         mt: 0.5,
       }}
@@ -59,7 +57,14 @@ const TaskThroughput = ({ perWeek, totals }) => {
       }}
     >
       <Box sx={cardSx}>
-        <Typography sx={{ fontWeight: 900, fontSize: 16, mb: 2 }}>
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: 16,
+            letterSpacing: '-0.02em',
+            mb: 2,
+          }}
+        >
           Tasks closed / week
         </Typography>
         <Box
@@ -80,9 +85,10 @@ const TaskThroughput = ({ perWeek, totals }) => {
                     ? '5px'
                     : `${Math.max((w.count / max) * 100, 10)}%`,
                   bgcolor: empty ? 'transparent' : '#80b621',
-                  border: empty ? '2px dashed' : '2px solid',
+                  border: empty
+                    ? `${RULE.hair}px dashed`
+                    : `${RULE.hair}px solid`,
                   borderColor: empty ? 'divider' : 'text.primary',
-                  borderRadius: '6px 6px 0 0',
                 }}
               />
             )
@@ -99,7 +105,14 @@ const TaskThroughput = ({ perWeek, totals }) => {
       </Box>
 
       <Box sx={cardSx}>
-        <Typography sx={{ fontWeight: 900, fontSize: 16, mb: 2 }}>
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: 16,
+            letterSpacing: '-0.02em',
+            mb: 2,
+          }}
+        >
           Backlog health
         </Typography>
         <Stack direction="row" spacing={3} sx={{ mb: 2.5 }}>
@@ -129,11 +142,13 @@ const TaskThroughput = ({ perWeek, totals }) => {
               value={subPct}
               sx={{
                 height: 12,
-                borderRadius: 6,
-                border: '2px solid',
+                border: `${RULE.hair}px solid`,
                 borderColor: 'text.primary',
                 bgcolor: 'background.paper',
-                '& .MuiLinearProgress-bar': { bgcolor: '#80b621' },
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: '#80b621',
+                  borderRadius: 0,
+                },
               }}
             />
           </Box>

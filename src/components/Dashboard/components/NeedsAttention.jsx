@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../../../context/AppContext'
 import { loadProjects } from '../../../utils/projectsManager'
 import { getItemAge } from '../../../utils/ageUtils'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
 import {
@@ -70,7 +71,7 @@ const NeedsAttention = () => {
 
   if (items === null)
     return (
-      <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 3 }} />
+      <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 0 }} />
     )
   if (items.length === 0) return null
 
@@ -81,13 +82,12 @@ const NeedsAttention = () => {
         <Typography
           variant="body1"
           sx={{
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
             opacity: 0.7,
           }}
         >
-          Needs Attention
+          Needs attention
         </Typography>
       </Stack>
       <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
@@ -98,21 +98,23 @@ const NeedsAttention = () => {
           <Box
             key={item.id}
             onClick={() => navigate(`/todos/${item.itemType}/${item.itemId}`)}
-            sx={{
+            sx={(theme) => ({
               p: 1.5,
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              border: '2px solid',
+              border: `${RULE.hair}px solid`,
               borderColor: item.important ? 'text.primary' : 'divider',
-              borderRadius: 2,
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'transform 0.15s, box-shadow 0.15s',
               boxShadow: item.important
-                ? (theme) => `3px 3px 0px ${theme.palette.text.primary}`
+                ? hardShadow(OFFSET.base, theme.palette.text.primary)
                 : 'none',
-              '&:hover': { transform: 'translate(-1px, -1px)' },
-            }}
+              '&:hover': {
+                transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                boxShadow: hardShadow(OFFSET.press, theme.palette.text.primary),
+              },
+            })}
           >
             {item.important && <Star sx={{ fontSize: 18, color: '#f59e0b' }} />}
             <Box sx={{ flex: 1, minWidth: 0 }}>

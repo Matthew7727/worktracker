@@ -19,6 +19,7 @@ import {
   getTopLevelActivities,
   getActivityStreamId,
 } from '../../../utils/projectsManager'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const NO_PARENT = ''
 
@@ -77,16 +78,17 @@ const AddActivityDialog = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '24px',
-          border: '4px solid',
+          border: `${RULE.heavy}px solid`,
           borderColor: 'text.primary',
           boxShadow: (theme) =>
-            `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
+            hardShadow(OFFSET.hero, theme.palette.text.primary),
           p: 2,
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 900 }}>New Activity</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+        New Activity
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -125,14 +127,14 @@ const AddActivityDialog = ({
                   key={s.id}
                   value={s.id}
                   sx={{
-                    fontWeight: 900,
-                    border: '2px solid',
+                    fontWeight: 800,
+                    border: `${RULE.hair}px solid`,
                     borderColor: 'divider',
                     '&.Mui-selected': {
                       borderColor: 'text.primary',
                       bgcolor: s.color,
                       color: '#000000',
-                      '&:hover': { bgcolor: s.color, opacity: 0.85 },
+                      '&:hover': { bgcolor: s.color },
                     },
                   }}
                 >
@@ -186,7 +188,7 @@ const AddActivityDialog = ({
         <Button
           onClick={handleClose}
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             color: 'text.secondary',
             '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
           }}
@@ -198,26 +200,27 @@ const AddActivityDialog = ({
           variant="contained"
           disabled={!title.trim() || !streamId}
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             px: 3,
             py: 1,
-            borderRadius: '16px',
             backgroundImage: 'none',
             bgcolor: 'background.paper',
             color: 'text.primary',
-            border: '3px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
-            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
+            boxShadow: (theme) =>
+              hardShadow(OFFSET.base, theme.palette.text.primary),
             '&:hover': {
               bgcolor: 'action.hover',
-              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
-              transform: 'translate(2px, 2px)',
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
+              transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
             },
             '&.Mui-disabled': {
               opacity: 0.5,
               boxShadow: 'none',
               transform: 'none',
-              border: '3px solid #ccc',
+              border: `${RULE.base}px solid #ccc`,
             },
           }}
         >

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Box, Typography, Button, Paper, Stack } from '@mui/material'
+import { Box, Typography, Button, Paper } from '@mui/material'
 import { FolderOpen } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
+import { RULE, OFFSET, hardShadow } from '../../styles/tokens'
 
 const WelcomeScreen = () => {
   const { setProjectDirectory } = useAppContext()
@@ -34,13 +35,17 @@ const WelcomeScreen = () => {
         sx={{
           p: 8,
           maxWidth: '600px',
-          borderRadius: '32px',
-          border: '4px solid',
+          border: `${RULE.base}px solid`,
           borderColor: 'text.primary',
+          boxShadow: (theme) =>
+            hardShadow(OFFSET.lift, theme.palette.text.primary),
           textAlign: 'center',
         }}
       >
-        <Typography variant="h1" sx={{ mb: 2 }}>
+        <Typography
+          variant="h1"
+          sx={{ mb: 2, fontWeight: 800, letterSpacing: '-0.05em' }}
+        >
           Welcome to Work Tracker
         </Typography>
         <Typography variant="h5" sx={{ mb: 6, opacity: 0.7, fontWeight: 700 }}>
@@ -56,10 +61,16 @@ const WelcomeScreen = () => {
             px: 6,
             py: 2,
             fontSize: '1.25rem',
-            boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
+            fontWeight: 800,
+            backgroundImage: 'none',
+            border: `${RULE.hair}px solid`,
+            borderColor: 'text.primary',
+            boxShadow: (theme) =>
+              hardShadow(OFFSET.base, theme.palette.text.primary),
             '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: (theme) => `0 10px 0 ${theme.palette.text.primary}`,
+              transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
             },
           }}
         >
@@ -67,14 +78,21 @@ const WelcomeScreen = () => {
         </Button>
 
         {error && (
-          <Typography sx={{ color: 'error.main', mt: 4, fontWeight: 900 }}>
+          <Typography sx={{ color: 'error.main', mt: 4, fontWeight: 800 }}>
             {error}
           </Typography>
         )}
 
-        <Box sx={{ mt: 8, pt: 4, borderTop: '2px dashed rgba(0,0,0,0.1)' }}>
+        <Box
+          sx={{
+            mt: 8,
+            pt: 4,
+            borderTop: `${RULE.hair}px solid`,
+            borderColor: 'divider',
+          }}
+        >
           <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.4 }}>
-            v0.1.0 • PREMIUM BOLD EDITION
+            v0.1.0 • Instrument panel edition
           </Typography>
         </Box>
       </Paper>

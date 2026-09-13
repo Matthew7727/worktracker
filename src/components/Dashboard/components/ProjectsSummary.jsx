@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Box,
-  Typography,
-  Stack,
-  LinearProgress,
-  CircularProgress,
-  Chip,
-} from '@mui/material'
+import { Box, Typography, Stack, LinearProgress, Chip } from '@mui/material'
 import { FolderOpen, Build } from '@mui/icons-material'
 import {
   loadProjects,
@@ -14,6 +7,7 @@ import {
 } from '../../../utils/projectsManager'
 import { getStreamAbbrev } from '../../../utils/streamConfig'
 import { useAppContext } from '../../../context/AppContext'
+import { FONT, OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const getAge = (createdAt) =>
   Math.floor((new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24))
@@ -41,7 +35,21 @@ const ProjectsSummary = () => {
     fetch()
   }, [selectedDirectory, refreshTrigger])
 
-  if (loading) return <CircularProgress size={20} />
+  if (loading) {
+    return (
+      <Box
+        role="progressbar"
+        aria-label="Loading projects"
+        sx={{
+          width: 20,
+          height: 20,
+          border: `${RULE.hair}px solid`,
+          borderColor: 'text.primary',
+          bgcolor: 'background.paper',
+        }}
+      />
+    )
+  }
 
   const activeClients = projects.clientProjects.filter(
     (p) => p.status === 'active'
@@ -66,13 +74,12 @@ const ProjectsSummary = () => {
             <Typography
               variant="body1"
               sx={{
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: 1,
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
                 opacity: 0.7,
               }}
             >
-              {mainFocusStream?.name || 'Main Focus'} Pipeline
+              {mainFocusStream?.name || 'Main focus'} pipeline
             </Typography>
           </Stack>
           {activeClients.length === 0 ? (
@@ -91,12 +98,11 @@ const ProjectsSummary = () => {
                     key={project.id}
                     sx={{
                       p: 2,
-                      border: '2px solid',
+                      border: `${RULE.hair}px solid`,
                       borderColor: 'text.primary',
-                      borderRadius: 2,
                       boxShadow: (theme) =>
-                        `3px 3px 0px ${theme.palette.text.primary}`,
-                      borderLeft: `5px solid ${mainFocusStream?.color || '#80b621'}`,
+                        hardShadow(OFFSET.base, theme.palette.text.primary),
+                      borderLeft: `${RULE.heavy}px solid ${mainFocusStream?.color || '#80b621'}`,
                     }}
                   >
                     <Stack
@@ -113,6 +119,7 @@ const ProjectsSummary = () => {
                       <Typography
                         variant="caption"
                         sx={{
+                          fontFamily: FONT.data,
                           fontWeight: 700,
                           color: 'text.secondary',
                           opacity: 0.5,
@@ -136,13 +143,12 @@ const ProjectsSummary = () => {
           <Typography
             variant="body1"
             sx={{
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: 1,
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
               opacity: 0.7,
             }}
           >
-            Activities Breakdown
+            Activities breakdown
           </Typography>
         </Stack>
         {activeActivities.length === 0 ? (
@@ -174,11 +180,11 @@ const ProjectsSummary = () => {
                         label={stream ? getStreamAbbrev(stream) : activity.type}
                         size="small"
                         sx={{
-                          fontWeight: 900,
+                          fontWeight: 800,
                           fontSize: '0.65rem',
                           bgcolor: color,
                           color: 'background.paper',
-                          border: '1.5px solid',
+                          border: `${RULE.hair}px solid`,
                           borderColor: 'text.primary',
                           height: 20,
                         }}
@@ -193,13 +199,21 @@ const ProjectsSummary = () => {
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <Typography
                         variant="caption"
-                        sx={{ fontWeight: 700, opacity: 0.5 }}
+                        sx={{
+                          fontFamily: FONT.data,
+                          fontWeight: 700,
+                          opacity: 0.5,
+                        }}
                       >
                         {age}d
                       </Typography>
                       <Typography
                         variant="caption"
-                        sx={{ fontWeight: 700, opacity: 0.6 }}
+                        sx={{
+                          fontFamily: FONT.data,
+                          fontWeight: 700,
+                          opacity: 0.6,
+                        }}
                       >
                         {completed}/{total}
                       </Typography>
@@ -211,11 +225,13 @@ const ProjectsSummary = () => {
                       value={progress}
                       sx={{
                         height: 8,
-                        borderRadius: 4,
-                        border: '2px solid',
+                        border: `${RULE.hair}px solid`,
                         borderColor: 'text.primary',
                         bgcolor: 'background.paper',
-                        '& .MuiLinearProgress-bar': { bgcolor: color },
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor: color,
+                          borderRadius: 0,
+                        },
                       }}
                     />
                   )}

@@ -10,7 +10,6 @@ import {
   Stack,
   Fade,
   TextField,
-  Divider,
   LinearProgress,
 } from '@mui/material'
 import {
@@ -24,6 +23,86 @@ import {
 import { useAppContext } from '../../context/AppContext'
 import { useUpdate } from '../../context/UpdateContext'
 import StreamSettings from './StreamSettings'
+import { RULE, OFFSET, hardShadow, FONT, SIGNAL } from '../../styles/tokens'
+
+const panelSx = {
+  p: 6,
+  border: `${RULE.base}px solid`,
+  borderColor: 'text.primary',
+  boxShadow: (theme) => hardShadow(OFFSET.hero, theme.palette.text.primary),
+}
+
+const dashedPanelSx = {
+  p: 6,
+  border: `${RULE.base}px dashed`,
+  borderColor: 'text.primary',
+  bgcolor: 'transparent',
+}
+
+const ledgerRowSx = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  p: 3,
+  bgcolor: 'action.hover',
+  border: `${RULE.hair}px solid`,
+  borderColor: 'text.primary',
+  '& + &': {
+    borderTop: 0,
+  },
+}
+
+const inputRootSx = {
+  fontWeight: 800,
+  fontSize: '1.2rem',
+  fontFamily: FONT.data,
+  border: `${RULE.hair}px solid`,
+  borderColor: 'text.primary',
+}
+
+const buttonHoverSx = {
+  boxShadow: (theme) => hardShadow(OFFSET.press, theme.palette.text.primary),
+  transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
+}
+
+const hardButtonSx = {
+  fontWeight: 800,
+  backgroundImage: 'none',
+  bgcolor: 'background.paper',
+  color: 'text.primary',
+  border: `${RULE.hair}px solid`,
+  borderColor: 'text.primary',
+  boxShadow: (theme) => hardShadow(OFFSET.base, theme.palette.text.primary),
+  '&:hover': {
+    ...buttonHoverSx,
+    bgcolor: 'action.hover',
+  },
+  '&.Mui-disabled': {
+    opacity: 0.5,
+    boxShadow: 'none',
+    transform: 'none',
+    border: `${RULE.hair}px solid #999`,
+    bgcolor: '#f0f0f0',
+  },
+}
+
+const successButtonSx = {
+  ...hardButtonSx,
+  bgcolor: SIGNAL.go,
+  color: '#fff',
+  '&:hover': {
+    ...buttonHoverSx,
+    bgcolor: SIGNAL.goDark,
+  },
+}
+
+const progressSx = {
+  height: 16,
+  border: `${RULE.base}px solid`,
+  borderColor: 'text.primary',
+  bgcolor: 'background.paper',
+  '& .MuiLinearProgress-bar': { bgcolor: SIGNAL.go },
+}
 
 const Settings = () => {
   const navigate = useNavigate()
@@ -165,7 +244,14 @@ const Settings = () => {
           pb: 10,
         }}
       >
-        <Typography variant="h1" sx={{ textAlign: 'center', fontWeight: 950 }}>
+        <Typography
+          variant="h1"
+          sx={{
+            textAlign: 'center',
+            fontWeight: 800,
+            letterSpacing: '-0.05em',
+          }}
+        >
           Settings
         </Typography>
 
@@ -176,16 +262,7 @@ const Settings = () => {
               <StreamSettings />
 
               {/* Notifications Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.text.primary}`,
-                }}
-              >
+              <Paper sx={panelSx}>
                 <Stack
                   direction="row"
                   alignItems="center"
@@ -193,7 +270,10 @@ const Settings = () => {
                   sx={{ mb: 4 }}
                 >
                   <NotificationsActive sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
+                  >
                     Daily Reminders
                   </Typography>
                 </Stack>
@@ -206,21 +286,10 @@ const Settings = () => {
                   achievements.
                 </Typography>
 
-                <Stack spacing={4}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'action.hover',
-                      borderRadius: '20px',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                    }}
-                  >
+                <Stack spacing={0}>
+                  <Box sx={ledgerRowSx}>
                     <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 800 }}>
                         Enable Notifications
                       </Typography>
                       <Typography
@@ -243,22 +312,11 @@ const Settings = () => {
                     />
                   </Box>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'action.hover',
-                      borderRadius: '20px',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                    }}
-                  >
+                  <Box sx={ledgerRowSx}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Schedule />
                       <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
                           Reminder Time
                         </Typography>
                         <Typography
@@ -277,11 +335,7 @@ const Settings = () => {
                         disabled={!notifEnabled}
                         sx={{
                           '& .MuiInputBase-root': {
-                            fontWeight: 900,
-                            fontSize: '1.2rem',
-                            borderRadius: '12px',
-                            border: '2px solid',
-                            borderColor: 'text.primary',
+                            ...inputRootSx,
                           },
                         }}
                       />
@@ -292,28 +346,8 @@ const Settings = () => {
                         }
                         disabled={!notifEnabled || isSaving}
                         sx={{
-                          fontWeight: 900,
+                          ...hardButtonSx,
                           px: 3,
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: '#f0f0f0',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
-                          '&.Mui-disabled': {
-                            opacity: 0.5,
-                            boxShadow: 'none',
-                            transform: 'none',
-                            border: '2px solid #999',
-                            bgcolor: '#f0f0f0',
-                          },
                         }}
                       >
                         UPDATE
@@ -325,16 +359,7 @@ const Settings = () => {
 
               {/* Utilisation Target Section */}
               {utilisationEnabled && (
-                <Paper
-                  sx={{
-                    p: 6,
-                    borderRadius: '40px',
-                    border: '4px solid',
-                    borderColor: 'text.primary',
-                    boxShadow: (theme) =>
-                      `10px 10px 0px ${theme.palette.text.primary}`,
-                  }}
-                >
+                <Paper sx={panelSx}>
                   <Stack
                     direction="row"
                     alignItems="center"
@@ -342,7 +367,10 @@ const Settings = () => {
                     sx={{ mb: 4 }}
                   >
                     <TrendingUp sx={{ fontSize: '2.5rem' }} />
-                    <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                    <Typography
+                      variant="h3"
+                      sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
+                    >
                       Utilisation Target
                     </Typography>
                   </Stack>
@@ -356,21 +384,10 @@ const Settings = () => {
                     standard week, over the 1 June – 31 May cycle.
                   </Typography>
 
-                  <Stack spacing={2}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 3,
-                        bgcolor: 'action.hover',
-                        borderRadius: '20px',
-                        border: '3px solid',
-                        borderColor: 'text.primary',
-                      }}
-                    >
+                  <Stack spacing={0}>
+                    <Box sx={ledgerRowSx}>
                       <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
                           Utilisation Target
                         </Typography>
                         <Typography
@@ -389,34 +406,19 @@ const Settings = () => {
                           sx={{
                             width: 100,
                             '& .MuiInputBase-root': {
-                              fontWeight: 900,
-                              fontSize: '1.2rem',
-                              borderRadius: '12px',
-                              border: '2px solid',
-                              borderColor: 'text.primary',
+                              ...inputRootSx,
                             },
                           }}
                         />
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
                           %
                         </Typography>
                       </Stack>
                     </Box>
 
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 3,
-                        bgcolor: 'action.hover',
-                        borderRadius: '20px',
-                        border: '3px solid',
-                        borderColor: 'text.primary',
-                      }}
-                    >
+                    <Box sx={ledgerRowSx}>
                       <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
                           Standard Week
                         </Typography>
                         <Typography
@@ -437,15 +439,11 @@ const Settings = () => {
                           sx={{
                             width: 100,
                             '& .MuiInputBase-root': {
-                              fontWeight: 900,
-                              fontSize: '1.2rem',
-                              borderRadius: '12px',
-                              border: '2px solid',
-                              borderColor: 'text.primary',
+                              ...inputRootSx,
                             },
                           }}
                         />
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
                           hrs
                         </Typography>
                       </Stack>
@@ -461,28 +459,10 @@ const Settings = () => {
                       }
                       disabled={isUtilSaving}
                       sx={{
-                        fontWeight: 900,
+                        ...hardButtonSx,
                         alignSelf: 'flex-end',
+                        mt: 2,
                         px: 3,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                        '&.Mui-disabled': {
-                          opacity: 0.5,
-                          boxShadow: 'none',
-                          border: '2px solid #999',
-                          bgcolor: '#f0f0f0',
-                        },
                       }}
                     >
                       SAVE
@@ -492,27 +472,20 @@ const Settings = () => {
               )}
 
               {/* Workspace Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
-                <Typography variant="h4" sx={{ mb: 4, fontWeight: 950 }}>
+              <Paper sx={panelSx}>
+                <Typography
+                  variant="h4"
+                  sx={{ mb: 4, fontWeight: 800, letterSpacing: '-0.04em' }}
+                >
                   Active Workspace
                 </Typography>
                 <Box
                   sx={{
                     mb: 4,
-                    fontFamily: '"JetBrains Mono", monospace',
+                    fontFamily: FONT.data,
                     bgcolor: 'rgba(0,0,0,0.04)',
                     p: 3,
-                    borderRadius: '16px',
-                    border: '2px solid',
+                    border: `${RULE.hair}px solid`,
                     borderColor: 'text.primary',
                     wordBreak: 'break-all',
                     fontWeight: 800,
@@ -530,22 +503,9 @@ const Settings = () => {
                     variant="contained"
                     onClick={rerunStreamSetup}
                     sx={{
+                      ...hardButtonSx,
                       px: 4,
                       py: 1.5,
-                      fontWeight: 900,
-                      backgroundImage: 'none',
-                      bgcolor: 'background.paper',
-                      color: 'text.primary',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      boxShadow: (theme) =>
-                        `4px 4px 0px ${theme.palette.text.primary}`,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                        boxShadow: (theme) =>
-                          `2px 2px 0px ${theme.palette.text.primary}`,
-                        transform: 'translate(2px, 2px)',
-                      },
                     }}
                   >
                     RE-RUN STARTUP SETUP
@@ -554,21 +514,14 @@ const Settings = () => {
                     variant="contained"
                     onClick={() => setProjectDirectory(null)}
                     sx={{
+                      ...hardButtonSx,
                       px: 4,
                       py: 1.5,
-                      fontWeight: 900,
-                      backgroundImage: 'none',
-                      bgcolor: '#f44336',
+                      bgcolor: SIGNAL.stop,
                       color: 'background.paper',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      boxShadow: (theme) =>
-                        `4px 4px 0px ${theme.palette.text.primary}`,
                       '&:hover': {
-                        bgcolor: '#d32f2f',
-                        boxShadow: (theme) =>
-                          `2px 2px 0px ${theme.palette.text.primary}`,
-                        transform: 'translate(2px, 2px)',
+                        ...buttonHoverSx,
+                        bgcolor: SIGNAL.stop,
                       },
                     }}
                   >
@@ -578,16 +531,7 @@ const Settings = () => {
               </Paper>
 
               {/* Reports Shortcut Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
+              <Paper sx={panelSx}>
                 <Stack
                   direction="row"
                   alignItems="center"
@@ -595,7 +539,10 @@ const Settings = () => {
                   sx={{ mb: 4 }}
                 >
                   <Assessment sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
+                  >
                     Reports & Analytics
                   </Typography>
                 </Stack>
@@ -611,22 +558,9 @@ const Settings = () => {
                     variant="contained"
                     onClick={() => navigate('/reports')}
                     sx={{
+                      ...hardButtonSx,
                       px: 4,
                       py: 1.5,
-                      fontWeight: 900,
-                      backgroundImage: 'none',
-                      bgcolor: 'background.paper',
-                      color: 'text.primary',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      boxShadow: (theme) =>
-                        `4px 4px 0px ${theme.palette.text.primary}`,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                        boxShadow: (theme) =>
-                          `2px 2px 0px ${theme.palette.text.primary}`,
-                        transform: 'translate(2px, 2px)',
-                      },
                     }}
                   >
                     OPEN REPORTS DASHBOARD
@@ -635,16 +569,7 @@ const Settings = () => {
               </Paper>
 
               {/* App Updates Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
+              <Paper sx={panelSx}>
                 <Stack
                   direction="row"
                   alignItems="center"
@@ -652,7 +577,10 @@ const Settings = () => {
                   sx={{ mb: 4 }}
                 >
                   <SystemUpdateAlt sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
+                  >
                     Application Updates
                   </Typography>
                 </Stack>
@@ -665,8 +593,7 @@ const Settings = () => {
                   sx={{
                     p: 4,
                     bgcolor: 'action.hover',
-                    borderRadius: '20px',
-                    border: '3px solid',
+                    border: `${RULE.hair}px solid`,
                     borderColor: 'text.primary',
                     display: 'flex',
                     flexDirection: 'column',
@@ -677,7 +604,7 @@ const Settings = () => {
                   {updateStatus === 'up-to-date' ? (
                     <Typography
                       variant="h6"
-                      sx={{ fontWeight: 800, mb: 2, color: '#4caf50' }}
+                      sx={{ fontWeight: 800, mb: 2, color: SIGNAL.go }}
                     >
                       ✓ You&apos;re on the latest version
                     </Typography>
@@ -697,23 +624,10 @@ const Settings = () => {
                         })
                       }}
                       sx={{
-                        fontWeight: 900,
+                        ...hardButtonSx,
                         px: 4,
                         py: 1.5,
                         fontSize: '1.1rem',
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
                       }}
                     >
                       CHECK FOR UPDATES
@@ -725,14 +639,14 @@ const Settings = () => {
                       disabled
                       variant="contained"
                       sx={{
-                        fontWeight: 900,
+                        fontWeight: 800,
                         px: 4,
                         py: 1.5,
                         fontSize: '1.1rem',
                         backgroundImage: 'none',
                         bgcolor: '#e0e0e0',
                         color: 'text.primary',
-                        border: '2px solid',
+                        border: `${RULE.hair}px solid`,
                         borderColor: 'text.primary',
                         boxShadow: 'none',
                         opacity: 0.7,
@@ -751,23 +665,10 @@ const Settings = () => {
                         variant="contained"
                         onClick={downloadUpdate}
                         sx={{
-                          fontWeight: 900,
+                          ...hardButtonSx,
                           px: 4,
                           py: 1.5,
                           fontSize: '1.1rem',
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
                         }}
                       >
                         DOWNLOAD UPDATE
@@ -787,14 +688,7 @@ const Settings = () => {
                       <LinearProgress
                         variant="determinate"
                         value={updateProgress?.percent || 0}
-                        sx={{
-                          height: 16,
-                          borderRadius: 8,
-                          border: '3px solid',
-                          borderColor: 'text.primary',
-                          bgcolor: 'background.paper',
-                          '& .MuiLinearProgress-bar': { bgcolor: '#4caf50' },
-                        }}
+                        sx={progressSx}
                       />
                     </Box>
                   ) : null}
@@ -805,23 +699,10 @@ const Settings = () => {
                       color="success"
                       onClick={installUpdate}
                       sx={{
-                        fontWeight: 900,
+                        ...successButtonSx,
                         px: 4,
                         py: 1.5,
                         fontSize: '1.1rem',
-                        backgroundImage: 'none',
-                        bgcolor: '#4caf50',
-                        color: '#fff',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#388e3c',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
                       }}
                     >
                       RESTART & INSTALL
@@ -841,22 +722,9 @@ const Settings = () => {
                         variant="contained"
                         onClick={resetUpdate}
                         sx={{
-                          fontWeight: 900,
+                          ...hardButtonSx,
                           px: 4,
                           py: 1.5,
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: '#f0f0f0',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
                         }}
                       >
                         TRY AGAIN
@@ -867,16 +735,11 @@ const Settings = () => {
               </Paper>
 
               {/* About Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '24px',
-                  border: '4px dashed',
-                  borderColor: 'text.primary',
-                  bgcolor: 'transparent',
-                }}
-              >
-                <Typography variant="h5" sx={{ mb: 2, fontWeight: 950 }}>
+              <Paper sx={dashedPanelSx}>
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 2, fontWeight: 800, letterSpacing: '-0.03em' }}
+                >
                   About System
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 800, mb: 1 }}>
@@ -892,16 +755,7 @@ const Settings = () => {
 
               {/* Developer Tools Section (Browser Mock Only) */}
               {window.electronAPI && window.electronAPI.isMock && (
-                <Paper
-                  sx={{
-                    p: 6,
-                    borderRadius: '40px',
-                    border: '4px solid',
-                    borderColor: 'text.primary',
-                    boxShadow: (theme) =>
-                      `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                  }}
-                >
+                <Paper sx={panelSx}>
                   <Stack
                     direction="row"
                     alignItems="center"
@@ -909,7 +763,10 @@ const Settings = () => {
                     sx={{ mb: 4 }}
                   >
                     <BugReport sx={{ fontSize: '2.5rem' }} />
-                    <Typography variant="h3" sx={{ fontWeight: 950 }}>
+                    <Typography
+                      variant="h3"
+                      sx={{ fontWeight: 800, letterSpacing: '-0.04em' }}
+                    >
                       Developer Tools
                     </Typography>
                   </Stack>
@@ -941,22 +798,9 @@ const Settings = () => {
                         }
                       }}
                       sx={{
-                        fontWeight: 900,
+                        ...hardButtonSx,
                         px: 4,
                         py: 1.5,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
                       }}
                     >
                       TEST NOTIFICATION

@@ -1,5 +1,6 @@
 import { Box, Tooltip, Typography } from '@mui/material'
 import { getItemAge, getAgeSeverity } from '../../utils/ageUtils'
+import { FONT } from '../../styles/tokens'
 
 const DOT_COLORS = {
   urgent: '#dc4c3f',
@@ -34,7 +35,6 @@ const TodoAgeChip = ({ item }) => {
             sx={{
               width: 7,
               height: 7,
-              borderRadius: '50%',
               bgcolor: dotColor,
             }}
           />
@@ -42,7 +42,7 @@ const TodoAgeChip = ({ item }) => {
         <Typography
           component="span"
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: FONT.data,
             fontSize: '0.64rem',
             fontWeight: 600,
             color: 'text.secondary',

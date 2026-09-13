@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Box, Button, TextField, Autocomplete } from '@mui/material'
 import { getActivityStreamId } from '../../../utils/projectsManager'
+import { hardShadow, OFFSET, RULE } from '../../../styles/tokens'
 
 // Inline note editor — renders in the flow of the page (no modal), right where
 // the note will actually live. Keyed by the note identity in the parent, so
@@ -50,6 +51,11 @@ const NoteEditorInline = ({
       sx={{
         p: 2,
         mb: 2,
+        border: `${RULE.base}px solid`,
+        borderColor: 'text.primary',
+        bgcolor: 'background.paper',
+        boxShadow: (theme) =>
+          hardShadow(OFFSET.base, theme.palette.text.primary),
       }}
     >
       <TextField
@@ -117,10 +123,13 @@ const NoteEditorInline = ({
           <Button
             onClick={onDelete}
             sx={{
-              fontWeight: 900,
+              fontWeight: 800,
               color: 'error.main',
               mr: 'auto',
-              '&:hover': { bgcolor: 'transparent', opacity: 0.7 },
+              '&:hover': {
+                bgcolor: 'transparent',
+                textDecoration: 'underline',
+              },
             }}
           >
             Delete
@@ -129,10 +138,14 @@ const NoteEditorInline = ({
         <Button
           onClick={onClose}
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             color: 'text.secondary',
             ml: note && onDelete ? 0 : 'auto',
-            '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
+            '&:hover': {
+              color: 'text.primary',
+              bgcolor: 'transparent',
+              textDecoration: 'underline',
+            },
           }}
         >
           Cancel
@@ -142,26 +155,28 @@ const NoteEditorInline = ({
           variant="contained"
           disabled={!title.trim() && !content.trim()}
           sx={{
-            fontWeight: 900,
+            fontWeight: 800,
             px: 3,
             py: 1,
-            borderRadius: '16px',
             backgroundImage: 'none',
             bgcolor: 'background.paper',
             color: 'text.primary',
-            border: '3px solid',
+            border: `${RULE.base}px solid`,
             borderColor: 'text.primary',
-            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
+            boxShadow: (theme) =>
+              hardShadow(OFFSET.base, theme.palette.text.primary),
             '&:hover': {
-              bgcolor: 'action.hover',
-              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
-              transform: 'translate(2px, 2px)',
+              bgcolor: 'text.primary',
+              color: 'background.paper',
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.press, theme.palette.text.primary),
+              transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
             },
             '&.Mui-disabled': {
               opacity: 0.5,
               boxShadow: 'none',
               transform: 'none',
-              border: '3px solid #ccc',
+              borderColor: 'text.disabled',
             },
           }}
         >

@@ -2,6 +2,7 @@ import React from 'react'
 import { Box, Typography, Stack, Tooltip } from '@mui/material'
 import { TrendingUp, TrendingDown, TrendingFlat } from '@mui/icons-material'
 import { useAppContext } from '../../../context/AppContext'
+import { OFFSET, RULE, hardShadow } from '../../../styles/tokens'
 
 const WEEKS_SHOWN = 8
 
@@ -83,9 +84,8 @@ const MomentumTrends = ({ entries }) => {
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
             opacity: 0.7,
           }}
         >
@@ -96,7 +96,7 @@ const MomentumTrends = ({ entries }) => {
             <TrendIcon sx={{ color: trendColor }} />
             <Typography
               variant="body2"
-              sx={{ fontWeight: 900, color: trendColor }}
+              sx={{ fontWeight: 800, color: trendColor }}
             >
               {trendText}
             </Typography>
@@ -120,7 +120,7 @@ const MomentumTrends = ({ entries }) => {
             placement="top"
             title={
               <Box sx={{ p: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                   w/c{' '}
                   {week.start.toLocaleDateString('en-GB', {
                     day: 'numeric',
@@ -148,12 +148,18 @@ const MomentumTrends = ({ entries }) => {
                     : '5px',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '8px 8px 0 0',
                 overflow: 'hidden',
-                border: weekTotals[i] > 0 ? '2px solid' : '2px dashed',
+                border:
+                  weekTotals[i] > 0
+                    ? `${RULE.hair}px solid`
+                    : `${RULE.hair}px dashed`,
                 borderColor: weekTotals[i] > 0 ? 'text.primary' : 'divider',
-                transition: 'all 0.2s',
-                '&:hover': { filter: 'brightness(1.1)' },
+                transition: 'transform 0.1s, box-shadow 0.1s',
+                '&:hover': {
+                  transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                  boxShadow: (theme) =>
+                    hardShadow(OFFSET.press, theme.palette.text.primary),
+                },
               }}
             >
               {stackedStreams.map((s) => (

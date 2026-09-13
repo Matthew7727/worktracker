@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Typography, Stack, Tooltip } from '@mui/material'
 import { getStreamAbbrev } from '../../utils/streamConfig'
+import { OFFSET, RULE, hardShadow } from '../../styles/tokens'
 
 const getCurrentWeekDays = () => {
   const today = new Date()
@@ -56,9 +57,8 @@ const WeeklyChart = ({ entries, streams = [] }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '2px dashed',
+          border: `${RULE.hair}px dashed`,
           borderColor: 'divider',
-          borderRadius: 3,
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 700, opacity: 0.4 }}>
@@ -94,7 +94,7 @@ const WeeklyChart = ({ entries, streams = [] }) => {
           <Tooltip
             title={
               <Box sx={{ p: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                   {weekDays[index].label}
                 </Typography>
                 {streams.map((s) => (
@@ -121,15 +121,18 @@ const WeeklyChart = ({ entries, streams = [] }) => {
                     : '6px',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '10px 10px 0 0',
                 overflow: 'hidden',
-                border: dailyTotals[index] > 0 ? '3px solid' : '2px dashed',
+                border:
+                  dailyTotals[index] > 0
+                    ? `${RULE.base}px solid`
+                    : `${RULE.hair}px dashed`,
                 borderColor:
                   dailyTotals[index] > 0 ? 'text.primary' : 'divider',
-                transition: 'all 0.3s ease',
+                transition: 'transform 0.15s, box-shadow 0.15s',
                 '&:hover': {
-                  transform: 'scaleY(1.05)',
-                  filter: 'brightness(1.1)',
+                  transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
+                  boxShadow: (theme) =>
+                    hardShadow(OFFSET.press, theme.palette.text.primary),
                 },
               }}
             >
@@ -141,7 +144,7 @@ const WeeklyChart = ({ entries, streams = [] }) => {
           <Typography
             variant="caption"
             sx={{
-              fontWeight: 900,
+              fontWeight: 800,
               opacity: weekDays[index].isToday ? 1 : 0.6,
               color: weekDays[index].isToday
                 ? 'text.primary'

@@ -11,6 +11,7 @@ import {
   Fade,
 } from '@mui/material'
 import ReactMarkdown from 'react-markdown'
+import { FONT, hardShadow, OFFSET, RULE } from '../../styles/tokens'
 import {
   docsContainerStyles,
   docsSidebarStyles,
@@ -35,16 +36,16 @@ const Documentation = () => {
             elevation={0}
             sx={{
               p: 3,
-              border: '3px solid',
+              border: `${RULE.base}px solid`,
               borderColor: 'text.primary',
-              borderRadius: '24px',
-              boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.base, theme.palette.text.primary),
               bgcolor: 'background.paper',
             }}
           >
             <Typography
               sx={{
-                fontWeight: 950,
+                fontWeight: 800,
                 fontSize: '1.25rem',
                 mb: 2,
                 letterSpacing: '-0.02em',
@@ -54,7 +55,7 @@ const Documentation = () => {
             </Typography>
             <Divider
               sx={{
-                borderBottomWidth: '2px',
+                borderBottomWidth: `${RULE.hair}px`,
                 borderColor: 'text.primary',
                 mb: 2,
               }}
@@ -65,8 +66,13 @@ const Documentation = () => {
                   <ListItemButton
                     onClick={() => scrollToSection(section.id)}
                     sx={{
-                      borderRadius: '12px',
-                      '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' },
+                      border: `${RULE.hair}px solid`,
+                      borderColor: 'transparent',
+                      '&:hover': {
+                        bgcolor: 'text.primary',
+                        borderColor: 'text.primary',
+                        color: 'background.paper',
+                      },
                     }}
                   >
                     <ListItemText
@@ -74,6 +80,7 @@ const Documentation = () => {
                       primaryTypographyProps={{
                         fontWeight: 800,
                         fontSize: '0.95rem',
+                        color: 'inherit',
                       }}
                     />
                   </ListItemButton>
@@ -84,7 +91,38 @@ const Documentation = () => {
         </Box>
 
         {/* Main Content */}
-        <Box sx={docsContentStyles}>
+        <Box
+          sx={[
+            docsContentStyles,
+            {
+              maxWidth: '68ch',
+              '& h1, & h2, & h3, & h4': {
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+              },
+              '& p, & li': {
+                fontWeight: 400,
+                lineHeight: 1.6,
+              },
+              '& code': {
+                fontFamily: FONT.data,
+                borderRadius: 0,
+                border: `${RULE.hair}px solid`,
+                borderColor: 'divider',
+              },
+              '& pre': {
+                borderRadius: 0,
+                border: `${RULE.base}px solid`,
+                borderColor: 'text.primary',
+                boxShadow: 'none',
+              },
+              '& pre code': {
+                border: 'none',
+                bgcolor: 'transparent',
+              },
+            },
+          ]}
+        >
           {docsContent.map((section) => (
             <Box
               key={section.id}
@@ -100,14 +138,14 @@ const Documentation = () => {
               mt: 10,
               p: 4,
               bgcolor: 'primary.main',
-              borderRadius: '24px',
               color: 'background.paper',
-              border: '3px solid',
+              border: `${RULE.base}px solid`,
               borderColor: 'text.primary',
-              boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
+              boxShadow: (theme) =>
+                hardShadow(OFFSET.base, theme.palette.text.primary),
             }}
           >
-            <Typography variant="h4" sx={{ fontWeight: 950, mb: 1 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
               Need Help?
             </Typography>
             <Typography
