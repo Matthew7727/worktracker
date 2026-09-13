@@ -119,8 +119,10 @@ jobs:
     environment: production-release
     timeout-minutes: 45
     env:
-      KEYCHAIN_PATH: ${{ runner.temp }}/worktracker-signing.keychain-db
-      CERTIFICATE_PATH: ${{ runner.temp }}/worktracker-signing.p12
+      # The runner context is unavailable at job scope. The run ID keeps these
+      # ephemeral paths unique on the GitHub-hosted macOS runner.
+      KEYCHAIN_PATH: /tmp/worktracker-signing-${{ github.run_id }}.keychain-db
+      CERTIFICATE_PATH: /tmp/worktracker-signing-${{ github.run_id }}.p12
     steps:
       - uses: actions/checkout@v4
         with:
