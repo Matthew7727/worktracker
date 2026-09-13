@@ -1,9 +1,15 @@
 import React, { useState } from 'react'
 import { Box, Typography, Menu, MenuItem, InputBase } from '@mui/material'
-import { MoreHoriz } from '@mui/icons-material'
-import { getDateKey, getRecentWorkingDays } from '../utils/weekDays'
+import { Add, MoreHoriz } from '@mui/icons-material'
+import {
+  getDateKey,
+  getRecentWorkingDays,
+  getWeekDays,
+  getWeekendDays,
+  isWeekend,
+} from '../utils/weekDays'
 import { DAY_STATUSES } from '../constants'
-import { MONO } from '../../shared/ui'
+import { InkButton, MONO } from '../../shared/ui'
 
 const RULE = '3px solid'
 
@@ -179,7 +185,11 @@ const WeekDayPicker = ({
   staffitHours,
   onSaveStaffitHours,
 }) => {
+  const [showWeekends, setShowWeekends] = useState(() => isWeekend(currentDate))
   const workingDays = getRecentWorkingDays(new Date())
+  const displayedDays = showWeekends
+    ? [...getWeekDays(currentDate), ...getWeekendDays(currentDate)]
+    : workingDays
   const todayKey = new Date().toDateString()
   const activeStreams = streams.filter((s) => !s.archived)
 
@@ -212,24 +222,36 @@ const WeekDayPicker = ({
             })}
           </Box>
         </Typography>
-        <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
-          Last 5 working days
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
+            {showWeekends ? 'This week' : 'Last 5 working days'}
+          </Typography>
+          {!showWeekends && (
+            <InkButton
+              tone="outline"
+              size="sm"
+              startIcon={<Add />}
+              onClick={() => setShowWeekends(true)}
+            >
+              Add weekend
+            </InkButton>
+          )}
+        </Box>
       </Box>
 
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: onSaveStaffitHours
-            ? 'repeat(5, minmax(0, 1fr)) minmax(120px, 0.9fr)'
-            : 'repeat(5, minmax(0, 1fr))',
+            ? `repeat(${displayedDays.length}, minmax(0, 1fr)) minmax(120px, 0.9fr)`
+            : `repeat(${displayedDays.length}, minmax(0, 1fr))`,
           border: RULE,
           borderColor: 'text.primary',
           bgcolor: 'background.paper',
           boxShadow: (t) => `6px 6px 0 ${t.palette.text.primary}`,
         }}
       >
-        {workingDays.map((day, i) => {
+        {displayedDays.map((day, i) => {
           const isSelected = day.toDateString() === currentDate.toDateString()
           const isToday = day.toDateString() === todayKey
           const dateKey = getDateKey(day)
@@ -246,7 +268,10 @@ const WeekDayPicker = ({
               key={dateKey}
               component="button"
               type="button"
-              onClick={() => onSelectDay(day)}
+              onClick={() => {
+                if (isWeekend(day)) setShowWeekends(true)
+                onSelectDay(day)
+              }}
               aria-pressed={isSelected}
               aria-label={`${day.toDateString()}${isNonWorking ? `, ${statusConfig.label}` : `, ${filledCount} of ${activeStreams.length} streams logged`}`}
               sx={{

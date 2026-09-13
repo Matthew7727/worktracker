@@ -14,7 +14,13 @@ const formatDate = (isoStr) => {
 
 // An index card pinned to the board. Linked notes carry their stream's colour
 // as the card's top band; free-standing notes stay plain.
-const NoteCard = ({ note, stream, onOpen, onOpenLinkedItem }) => (
+const NoteCard = ({
+  note,
+  stream,
+  onOpen,
+  onOpenLinkedItem,
+  draggable = false,
+}) => (
   <Box
     component="article"
     role="button"
@@ -34,7 +40,8 @@ const NoteCard = ({ note, stream, onOpen, onOpenLinkedItem }) => (
       borderTop: '10px solid',
       borderTopColor: stream?.color || 'text.primary',
       boxShadow: (t) => `4px 4px 0 ${t.palette.text.primary}`,
-      cursor: 'pointer',
+      cursor: draggable ? 'grab' : 'pointer',
+      ...(draggable && { '&:active': { cursor: 'grabbing' } }),
       '&:focus-visible': {
         outline: '3px solid',
         outlineColor: 'primary.main',

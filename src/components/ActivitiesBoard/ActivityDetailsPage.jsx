@@ -524,6 +524,23 @@ const ActivityDetailsPage = () => {
         }}
       >
         <Stack spacing={2.5}>
+          <Panel label="Context">
+            <InputBase
+              fullWidth
+              multiline
+              minRows={2}
+              readOnly={itemReadOnly}
+              placeholder={`Add context for this ${entityLabel}…`}
+              value={item.description || ''}
+              onChange={(e) => updateItem({ description: e.target.value })}
+              sx={{
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+                '& textarea::placeholder': { fontStyle: 'italic' },
+              }}
+            />
+          </Panel>
+
           <Panel
             label="Todos"
             meta={tasks.length ? `${tasks.length - doneCount} open` : null}
@@ -622,25 +639,6 @@ const ActivityDetailsPage = () => {
               )}
             </Panel>
           )}
-        </Stack>
-
-        <Stack spacing={2}>
-          <Panel label="Context">
-            <InputBase
-              fullWidth
-              multiline
-              minRows={2}
-              readOnly={itemReadOnly}
-              placeholder={`Add context for this ${entityLabel}…`}
-              value={item.description || ''}
-              onChange={(e) => updateItem({ description: e.target.value })}
-              sx={{
-                fontSize: '0.9rem',
-                lineHeight: 1.6,
-                '& textarea::placeholder': { fontStyle: 'italic' },
-              }}
-            />
-          </Panel>
 
           <Panel label="Notes">
             {linkedNotes.length > 0 ? (
@@ -697,67 +695,6 @@ const ActivityDetailsPage = () => {
             {noteEditorTarget === null && (
               <AddLink onClick={openNewNote}>Add note</AddLink>
             )}
-          </Panel>
-
-          <Panel label="Team">
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-              {teamMembers.map((member) => (
-                <Chip
-                  key={member}
-                  label={member}
-                  onDelete={
-                    itemReadOnly ? undefined : () => removeTeamMember(member)
-                  }
-                  avatar={
-                    <Avatar
-                      sx={{
-                        bgcolor: accentColor,
-                        color: '#fff',
-                        fontSize: '0.6rem',
-                        fontWeight: 800,
-                      }}
-                    >
-                      {initialsFor(member)}
-                    </Avatar>
-                  }
-                  sx={{ fontWeight: 700 }}
-                />
-              ))}
-              {!itemReadOnly &&
-                (addingTeam ? (
-                  <InputBase
-                    autoFocus
-                    placeholder="Name…"
-                    value={teamInput}
-                    onChange={(e) => setTeamInput(e.target.value)}
-                    onBlur={addTeamMember}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') addTeamMember()
-                      if (e.key === 'Escape') {
-                        setTeamInput('')
-                        setAddingTeam(false)
-                      }
-                    }}
-                    sx={{ fontSize: '0.85rem', minWidth: 120 }}
-                  />
-                ) : (
-                  <Chip
-                    label="+ Add"
-                    onClick={() => setAddingTeam(true)}
-                    variant="outlined"
-                    sx={{
-                      fontWeight: 700,
-                      borderStyle: 'dashed',
-                      color: 'text.secondary',
-                    }}
-                  />
-                ))}
-              {teamMembers.length === 0 && itemReadOnly && (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  No team members.
-                </Typography>
-              )}
-            </Stack>
           </Panel>
 
           <Panel label="Actions">
@@ -839,6 +776,67 @@ const ActivityDetailsPage = () => {
             </Stack>
           </Panel>
         </Stack>
+
+        <Panel label="Team">
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            {teamMembers.map((member) => (
+              <Chip
+                key={member}
+                label={member}
+                onDelete={
+                  itemReadOnly ? undefined : () => removeTeamMember(member)
+                }
+                avatar={
+                  <Avatar
+                    sx={{
+                      bgcolor: accentColor,
+                      color: '#fff',
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {initialsFor(member)}
+                  </Avatar>
+                }
+                sx={{ fontWeight: 700 }}
+              />
+            ))}
+            {!itemReadOnly &&
+              (addingTeam ? (
+                <InputBase
+                  autoFocus
+                  placeholder="Name…"
+                  value={teamInput}
+                  onChange={(e) => setTeamInput(e.target.value)}
+                  onBlur={addTeamMember}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addTeamMember()
+                    if (e.key === 'Escape') {
+                      setTeamInput('')
+                      setAddingTeam(false)
+                    }
+                  }}
+                  sx={{ fontSize: '0.85rem', minWidth: 120 }}
+                />
+              ) : (
+                <Chip
+                  label="+ Add"
+                  onClick={() => setAddingTeam(true)}
+                  variant="outlined"
+                  sx={{
+                    fontWeight: 700,
+                    borderStyle: 'dashed',
+                    color: 'text.secondary',
+                  }}
+                />
+              ))}
+            {teamMembers.length === 0 && itemReadOnly && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                No team members.
+              </Typography>
+            )}
+          </Stack>
+        </Panel>
       </Box>
 
       <ConfirmDialog {...confirm} onCancel={closeConfirm} />

@@ -13,7 +13,18 @@ export const getWeekDays = (refDate) => {
   })
 }
 
-const isWeekend = (date) => date.getDay() === 0 || date.getDay() === 6
+export const isWeekend = (date) => date.getDay() === 0 || date.getDay() === 6
+
+// Saturday and Sunday for the week containing refDate. These are deliberately
+// separate from getWeekDays: weekdays remain the default Entries experience.
+export const getWeekendDays = (refDate) => {
+  const friday = getWeekDays(refDate)[4]
+  return [1, 2].map((offset) => {
+    const weekendDay = new Date(friday)
+    weekendDay.setDate(friday.getDate() + offset)
+    return weekendDay
+  })
+}
 
 const previousWorkingDay = (date) => {
   const previous = new Date(date)
