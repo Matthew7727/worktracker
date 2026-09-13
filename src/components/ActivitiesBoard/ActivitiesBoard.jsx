@@ -54,6 +54,7 @@ import { filterTabStyles } from './ActivitiesBoard.styles'
 import TodoAgeChip from '../shared/TodoAgeChip'
 import TodoDueChip from '../shared/TodoDueChip'
 import { sortTasksByUrgency } from '../../utils/taskUrgency'
+import AllTodosView from './components/AllTodosView'
 
 // Keep just-completed todos visible briefly so users can catch and undo mistakes.
 const COMPLETED_TODO_GRACE_MS = 5000
@@ -397,6 +398,7 @@ const ActivitiesBoard = () => {
   const { selectedDirectory, streamConfig, streams, mainFocusStream } =
     useAppContext()
   const [data, setData] = useState({ activities: [], clientProjects: [] })
+  const [viewMode, setViewMode] = useState('board')
   const [activityFilter, setActivityFilter] = useState('ALL')
   const [addActivityOpen, setAddActivityOpen] = useState(false)
   const [addProjectOpen, setAddProjectOpen] = useState(false)
@@ -587,6 +589,14 @@ const ActivitiesBoard = () => {
     )
   }
 
+  const handleToggleAnyTask = (ownerType, ownerId, taskId) => {
+    if (ownerType === 'project') {
+      handleToggleClientProjectTask(ownerId, taskId)
+    } else {
+      handleToggleTask(ownerId, taskId)
+    }
+  }
+
   const handleRenameClientProject = (projectId, newTitle) => {
     save({
       ...data,
@@ -671,269 +681,319 @@ const ActivitiesBoard = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          mb: 4,
+          mb: 2,
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 900 }}>
           Projects & Activities
         </Typography>
-        <NewButton
-          showProjects={projectHierarchy}
-          onAddProject={() => setAddProjectOpen(true)}
-          onAddActivity={() => setAddActivityOpen(true)}
-        />
-      </Box>
-
-      {/* ── Main focus project pipeline ── */}
-      {projectHierarchy && (
-        <Box sx={{ mb: 5 }}>
-          <SectionHeader
-            title={mainFocusStream?.name || 'Main Focus'}
-            count={data.clientProjects.length}
-            countLabel={
-              data.clientProjects.length === 1 ? 'project' : 'projects'
-            }
-            subtitle="Dated engagements with a start, an end, and a status."
+        {viewMode === 'board' && (
+          <NewButton
+            showProjects={projectHierarchy}
+            onAddProject={() => setAddProjectOpen(true)}
+            onAddActivity={() => setAddActivityOpen(true)}
           />
-          <MainGoalUrgentCard
-            stream={
-              mainFocusStream && {
-                ...mainFocusStream,
-                abbrev: getStreamAbbrev(mainFocusStream),
-              }
-            }
-            projects={data.clientProjects.filter(
-              (project) => project.status === 'active'
-            )}
-            onOpenProject={(projectId) =>
-              navigate(`/todos/project/${projectId}`)
-            }
-            onToggleProjectTask={handleToggleClientProjectTask}
-          />
-          <ClientProjectsList
-            projects={data.clientProjects}
-            onToggleStatus={handleToggleClientProjectStatus}
-            onDelete={handleDeleteClientProject}
-            onRename={handleRenameClientProject}
-            onOpenDetails={(projectId) =>
-              navigate(`/todos/project/${projectId}`)
-            }
-          />
-        </Box>
-      )}
-
-      {/* ── Activities ── */}
-      <Box sx={{ mb: 5 }}>
-        <SectionHeader
-          title="Activities"
-          count={activeTopLevel.length}
-          countLabel="active"
-        />
-
-        {/* Filter tabs */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-          <Box
-            component="button"
-            onClick={() => setActivityFilter('ALL')}
-            sx={filterTabStyles(
-              activityFilter === 'ALL',
-              'text.primary',
-              'background.default'
-            )}
-          >
-            All
-          </Box>
-          {activityStreams.map((s) => (
-            <Box
-              key={s.id}
-              component="button"
-              onClick={() => setActivityFilter(s.id)}
-              sx={filterTabStyles(activityFilter === s.id, s.color, '#000000')}
-            >
-              {s.name}
-            </Box>
-          ))}
-        </Box>
-
-        {activeTopLevel.length === 0 && archivedActivities.length === 0 ? (
-          <Box
-            sx={{
-              py: 6,
-              textAlign: 'center',
-              border: '2px dashed',
-              borderColor: 'divider',
-              borderRadius: '20px',
-              color: 'text.secondary',
-            }}
-          >
-            <Typography variant="body2">
-              No activities yet.{' '}
-              <Box
-                component="span"
-                sx={{
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  fontWeight: 700,
-                }}
-                onClick={() => setAddActivityOpen(true)}
-              >
-                Add one
-              </Box>
-            </Typography>
-          </Box>
-        ) : (
-          <>
-            {activeTopLevel.length > 0 && (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={activeTopLevel.map((a) => a.id)}
-                  strategy={rectSortingStrategy}
-                >
-                  <ActivityGrid>
-                    {activeTopLevel.map((activity) => {
-                      const children = getChildActivities(
-                        data.activities,
-                        activity.id
-                      ).filter((c) => c.status === 'active' && typeMatch(c))
-
-                      if (children.length === 0) {
-                        return (
-                          <SortableActivity
-                            key={activity.id}
-                            id={activity.id}
-                            disabled={!dndEnabled}
-                          >
-                            {(dragHandle) => (
-                              <ActivityCard
-                                dragHandle={dragHandle}
-                                {...cardPropsFor(activity)}
-                              />
-                            )}
-                          </SortableActivity>
-                        )
-                      }
-
-                      return (
-                        <Box
-                          key={activity.id}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 1.5,
-                          }}
-                        >
-                          <SortableActivity
-                            id={activity.id}
-                            disabled={!dndEnabled}
-                          >
-                            {(dragHandle) => (
-                              <ActivityCard
-                                dragHandle={dragHandle}
-                                {...cardPropsFor(activity)}
-                              />
-                            )}
-                          </SortableActivity>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: 1.5,
-                              pl: 2,
-                              ml: 1,
-                              borderLeft: '2px solid',
-                              borderColor: 'divider',
-                            }}
-                          >
-                            <SortableContext
-                              items={children.map((c) => c.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              {children.map((child) => (
-                                <SortableActivity
-                                  key={child.id}
-                                  id={child.id}
-                                  disabled={!dndEnabled}
-                                >
-                                  {(dragHandle) => (
-                                    <ActivityCard
-                                      dragHandle={dragHandle}
-                                      {...cardPropsFor(child)}
-                                    />
-                                  )}
-                                </SortableActivity>
-                              ))}
-                            </SortableContext>
-                          </Box>
-                        </Box>
-                      )
-                    })}
-                  </ActivityGrid>
-                </SortableContext>
-              </DndContext>
-            )}
-
-            {archivedActivities.length > 0 && (
-              <Box sx={{ mt: activeTopLevel.length > 0 ? 4 : 0 }}>
-                <Box
-                  component="button"
-                  onClick={() => setShowCompleted((s) => !s)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    border: 'none',
-                    background: 'none',
-                    p: 0.5,
-                    mb: 0.5,
-                    fontFamily: 'inherit',
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    color: 'text.secondary',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {showCompleted ? (
-                    <ExpandMore sx={{ fontSize: '0.9rem' }} />
-                  ) : (
-                    <ChevronRight sx={{ fontSize: '0.9rem' }} />
-                  )}
-                  COMPLETED
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontFamily: '"JetBrains Mono", monospace',
-                      fontSize: '0.66rem',
-                      color: 'text.disabled',
-                    }}
-                  >
-                    {archivedActivities.length}
-                  </Typography>
-                </Box>
-                {showCompleted && (
-                  <Box>
-                    {archivedActivities.map((activity) => (
-                      <CompletedActivityRow
-                        key={activity.id}
-                        activity={activity}
-                        stream={getStreamFor(activity)}
-                        onDelete={() => handleDeleteActivity(activity.id)}
-                        onOpenDetails={() =>
-                          navigate(`/todos/activity/${activity.id}`)
-                        }
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            )}
-          </>
         )}
       </Box>
+
+      <Box sx={{ display: 'flex', gap: 1, mb: 4 }}>
+        <Box
+          component="button"
+          onClick={() => setViewMode('board')}
+          sx={filterTabStyles(
+            viewMode === 'board',
+            'text.primary',
+            'background.default'
+          )}
+        >
+          Board
+        </Box>
+        <Box
+          component="button"
+          onClick={() => setViewMode('todos')}
+          sx={filterTabStyles(
+            viewMode === 'todos',
+            'text.primary',
+            'background.default'
+          )}
+        >
+          All todos
+        </Box>
+      </Box>
+
+      {viewMode === 'todos' ? (
+        <AllTodosView
+          activities={data.activities}
+          projects={data.clientProjects}
+          streamById={streamById}
+          mainFocusStream={
+            mainFocusStream && {
+              ...mainFocusStream,
+              abbrev: getStreamAbbrev(mainFocusStream),
+            }
+          }
+          getActivityStreamId={getActivityStreamId}
+          onOpenItem={(type, id) => navigate(`/todos/${type}/${id}`)}
+          onToggleTask={handleToggleAnyTask}
+        />
+      ) : (
+        <>
+          {/* ── Main focus project pipeline ── */}
+          {projectHierarchy && (
+            <Box sx={{ mb: 5 }}>
+              <SectionHeader
+                title={mainFocusStream?.name || 'Main Focus'}
+                count={data.clientProjects.length}
+                countLabel={
+                  data.clientProjects.length === 1 ? 'project' : 'projects'
+                }
+                subtitle="Dated engagements with a start, an end, and a status."
+              />
+              <MainGoalUrgentCard
+                stream={
+                  mainFocusStream && {
+                    ...mainFocusStream,
+                    abbrev: getStreamAbbrev(mainFocusStream),
+                  }
+                }
+                projects={data.clientProjects.filter(
+                  (project) => project.status === 'active'
+                )}
+                onOpenProject={(projectId) =>
+                  navigate(`/todos/project/${projectId}`)
+                }
+                onToggleProjectTask={handleToggleClientProjectTask}
+              />
+              <ClientProjectsList
+                projects={data.clientProjects}
+                onToggleStatus={handleToggleClientProjectStatus}
+                onDelete={handleDeleteClientProject}
+                onRename={handleRenameClientProject}
+                onOpenDetails={(projectId) =>
+                  navigate(`/todos/project/${projectId}`)
+                }
+              />
+            </Box>
+          )}
+
+          {/* ── Activities ── */}
+          <Box sx={{ mb: 5 }}>
+            <SectionHeader
+              title="Activities"
+              count={activeTopLevel.length}
+              countLabel="active"
+            />
+
+            {/* Filter tabs */}
+            <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+              <Box
+                component="button"
+                onClick={() => setActivityFilter('ALL')}
+                sx={filterTabStyles(
+                  activityFilter === 'ALL',
+                  'text.primary',
+                  'background.default'
+                )}
+              >
+                All
+              </Box>
+              {activityStreams.map((s) => (
+                <Box
+                  key={s.id}
+                  component="button"
+                  onClick={() => setActivityFilter(s.id)}
+                  sx={filterTabStyles(
+                    activityFilter === s.id,
+                    s.color,
+                    '#000000'
+                  )}
+                >
+                  {s.name}
+                </Box>
+              ))}
+            </Box>
+
+            {activeTopLevel.length === 0 && archivedActivities.length === 0 ? (
+              <Box
+                sx={{
+                  py: 6,
+                  textAlign: 'center',
+                  border: '2px dashed',
+                  borderColor: 'divider',
+                  borderRadius: '20px',
+                  color: 'text.secondary',
+                }}
+              >
+                <Typography variant="body2">
+                  No activities yet.{' '}
+                  <Box
+                    component="span"
+                    sx={{
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      fontWeight: 700,
+                    }}
+                    onClick={() => setAddActivityOpen(true)}
+                  >
+                    Add one
+                  </Box>
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                {activeTopLevel.length > 0 && (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={activeTopLevel.map((a) => a.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      <ActivityGrid>
+                        {activeTopLevel.map((activity) => {
+                          const children = getChildActivities(
+                            data.activities,
+                            activity.id
+                          ).filter((c) => c.status === 'active' && typeMatch(c))
+
+                          if (children.length === 0) {
+                            return (
+                              <SortableActivity
+                                key={activity.id}
+                                id={activity.id}
+                                disabled={!dndEnabled}
+                              >
+                                {(dragHandle) => (
+                                  <ActivityCard
+                                    dragHandle={dragHandle}
+                                    {...cardPropsFor(activity)}
+                                  />
+                                )}
+                              </SortableActivity>
+                            )
+                          }
+
+                          return (
+                            <Box
+                              key={activity.id}
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1.5,
+                              }}
+                            >
+                              <SortableActivity
+                                id={activity.id}
+                                disabled={!dndEnabled}
+                              >
+                                {(dragHandle) => (
+                                  <ActivityCard
+                                    dragHandle={dragHandle}
+                                    {...cardPropsFor(activity)}
+                                  />
+                                )}
+                              </SortableActivity>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 1.5,
+                                  pl: 2,
+                                  ml: 1,
+                                  borderLeft: '2px solid',
+                                  borderColor: 'divider',
+                                }}
+                              >
+                                <SortableContext
+                                  items={children.map((c) => c.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  {children.map((child) => (
+                                    <SortableActivity
+                                      key={child.id}
+                                      id={child.id}
+                                      disabled={!dndEnabled}
+                                    >
+                                      {(dragHandle) => (
+                                        <ActivityCard
+                                          dragHandle={dragHandle}
+                                          {...cardPropsFor(child)}
+                                        />
+                                      )}
+                                    </SortableActivity>
+                                  ))}
+                                </SortableContext>
+                              </Box>
+                            </Box>
+                          )
+                        })}
+                      </ActivityGrid>
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                {archivedActivities.length > 0 && (
+                  <Box sx={{ mt: activeTopLevel.length > 0 ? 4 : 0 }}>
+                    <Box
+                      component="button"
+                      onClick={() => setShowCompleted((s) => !s)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        border: 'none',
+                        background: 'none',
+                        p: 0.5,
+                        mb: 0.5,
+                        fontFamily: 'inherit',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        letterSpacing: '0.1em',
+                        color: 'text.secondary',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {showCompleted ? (
+                        <ExpandMore sx={{ fontSize: '0.9rem' }} />
+                      ) : (
+                        <ChevronRight sx={{ fontSize: '0.9rem' }} />
+                      )}
+                      COMPLETED
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontFamily: '"JetBrains Mono", monospace',
+                          fontSize: '0.66rem',
+                          color: 'text.disabled',
+                        }}
+                      >
+                        {archivedActivities.length}
+                      </Typography>
+                    </Box>
+                    {showCompleted && (
+                      <Box>
+                        {archivedActivities.map((activity) => (
+                          <CompletedActivityRow
+                            key={activity.id}
+                            activity={activity}
+                            stream={getStreamFor(activity)}
+                            onDelete={() => handleDeleteActivity(activity.id)}
+                            onOpenDetails={() =>
+                              navigate(`/todos/activity/${activity.id}`)
+                            }
+                          />
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </>
+            )}
+          </Box>
+        </>
+      )}
 
       <AddActivityDialog
         open={addActivityOpen}

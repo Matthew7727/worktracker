@@ -24,9 +24,10 @@ const rotationFor = (id) => {
 
 const NotesBoard = () => {
   const navigate = useNavigate()
-  const { selectedDirectory, streamConfig } = useAppContext()
+  const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
   const [notes, setNotes] = useState([])
   const [activities, setActivities] = useState([])
+  const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   // null = no editor open; 'new' = creating a fresh note; a note object =
   // editing that note in place (rendered inline where its card would be).
@@ -52,6 +53,7 @@ const NotesBoard = () => {
     ])
     setNotes(notesData)
     setActivities(projectsData.activities || [])
+    setProjects(projectsData.clientProjects || [])
     setLoading(false)
   }
 
@@ -61,6 +63,11 @@ const NotesBoard = () => {
   }, [selectedDirectory])
 
   const streamForNote = (note) => {
+    if (note.projectId) {
+      return mainFocusStream
+        ? { ...mainFocusStream, abbrev: getStreamAbbrev(mainFocusStream) }
+        : null
+    }
     if (!note.activityId) return null
     const activity = activities.find((a) => a.id === note.activityId)
     return activity ? streamById[getActivityStreamId(activity)] : null
@@ -144,6 +151,7 @@ const NotesBoard = () => {
         <NoteEditorInline
           note={null}
           activities={activities}
+          projects={projects}
           streamById={streamById}
           onSave={handleSave}
           onClose={closeEditor}
@@ -192,6 +200,7 @@ const NotesBoard = () => {
                 key={note.id}
                 note={note}
                 activities={activities}
+                projects={projects}
                 streamById={streamById}
                 onSave={handleSave}
                 onDelete={handleDelete}
@@ -204,8 +213,8 @@ const NotesBoard = () => {
                 stream={streamForNote(note)}
                 rotation={rotationFor(note.id)}
                 onOpen={() => openExistingNote(note)}
-                onOpenActivity={(activityId) =>
-                  navigate(`/todos/activity/${activityId}`)
+                onOpenLinkedItem={(type, id) =>
+                  navigate(`/todos/${type}/${id}`)
                 }
               />
             )
