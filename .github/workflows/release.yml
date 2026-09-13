@@ -190,6 +190,9 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
           spctl --assess --type execute --verbose=4 "$APP_PATH"
           xcrun stapler validate "$APP_PATH"
+          # electron-builder staples the app; staple the distributable DMG too
+          # so it remains independently verifiable when downloaded offline.
+          xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
 
       - uses: actions/upload-artifact@v4
