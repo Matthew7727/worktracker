@@ -7,7 +7,6 @@ import {
   CircularProgress,
   Chip,
 } from '@mui/material'
-import { FolderOpen, Build } from '@mui/icons-material'
 import {
   loadProjects,
   getActivityStreamId,
@@ -62,17 +61,15 @@ const ProjectsSummary = () => {
       {projectHierarchy && (
         <Box sx={{ flex: 1 }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-            <FolderOpen sx={{ fontSize: 20, opacity: 0.7 }} />
             <Typography
               variant="body1"
               sx={{
+                fontSize: '1.15rem',
                 fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: 1,
-                opacity: 0.7,
+                letterSpacing: '-0.02em',
               }}
             >
-              {mainFocusStream?.name || 'Main Focus'} Pipeline
+              {mainFocusStream?.name || 'Main focus'} pipeline
             </Typography>
           </Stack>
           {activeClients.length === 0 ? (
@@ -129,20 +126,18 @@ const ProjectsSummary = () => {
         </Box>
       )}
 
-      {/* Activities Breakdown */}
+      {/* Activities breakdown */}
       <Box sx={{ flex: 1 }}>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-          <Build sx={{ fontSize: 20, opacity: 0.7 }} />
           <Typography
             variant="body1"
             sx={{
+              fontSize: '1.15rem',
               fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              opacity: 0.7,
+              letterSpacing: '-0.02em',
             }}
           >
-            Activities Breakdown
+            Activities breakdown
           </Typography>
         </Stack>
         {activeActivities.length === 0 ? (

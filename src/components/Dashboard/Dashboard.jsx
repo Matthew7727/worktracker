@@ -11,7 +11,7 @@ import {
   getCycleWeeks,
 } from '../../utils/dashboardInsights'
 import HeroStatement from './components/HeroStatement'
-import VitalSigns from './components/VitalSigns'
+import { StatStrip } from '../shared/ui'
 import UtilisationCycle from './components/UtilisationCycle'
 import StreamAlignment from './components/StreamAlignment'
 import ContributionGraph from './ContributionGraph'
@@ -34,13 +34,12 @@ const UNLOCKS = {
 
 const SectionLabel = ({ children }) => (
   <Typography
-    variant="h6"
+    component="h2"
     sx={{
+      fontSize: '1.6rem',
       fontWeight: 900,
-      mb: 3,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      opacity: 0.7,
+      letterSpacing: '-0.035em',
+      mb: 2.5,
     }}
   >
     {children}
@@ -94,7 +93,7 @@ const Dashboard = () => {
     {
       value: stats.currentStreak,
       label: 'Day streak',
-      sub: stats.currentStreak > 0 ? '🔥 on a roll' : 'log to start',
+      sub: stats.currentStreak > 0 ? 'Keep it going' : 'Log today to start one',
       valueColor: stats.currentStreak > 0 ? '#80b621' : undefined,
       subColor: stats.currentStreak > 0 ? '#80b621' : undefined,
     },
@@ -125,11 +124,11 @@ const Dashboard = () => {
     hasTasks
       ? {
           value: taskTotals.lastWeek,
-          label: 'Tasks / wk',
+          label: 'Todos closed last week',
           sub: (() => {
             const d = taskTotals.lastWeek - taskTotals.prevWeek
-            if (d === 0) return 'level'
-            return `${d > 0 ? '▲' : '▼'} ${Math.abs(d)} vs last`
+            if (d === 0) return 'Same as the week before'
+            return `${d > 0 ? '▲' : '▼'} ${Math.abs(d)} on the week before`
           })(),
           subColor:
             taskTotals.lastWeek - taskTotals.prevWeek >= 0
@@ -148,7 +147,7 @@ const Dashboard = () => {
           flexDirection: 'column',
           gap: 6,
           pb: 10,
-          maxWidth: 1000,
+          maxWidth: 1100,
           mx: 'auto',
           width: '100%',
           pt: 4,
@@ -160,7 +159,7 @@ const Dashboard = () => {
             <Skeleton
               variant="rectangular"
               height={160}
-              sx={{ borderRadius: '24px' }}
+              sx={{ borderRadius: 0 }}
             />
           ) : (
             <>
@@ -175,7 +174,15 @@ const Dashboard = () => {
                 wellbeing={wellbeing}
               />
               <NeedsAttention />
-              <VitalSigns tiles={tiles} />
+              <StatStrip
+                items={tiles.filter(Boolean).map((t) => ({
+                  value: t.value,
+                  label: t.label,
+                  sub: t.sub,
+                  color: t.valueColor,
+                  subColor: t.subColor,
+                }))}
+              />
             </>
           )}
         </Box>
@@ -186,7 +193,7 @@ const Dashboard = () => {
         {!loading && showUtilisation && (
           <>
             <Box>
-              <SectionLabel>Utilisation Cycle</SectionLabel>
+              <SectionLabel>Utilisation cycle</SectionLabel>
               <UtilisationCycle
                 cycleWeeks={cycleWeeks}
                 standardWeeklyHours={standardWeeklyHours}
@@ -198,11 +205,11 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* ── Task Throughput (NEW) ── */}
+        {/* ── Task throughput (NEW) ── */}
         {!loading && hasTasks && (
           <>
             <Box>
-              <SectionLabel>Task Throughput</SectionLabel>
+              <SectionLabel>Task throughput</SectionLabel>
               <TaskThroughput perWeek={perWeek} totals={taskTotals} />
             </Box>
             <SectionDivider />
@@ -221,7 +228,7 @@ const Dashboard = () => {
               <MomentumTrends entries={allEntries} />
             ) : (
               <LockedTile
-                title="Momentum Trends"
+                title="Momentum trends"
                 requirement={`Log ${UNLOCKS.momentum - days} more day${UNLOCKS.momentum - days === 1 ? '' : 's'} to unlock your 8-week momentum view.`}
                 current={days}
                 target={UNLOCKS.momentum}
@@ -246,7 +253,7 @@ const Dashboard = () => {
             >
               {hasTags && (
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <SectionLabel>Tag Insights</SectionLabel>
+                  <SectionLabel>Tags</SectionLabel>
                   <TagInsights tagCounts={tagCounts} />
                 </Box>
               )}
@@ -265,7 +272,7 @@ const Dashboard = () => {
         {!loading && hasWellbeing && (
           <>
             <Box>
-              <SectionLabel>Wellbeing &amp; Time Off</SectionLabel>
+              <SectionLabel>Wellbeing and time off</SectionLabel>
               <Wellbeing counts={wellbeing} />
             </Box>
             <SectionDivider />
@@ -274,12 +281,12 @@ const Dashboard = () => {
 
         {/* ── The Journey (unlocks at 7 logged days) ── */}
         <Box>
-          <SectionLabel>The Journey</SectionLabel>
+          <SectionLabel>The journey</SectionLabel>
           {loading ? (
             <Skeleton
               variant="rectangular"
               height={150}
-              sx={{ borderRadius: '24px' }}
+              sx={{ borderRadius: 0 }}
             />
           ) : journeyUnlocked ? (
             <ContributionGraph
@@ -288,7 +295,7 @@ const Dashboard = () => {
             />
           ) : (
             <LockedTile
-              title="The Journey"
+              title="The journey"
               requirement={`Log ${UNLOCKS.journey - days} more day${UNLOCKS.journey - days === 1 ? '' : 's'} to unlock your year-at-a-glance map.`}
               current={days}
               target={UNLOCKS.journey}
@@ -313,9 +320,9 @@ const Dashboard = () => {
 
         <SectionDivider />
 
-        {/* ── Current Priorities ── */}
+        {/* ── Current priorities ── */}
         <Box>
-          <SectionLabel>Current Priorities</SectionLabel>
+          <SectionLabel>Current priorities</SectionLabel>
           <ProjectsSummary />
         </Box>
       </Box>

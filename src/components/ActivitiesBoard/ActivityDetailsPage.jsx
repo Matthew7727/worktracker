@@ -13,7 +13,8 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material'
-import { ArrowBack, Add } from '@mui/icons-material'
+import { ArrowBack, Add, Check } from '@mui/icons-material'
+import { InkButton, StatStrip, MONO } from '../shared/ui'
 import { useAppContext } from '../../context/AppContext'
 import {
   loadProjects,
@@ -32,7 +33,6 @@ import {
   getNotesForActivity,
 } from '../../utils/notesManager'
 import TaskList from './components/TaskList'
-import StreamTag from './components/StreamTag'
 import ConfirmDialog from './components/ConfirmDialog'
 import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
@@ -68,103 +68,53 @@ const initialsFor = (name) =>
     .join('')
     .toUpperCase()
 
-const ProgressRing = ({ done, total, color }) => {
-  const r = 26
-  const circumference = 2 * Math.PI * r
-  const pct = total > 0 ? done / total : 0
-
-  return (
-    <Box sx={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
-      <svg width="64" height="64" style={{ transform: 'rotate(-90deg)' }}>
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          strokeWidth="7"
-          style={{
-            stroke: 'var(--mui-palette-action-hover, rgba(0,0,0,0.06))',
-          }}
-        />
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeDasharray={`${pct * circumference} ${circumference}`}
-        />
-      </svg>
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.7rem',
-          fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {done}/{total}
-      </Box>
-    </Box>
-  )
-}
-
-const Panel = ({ label, children, sx = {} }) => (
+const Panel = ({ label, meta, children, sx = {} }) => (
   <Paper
     elevation={0}
-    sx={{
-      p: 2.5,
-      borderRadius: '18px',
-      border: '1.5px solid',
-      borderColor: 'divider',
-      ...sx,
-    }}
+    component="section"
+    sx={{ border: '3px solid', borderColor: 'text.primary', ...sx }}
   >
-    <Typography
+    <Box
       sx={{
-        fontSize: '0.66rem',
-        fontWeight: 800,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color: 'text.secondary',
-        mb: 1.5,
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        px: 2.5,
+        py: 1.25,
+        borderBottom: '2px solid',
+        borderColor: 'divider',
       }}
     >
-      {label}
-    </Typography>
-    {children}
+      <Typography component="h2" sx={{ fontWeight: 900, fontSize: '1.05rem' }}>
+        {label}
+      </Typography>
+      {meta != null && (
+        <Typography
+          sx={{
+            fontFamily: MONO,
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            color: 'text.secondary',
+          }}
+        >
+          {meta}
+        </Typography>
+      )}
+    </Box>
+    <Box sx={{ p: 2.5 }}>{children}</Box>
   </Paper>
 )
 
-const StatusPill = ({ label, tone }) => (
-  <Box
-    component="span"
-    sx={{
-      fontSize: '0.68rem',
-      fontWeight: 800,
-      px: 1.5,
-      py: 0.4,
-      borderRadius: '999px',
-      flexShrink: 0,
-      ...(tone === 'active'
-        ? { bgcolor: 'primary.main', color: '#fff' }
-        : {
-            bgcolor: 'transparent',
-            border: '1.5px solid',
-            borderColor: 'divider',
-            color: 'text.disabled',
-          }),
-    }}
+const AddLink = ({ children, onClick }) => (
+  <InkButton
+    tone="ghost"
+    size="sm"
+    startIcon={<Add />}
+    onClick={onClick}
+    sx={{ ml: -1 }}
   >
-    {label}
-  </Box>
+    {children}
+  </InkButton>
 )
 
 const EMPTY_CONFIRM = {
@@ -433,116 +383,146 @@ const ActivityDetailsPage = () => {
   const canHaveChildren = !isProject && !item.parentId
 
   return (
-    <Box sx={{ pb: 6 }}>
+    <Box sx={{ pb: 8, maxWidth: 1280, mx: 'auto', width: '100%' }}>
       {/* ── Header ── */}
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/todos')}
-          sx={{
-            fontWeight: 900,
-            borderRadius: '999px',
-            borderWidth: '2px',
-            borderColor: 'text.primary',
-            color: 'text.primary',
-            px: 2,
-            '&:hover': { borderWidth: '2px' },
-          }}
-        >
-          Back
-        </Button>
-        {stream && (
-          <StreamTag stream={stream} label={stream.name} size="medium" />
-        )}
-        <StatusPill label={statusLabel} tone={isActive ? 'active' : 'muted'} />
-      </Stack>
+      <InkButton
+        tone="ghost"
+        size="sm"
+        startIcon={<ArrowBack />}
+        onClick={() => navigate('/todos')}
+        sx={{ ml: -1, mb: 2 }}
+      >
+        {isProject ? 'Projects & activities' : 'Activities'}
+      </InkButton>
 
       <Box
+        component="header"
         sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 3,
-          mb: 3,
-          flexWrap: 'wrap',
+          border: '3px solid',
+          borderColor: 'text.primary',
+          borderTop: '14px solid',
+          borderTopColor: accentColor,
+          bgcolor: 'background.paper',
+          boxShadow: (t) => `8px 8px 0 ${t.palette.text.primary}`,
+          mb: 4,
         }}
       >
-        <Box sx={{ flex: 1, minWidth: 260 }}>
-          {parentActivity && (
-            <Typography
-              onClick={() => navigate(`/todos/activity/${parentActivity.id}`)}
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: 'text.secondary',
-                cursor: 'pointer',
-                mb: 0.5,
-                '&:hover': {
-                  color: 'text.primary',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              Part of: {parentActivity.title}
-            </Typography>
-          )}
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: 900, letterSpacing: '-0.02em', mb: 0.75 }}
-          >
-            {item.title}
-          </Typography>
+        <Box sx={{ px: 3, pt: 2.25, pb: 2.75 }}>
           <Box
             sx={{
               display: 'flex',
-              gap: 2,
+              alignItems: 'center',
+              gap: 1.5,
               flexWrap: 'wrap',
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '0.7rem',
-              color: 'text.secondary',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              fontVariantNumeric: 'tabular-nums',
+              mb: 1.25,
             }}
           >
-            {!item.ongoing && item.createdAt && (
-              <span>Started {formatDate(item.createdAt)}</span>
+            {stream && (
+              <Typography sx={{ fontWeight: 800, fontSize: '0.92rem' }}>
+                {stream.name}
+              </Typography>
             )}
-            <span>
-              {itemReadOnly && item.completedAt
-                ? `Completed ${formatDate(item.completedAt)}`
-                : 'Ongoing'}
-            </span>
-            {tasks.length > 0 && (
-              <span>
-                {tasks.length} todos · {doneCount} done
-              </span>
+            <Box
+              sx={{
+                px: 0.9,
+                py: 0.15,
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                border: '2px solid',
+                borderColor: 'text.primary',
+                bgcolor: isActive ? accentColor : 'transparent',
+                color: isActive ? '#000' : 'text.secondary',
+              }}
+            >
+              {statusLabel}
+            </Box>
+            {parentActivity && (
+              <Typography
+                component="button"
+                type="button"
+                onClick={() => navigate(`/todos/activity/${parentActivity.id}`)}
+                sx={{
+                  border: 'none',
+                  background: 'none',
+                  p: 0,
+                  fontFamily: 'inherit',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  color: 'text.secondary',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    color: 'text.primary',
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                Part of {parentActivity.title}
+              </Typography>
             )}
           </Box>
+          <Typography
+            component="h1"
+            sx={{
+              fontSize: { xs: '2.25rem', md: '3.25rem' },
+              fontWeight: 900,
+              letterSpacing: '-0.045em',
+              lineHeight: 0.98,
+              maxWidth: '22ch',
+            }}
+          >
+            {item.title}
+          </Typography>
         </Box>
-        {tasks.length > 0 && (
-          <ProgressRing
-            done={doneCount}
-            total={tasks.length}
-            color={accentColor}
-          />
-        )}
+        <StatStrip
+          sx={{
+            border: 'none',
+            borderTop: '3px solid',
+            borderColor: 'text.primary',
+          }}
+          items={[
+            {
+              label: 'Todos done',
+              value: tasks.length ? `${doneCount}/${tasks.length}` : '0',
+              color:
+                tasks.length && doneCount === tasks.length
+                  ? accentColor
+                  : undefined,
+            },
+            {
+              label: 'Started',
+              value: formatDate(item.createdAt) || 'Not set',
+              size: 'sm',
+            },
+            {
+              label: itemReadOnly ? 'Completed' : 'Ends',
+              value: itemReadOnly
+                ? formatDate(item.completedAt) || 'Not set'
+                : 'Ongoing',
+              size: 'sm',
+            },
+            {
+              label: 'Team',
+              value: teamMembers.length,
+              size: 'sm',
+            },
+          ]}
+        />
       </Box>
 
       {/* ── Main grid ── */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 320px' },
-          gap: 2.5,
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 340px' },
+          gap: 3,
           alignItems: 'start',
         }}
       >
         <Stack spacing={2.5}>
-          <Panel label="Todos">
+          <Panel
+            label="Todos"
+            meta={tasks.length ? `${tasks.length - doneCount} open` : null}
+          >
             <TaskList
               tasks={tasks}
               accentColor={accentColor}
@@ -581,7 +561,7 @@ const ActivityDetailsPage = () => {
           </Panel>
 
           {canHaveChildren && (childActivities.length > 0 || !itemReadOnly) && (
-            <Panel label="Sub-activities">
+            <Panel label="Sub-activities" meta={childActivities.length || null}>
               {childActivities.length > 0 ? (
                 <Stack spacing={1} sx={{ mb: itemReadOnly ? 0 : 1.5 }}>
                   {childActivities.map((child) => {
@@ -595,7 +575,7 @@ const ActivityDetailsPage = () => {
                         onClick={() => navigate(`/todos/activity/${child.id}`)}
                         sx={{
                           p: 1.5,
-                          borderRadius: '12px',
+                          borderRadius: 0,
                           border: '1px solid',
                           borderColor: 'divider',
                           cursor: 'pointer',
@@ -631,22 +611,9 @@ const ActivityDetailsPage = () => {
                 </Typography>
               )}
               {!itemReadOnly && (
-                <Button
-                  onClick={() => setAddSubOpen(true)}
-                  startIcon={<Add sx={{ fontSize: '1rem' }} />}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    color: 'text.secondary',
-                    pl: 0,
-                    '&:hover': {
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                    },
-                  }}
-                >
+                <AddLink onClick={() => setAddSubOpen(true)}>
                   Add sub-activity
-                </Button>
+                </AddLink>
               )}
             </Panel>
           )}
@@ -720,22 +687,7 @@ const ActivityDetailsPage = () => {
                 </Box>
               )}
               {noteEditorTarget === null && (
-                <Button
-                  onClick={openNewNote}
-                  startIcon={<Add sx={{ fontSize: '1rem' }} />}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    color: 'text.secondary',
-                    pl: 0,
-                    '&:hover': {
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                    },
-                  }}
-                >
-                  Add note
-                </Button>
+                <AddLink onClick={openNewNote}>Add note</AddLink>
               )}
             </Panel>
           )}
@@ -814,13 +766,14 @@ const ActivityDetailsPage = () => {
                 sx={{ mb: 0.5, ml: 0 }}
               />
               {isActive ? (
-                <Button
-                  fullWidth
+                <InkButton
+                  color={accentColor}
+                  startIcon={<Check />}
                   onClick={() =>
                     openConfirm({
                       title: isProject
-                        ? 'Mark Project Done'
-                        : 'Finish Activity',
+                        ? 'Mark project done'
+                        : 'Finish activity',
                       message: `"${item.title}" will be marked as ${
                         isProject ? 'done' : 'completed'
                       }.`,
@@ -828,24 +781,17 @@ const ActivityDetailsPage = () => {
                       onConfirm: markComplete,
                     })
                   }
-                  sx={{
-                    fontWeight: 800,
-                    borderRadius: '12px',
-                    bgcolor: 'primary.main',
-                    color: '#fff',
-                    py: 1.1,
-                    '&:hover': { bgcolor: 'primary.dark' },
-                  }}
+                  sx={{ width: '100%' }}
                 >
                   {isProject ? 'Mark done' : 'Mark complete'}
-                </Button>
+                </InkButton>
               ) : (
                 <>
                   <Box
                     sx={{
                       px: 1.5,
                       py: 1,
-                      borderRadius: '10px',
+                      borderRadius: 0,
                       bgcolor: 'action.hover',
                       fontSize: '0.8rem',
                       fontWeight: 700,
@@ -855,48 +801,34 @@ const ActivityDetailsPage = () => {
                   >
                     {statusLabel}
                     {item.completedAt
-                      ? ` · ${formatDate(item.completedAt)}`
+                      ? ` on ${formatDate(item.completedAt)}`
                       : ''}
                   </Box>
-                  <Button
-                    fullWidth
+                  <InkButton
+                    tone="outline"
                     onClick={reopen}
-                    sx={{
-                      fontWeight: 800,
-                      borderRadius: '12px',
-                      border: '1.5px solid',
-                      borderColor: 'divider',
-                      color: 'text.primary',
-                      py: 1,
-                    }}
+                    sx={{ width: '100%' }}
                   >
                     Reopen
-                  </Button>
+                  </InkButton>
                 </>
               )}
-              <Button
-                fullWidth
+              <InkButton
+                tone="ghost"
+                size="sm"
                 onClick={() =>
                   openConfirm({
-                    title: isProject ? 'Delete Project' : 'Delete Activity',
+                    title: isProject ? 'Delete project' : 'Delete activity',
                     message: `"${item.title}" will be permanently removed.`,
                     confirmLabel: 'Delete',
                     danger: true,
                     onConfirm: deleteItem,
                   })
                 }
-                sx={{
-                  fontWeight: 700,
-                  fontSize: '0.78rem',
-                  color: 'error.main',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    textDecoration: 'underline',
-                  },
-                }}
+                sx={{ color: 'error.main', alignSelf: 'flex-start', ml: -1 }}
               >
-                Delete {entityLabel}…
-              </Button>
+                Delete {entityLabel}
+              </InkButton>
             </Stack>
           </Panel>
         </Stack>

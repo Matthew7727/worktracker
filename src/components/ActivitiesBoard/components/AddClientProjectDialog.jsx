@@ -36,7 +36,7 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '24px',
+          borderRadius: 0,
           border: '4px solid',
           borderColor: 'text.primary',
           boxShadow: (theme) =>
@@ -86,7 +86,7 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
             fontWeight: 900,
             px: 3,
             py: 1,
-            borderRadius: '16px',
+            borderRadius: 0,
             backgroundImage: 'none',
             bgcolor: 'background.paper',
             color: 'text.primary',

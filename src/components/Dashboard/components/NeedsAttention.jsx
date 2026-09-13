@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Typography, Stack, Skeleton } from '@mui/material'
-import { Star, NotificationsActive } from '@mui/icons-material'
+import { Box, Typography, Skeleton } from '@mui/material'
+import { Star } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../../../context/AppContext'
 import { loadProjects } from '../../../utils/projectsManager'
@@ -68,58 +68,83 @@ const NeedsAttention = () => {
     load()
   }, [selectedDirectory, refreshTrigger])
 
-  if (items === null)
-    return (
-      <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 3 }} />
-    )
+  if (items === null) return <Skeleton variant="rectangular" height={80} />
   if (items.length === 0) return null
 
   return (
-    <Box>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
-        <NotificationsActive sx={{ fontSize: 20, opacity: 0.7 }} />
+    <Box component="section">
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 2,
+          mb: 1.5,
+        }}
+      >
         <Typography
-          variant="body1"
+          component="h2"
           sx={{
+            fontSize: '1.6rem',
             fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-            opacity: 0.7,
+            letterSpacing: '-0.035em',
           }}
         >
-          Needs Attention
+          Needs attention
         </Typography>
-      </Stack>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-        Overdue and due-this-week todos first.
-      </Typography>
-      <Stack spacing={1}>
-        {items.map((item) => (
+        <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
+          Overdue first, then due this week
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          border: '3px solid',
+          borderColor: 'text.primary',
+          borderLeft: '10px solid',
+          borderLeftColor: '#c62f22',
+          bgcolor: 'background.paper',
+        }}
+      >
+        {items.map((item, i) => (
           <Box
             key={item.id}
+            component="button"
+            type="button"
             onClick={() => navigate(`/todos/${item.itemType}/${item.itemId}`)}
             sx={{
-              p: 1.5,
+              width: '100%',
+              px: 2,
+              py: 1.25,
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              border: '2px solid',
-              borderColor: item.important ? 'text.primary' : 'divider',
-              borderRadius: 2,
+              fontFamily: 'inherit',
+              textAlign: 'left',
+              color: 'text.primary',
+              bgcolor: 'transparent',
+              border: 'none',
+              borderTop: i === 0 ? 'none' : '2px solid',
+              borderColor: 'divider',
               cursor: 'pointer',
-              transition: 'all 0.15s',
-              boxShadow: item.important
-                ? (theme) => `3px 3px 0px ${theme.palette.text.primary}`
-                : 'none',
-              '&:hover': { transform: 'translate(-1px, -1px)' },
+              '&:hover': { bgcolor: 'action.hover' },
+              '&:focus-visible': {
+                outline: '3px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: -3,
+              },
             }}
           >
-            {item.important && <Star sx={{ fontSize: 18, color: '#f59e0b' }} />}
+            {item.important && (
+              <Star
+                aria-label="Important"
+                sx={{ fontSize: 18, color: '#f59e0b' }}
+              />
+            )}
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
-                variant="body2"
                 sx={{
-                  fontWeight: item.important ? 800 : 600,
+                  fontWeight: item.important ? 900 : 700,
+                  fontSize: '0.95rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -128,8 +153,11 @@ const NeedsAttention = () => {
                 {item.text}
               </Typography>
               <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, opacity: 0.5, display: 'block' }}
+                sx={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                }}
               >
                 {item.ownerLabel}
               </Typography>
@@ -140,7 +168,7 @@ const NeedsAttention = () => {
             )}
           </Box>
         ))}
-      </Stack>
+      </Box>
     </Box>
   )
 }

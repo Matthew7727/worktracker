@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
-import { Box, Button, TextField, Autocomplete } from '@mui/material'
+import { Box, TextField, Autocomplete, InputBase } from '@mui/material'
 import { getActivityStreamId } from '../../../utils/projectsManager'
+import { InkButton } from '../../shared/ui'
 
 // Inline note editor — renders in the flow of the page (no modal), right where
 // the note will actually live. Keyed by the note identity in the parent, so
@@ -35,8 +36,13 @@ const NoteEditorInline = ({
     [activities, streamById]
   )
 
+  const bandColor = linkedActivity
+    ? streamById[getActivityStreamId(linkedActivity)]?.color
+    : null
+  const isEmpty = !title.trim() && !content.trim()
+
   const handleSubmit = () => {
-    if (!title.trim() && !content.trim()) return
+    if (isEmpty) return
     onSave({
       title: title.trim(),
       content,
@@ -47,126 +53,112 @@ const NoteEditorInline = ({
 
   return (
     <Box
+      component="form"
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose?.()
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit()
+      }}
       sx={{
-        p: 2,
-        mb: 2,
+        mb: 3,
+        breakInside: 'avoid',
+        bgcolor: 'background.paper',
+        border: '3px solid',
+        borderColor: 'text.primary',
+        borderTop: '10px solid',
+        borderTopColor: bandColor || 'text.primary',
+        boxShadow: (t) => `8px 8px 0 ${t.palette.text.primary}`,
       }}
     >
-      <TextField
-        autoFocus
-        placeholder="Name"
-        fullWidth
-        variant="standard"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        InputProps={{ disableUnderline: true }}
-        sx={{
-          mb: 1.5,
-          '& .MuiInputBase-input': { fontWeight: 800, fontSize: '1rem' },
-          '& .MuiInputBase-input::placeholder': {
-            color: 'text.disabled',
-            opacity: 1,
-          },
-        }}
-      />
-      <TextField
-        placeholder="Note"
-        fullWidth
-        multiline
-        minRows={4}
-        variant="standard"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        InputProps={{ disableUnderline: true }}
-        sx={{
-          mb: 1.5,
-          '& .MuiInputBase-input::placeholder': {
-            color: 'text.disabled',
-            opacity: 1,
-          },
-        }}
-      />
-      {!lockActivityId && (
-        <Autocomplete
-          options={groupedActivities}
-          value={linkedActivity}
-          onChange={(_, val) => setLinkedActivity(val)}
-          getOptionLabel={(a) => a.title || ''}
-          groupBy={(a) => streamById[getActivityStreamId(a)]?.name || ''}
-          isOptionEqualToValue={(a, b) => a.id === b.id}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="standard"
-              placeholder="Activity"
-              size="small"
-              InputProps={{ ...params.InputProps, disableUnderline: true }}
-              sx={{
-                '& .MuiInputBase-input::placeholder': {
-                  color: 'text.disabled',
-                  opacity: 1,
-                },
-              }}
-            />
-          )}
-          sx={{ mb: 1.5 }}
+      <Box sx={{ px: 2.25, pt: 1.75, pb: 1 }}>
+        <InputBase
+          autoFocus
+          fullWidth
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          sx={{
+            fontWeight: 900,
+            fontSize: '1.2rem',
+            letterSpacing: '-0.02em',
+            mb: 0.5,
+          }}
         />
+        <InputBase
+          fullWidth
+          multiline
+          minRows={5}
+          placeholder="Write the note"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          sx={{ fontSize: '0.95rem', lineHeight: 1.55 }}
+        />
+      </Box>
+      {!lockActivityId && (
+        <Box
+          sx={{
+            px: 2.25,
+            py: 1,
+            borderTop: '2px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Autocomplete
+            options={groupedActivities}
+            value={linkedActivity}
+            onChange={(_, val) => setLinkedActivity(val)}
+            getOptionLabel={(a) => a.title || ''}
+            groupBy={(a) => streamById[getActivityStreamId(a)]?.name || ''}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="standard"
+                placeholder="Link to an activity (optional)"
+                size="small"
+                InputProps={{ ...params.InputProps, disableUnderline: true }}
+                sx={{ '& input': { fontWeight: 700, fontSize: '0.88rem' } }}
+              />
+            )}
+          />
+        </Box>
       )}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          px: 1.5,
+          py: 1.25,
+          borderTop: '3px solid',
+          borderColor: 'text.primary',
+          bgcolor: 'background.subtle',
+        }}
+      >
         {note && onDelete && (
-          <Button
+          <InkButton
+            tone="ghost"
+            size="sm"
             onClick={onDelete}
-            sx={{
-              fontWeight: 900,
-              color: 'error.main',
-              mr: 'auto',
-              '&:hover': { bgcolor: 'transparent', opacity: 0.7 },
-            }}
+            sx={{ color: 'error.main', mr: 'auto' }}
           >
             Delete
-          </Button>
+          </InkButton>
         )}
-        <Button
+        <InkButton
+          tone="ghost"
+          size="sm"
           onClick={onClose}
-          sx={{
-            fontWeight: 900,
-            color: 'text.secondary',
-            ml: note && onDelete ? 0 : 'auto',
-            '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
-          }}
+          sx={{ ml: note && onDelete ? 0 : 'auto' }}
         >
           Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!title.trim() && !content.trim()}
-          sx={{
-            fontWeight: 900,
-            px: 3,
-            py: 1,
-            borderRadius: '16px',
-            backgroundImage: 'none',
-            bgcolor: 'background.paper',
-            color: 'text.primary',
-            border: '3px solid',
-            borderColor: 'text.primary',
-            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
-            '&:hover': {
-              bgcolor: 'action.hover',
-              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
-              transform: 'translate(2px, 2px)',
-            },
-            '&.Mui-disabled': {
-              opacity: 0.5,
-              boxShadow: 'none',
-              transform: 'none',
-              border: '3px solid #ccc',
-            },
-          }}
-        >
-          Save Note
-        </Button>
+        </InkButton>
+        <InkButton type="submit" size="sm" disabled={isEmpty}>
+          Save note
+        </InkButton>
       </Box>
     </Box>
   )

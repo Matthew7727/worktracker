@@ -83,13 +83,12 @@ const MomentumTrends = ({ entries }) => {
         <Typography
           variant="h6"
           sx={{
+            fontSize: '1.6rem',
             fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-            opacity: 0.7,
+            letterSpacing: '-0.035em',
           }}
         >
-          Momentum — last {WEEKS_SHOWN} weeks
+          Momentum over the last {WEEKS_SHOWN} weeks
         </Typography>
         {deltaPct !== null && (
           <Stack direction="row" alignItems="center" spacing={0.75}>
@@ -148,7 +147,7 @@ const MomentumTrends = ({ entries }) => {
                     : '5px',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '8px 8px 0 0',
+                borderRadius: 0,
                 overflow: 'hidden',
                 border: weekTotals[i] > 0 ? '2px solid' : '2px dashed',
                 borderColor: weekTotals[i] > 0 ? 'text.primary' : 'divider',

@@ -71,7 +71,7 @@ const GhostAddRow = ({ label = 'Add todo', onAdd, sx = {} }) => {
               outline: '2px solid',
               outlineColor: 'primary.main',
               outlineOffset: 2,
-              borderRadius: '6px',
+              borderRadius: 0,
             },
           }}
         >
@@ -80,7 +80,7 @@ const GhostAddRow = ({ label = 'Add todo', onAdd, sx = {} }) => {
             sx={{
               width: 18,
               height: 18,
-              borderRadius: '50%',
+              borderRadius: 0,
               border: '1.5px solid',
               borderColor: 'text.secondary',
               display: 'inline-flex',

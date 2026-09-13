@@ -34,7 +34,7 @@ const WelcomeScreen = () => {
         sx={{
           p: 8,
           maxWidth: '600px',
-          borderRadius: '32px',
+          borderRadius: 0,
           border: '4px solid',
           borderColor: 'text.primary',
           textAlign: 'center',

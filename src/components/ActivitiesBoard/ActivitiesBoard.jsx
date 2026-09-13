@@ -6,13 +6,12 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Paper,
   Checkbox,
 } from '@mui/material'
 import {
   Add,
   Delete,
-  CheckCircle,
+  Check,
   ChevronRight,
   ExpandMore,
 } from '@mui/icons-material'
@@ -49,46 +48,22 @@ import ClientProjectsList from './components/ClientProjectsList'
 import AddActivityDialog from './components/AddActivityDialog'
 import AddClientProjectDialog from './components/AddClientProjectDialog'
 import ConfirmDialog from './components/ConfirmDialog'
-import StreamTag from './components/StreamTag'
-import { filterTabStyles } from './ActivitiesBoard.styles'
 import TodoAgeChip from '../shared/TodoAgeChip'
 import TodoDueChip from '../shared/TodoDueChip'
 import { sortTasksByUrgency } from '../../utils/taskUrgency'
+import {
+  InkButton,
+  PageHeader,
+  SectionHeader,
+  Segmented,
+  EmptyState,
+  MONO,
+} from '../shared/ui'
 
 // Keep just-completed todos visible briefly so users can catch and undo mistakes.
 const COMPLETED_TODO_GRACE_MS = 5000
 
 // ── Local shared components ───────────────────────────────────────────────────
-
-const SectionHeader = ({ title, count, countLabel, subtitle }) => (
-  <Box sx={{ mb: 2.5 }}>
-    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
-      <Typography variant="h5" sx={{ fontWeight: 900 }}>
-        {title}
-      </Typography>
-      {count !== undefined && (
-        <Typography
-          component="span"
-          sx={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.68rem',
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            color: 'text.secondary',
-            textTransform: 'uppercase',
-          }}
-        >
-          {count} {countLabel}
-        </Typography>
-      )}
-    </Box>
-    {subtitle && (
-      <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-        {subtitle}
-      </Typography>
-    )}
-  </Box>
-)
 
 const NewButton = ({ onAddProject, onAddActivity, showProjects }) => {
   const [anchorEl, setAnchorEl] = useState(null)
@@ -104,45 +79,26 @@ const NewButton = ({ onAddProject, onAddActivity, showProjects }) => {
 
   return (
     <>
-      <Box
-        component="button"
+      <InkButton
+        color="secondary.main"
+        startIcon={<Add />}
         onClick={handleClick}
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 0.75,
-          fontFamily: 'inherit',
-          fontSize: '0.85rem',
-          fontWeight: 900,
-          px: 2.5,
-          py: 1,
-          borderRadius: '25px',
-          border: '2px solid',
-          borderColor: 'text.primary',
-          color: 'text.primary',
-          bgcolor: 'background.paper',
-          cursor: 'pointer',
-          transition: 'all 0.15s ease',
-          '&:hover': {
-            boxShadow: '4px 4px 0px',
-            transform: 'translate(-1px, -1px)',
-          },
-        }}
       >
-        <Add sx={{ fontSize: '1rem' }} />
-        New
-      </Box>
+        {showProjects ? 'New' : 'New activity'}
+      </InkButton>
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem
           onClick={() => {
             setAnchorEl(null)
             onAddProject()
           }}
-          sx={{ fontWeight: 700 }}
+          sx={{ fontWeight: 700, minWidth: 180 }}
         >
           Project
         </MenuItem>
@@ -193,21 +149,16 @@ const ActivityGrid = ({ children }) => (
     sx={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-      gap: 2,
-      alignItems: 'stretch',
+      gap: 2.5,
+      alignItems: 'start',
     }}
   >
     {children}
   </Box>
 )
 
-const MainGoalUrgentCard = ({
-  stream,
-  projects,
-  onOpenProject,
-  onToggleProjectTask,
-}) => {
-  const openTasks = sortTasksByUrgency(
+const getUrgentTasks = (projects) =>
+  sortTasksByUrgency(
     projects.flatMap((project) =>
       (project.tasks || [])
         .filter((task) => !task.completed)
@@ -217,100 +168,89 @@ const MainGoalUrgentCard = ({
           projectTitle: project.title,
         }))
     )
-  ).slice(0, 3)
+  ).slice(0, 4)
 
-  if (openTasks.length === 0) return null
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2.5,
-        borderRadius: '18px',
-        border: '1.5px solid',
-        borderColor: 'divider',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1.5,
-        mb: 2,
-      }}
+const DueNextPanel = ({
+  stream,
+  tasks,
+  onOpenProject,
+  onToggleProjectTask,
+}) => (
+  <Box
+    sx={{
+      border: '3px solid',
+      borderColor: 'text.primary',
+      borderTop: '8px solid',
+      borderTopColor: stream?.color || 'primary.main',
+      bgcolor: 'background.paper',
+    }}
+  >
+    <Box
+      sx={{ px: 2, py: 1.5, borderBottom: '2px solid', borderColor: 'divider' }}
     >
+      <Typography sx={{ fontWeight: 900 }}>Due next</Typography>
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        Earliest due date first, then longest open.
+      </Typography>
+    </Box>
+    {tasks.map((task, i) => (
       <Box
+        key={task.id}
+        onClick={() => onOpenProject(task.projectId)}
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1.5,
-          flexWrap: 'wrap',
+          gap: 1,
+          px: 1.25,
+          py: 1,
+          cursor: 'pointer',
+          borderTop: i === 0 ? 'none' : '2px solid',
+          borderColor: 'divider',
+          '&:hover': { bgcolor: 'action.hover' },
         }}
       >
-        <Box>
-          <Typography sx={{ fontSize: '1.05rem', fontWeight: 800 }}>
-            {stream?.name || 'Main goal'} urgent todos
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Due date first, then longest-open work.
-          </Typography>
-        </Box>
-        <StreamTag stream={stream} label={stream?.abbrev || 'MG'} />
-      </Box>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        {openTasks.map((task) => (
-          <Box
-            key={task.id}
-            onClick={() => onOpenProject(task.projectId)}
+        {onToggleProjectTask && (
+          <Checkbox
+            size="small"
+            checked={task.completed}
+            inputProps={{ 'aria-label': `Complete ${task.text}` }}
+            onClick={(event) => event.stopPropagation()}
+            onChange={() => onToggleProjectTask(task.projectId, task.id)}
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.75,
-              cursor: 'pointer',
-              borderRadius: '12px',
-              px: 0.5,
-              py: 0.75,
-              '&:hover': { bgcolor: 'action.hover' },
+              p: 0.5,
+              color: 'text.primary',
+              '&.Mui-checked': { color: 'primary.main' },
+            }}
+          />
+        )}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontWeight: task.important ? 900 : 700,
+              fontSize: '0.92rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: task.important ? 800 : 600,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {task.text}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', display: 'block' }}
-              >
-                {task.projectTitle}
-              </Typography>
-            </Box>
-            {onToggleProjectTask && (
-              <Checkbox
-                size="small"
-                checked={task.completed}
-                onClick={(event) => event.stopPropagation()}
-                onChange={() => onToggleProjectTask(task.projectId, task.id)}
-                sx={{
-                  p: 0.5,
-                  color: 'text.secondary',
-                  '&.Mui-checked': { color: 'primary.main' },
-                }}
-              />
-            )}
-            <TodoDueChip item={task} />
-            {!task.dueDate && <TodoAgeChip item={task} />}
-          </Box>
-        ))}
+            {task.text}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'text.secondary',
+            }}
+          >
+            {task.projectTitle}
+          </Typography>
+        </Box>
+        <TodoDueChip item={task} />
+        {!task.dueDate && <TodoAgeChip item={task} />}
       </Box>
-    </Paper>
-  )
-}
+    ))}
+  </Box>
+)
 
 const CompletedActivityRow = ({
   activity,
@@ -323,60 +263,77 @@ const CompletedActivityRow = ({
   return (
     <Box
       sx={{
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: '24px minmax(0, 1fr) auto auto 32px',
         alignItems: 'center',
         gap: 1.5,
         py: 1,
-        px: 0.75,
-        borderBottom: '1px solid',
+        px: 1.5,
+        borderTop: '2px solid',
         borderColor: 'divider',
-        '&:last-of-type': { borderBottom: 'none' },
+        '&:first-of-type': { borderTop: 'none' },
         '&:hover .row-delete': { opacity: 1 },
+        '&:hover': { bgcolor: 'action.hover' },
       }}
     >
-      <CheckCircle sx={{ fontSize: '1rem', color: 'primary.main' }} />
+      <Check sx={{ fontSize: '1.1rem', color: 'text.secondary' }} />
       <Typography
-        variant="body2"
         onClick={onOpenDetails}
         sx={{
-          fontWeight: 600,
+          fontWeight: 700,
+          fontSize: '0.9rem',
           color: 'text.secondary',
-          textDecoration: 'line-through',
           cursor: 'pointer',
-          '&:hover': { color: 'text.primary' },
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          '&:hover': { color: 'text.primary', textDecoration: 'underline' },
         }}
       >
         {activity.title}
       </Typography>
-      <StreamTag
-        stream={stream}
-        label={stream?.abbrev || activity.type}
-        muted
-      />
-      <Box sx={{ flex: 1 }} />
-      {activity.completedAt && (
-        <Typography
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <Box
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.66rem',
-            color: 'text.disabled',
-            fontVariantNumeric: 'tabular-nums',
+            width: 10,
+            height: 10,
+            bgcolor: stream?.color || 'text.disabled',
           }}
+        />
+        <Typography
+          sx={{ fontSize: '0.78rem', fontWeight: 700, color: 'text.secondary' }}
         >
-          {activity.completedAt}
+          {stream?.name || activity.type}
         </Typography>
-      )}
+      </Box>
+      <Typography
+        sx={{
+          fontFamily: MONO,
+          fontSize: '0.75rem',
+          color: 'text.secondary',
+          minWidth: 88,
+          textAlign: 'right',
+        }}
+      >
+        {activity.completedAt || ''}
+      </Typography>
       <IconButton
         size="small"
         className="row-delete"
+        aria-label={`Delete ${activity.title}`}
         onClick={() => setConfirmOpen(true)}
-        sx={{ opacity: 0, transition: 'opacity 0.15s', p: 0.25 }}
+        sx={{
+          opacity: 0,
+          transition: 'opacity 0.15s',
+          p: 0.25,
+          '&:focus-visible': { opacity: 1 },
+        }}
       >
-        <Delete sx={{ fontSize: '0.9rem' }} />
+        <Delete sx={{ fontSize: '1rem' }} />
       </IconButton>
       <ConfirmDialog
         open={confirmOpen}
-        title="Delete Activity"
+        title="Delete activity"
         message={`"${activity.title}" will be permanently removed.`}
         confirmLabel="Delete"
         danger
@@ -664,123 +621,134 @@ const ActivitiesBoard = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  const allActiveTopLevel = getTopLevelActivities(data.activities).filter(
+    (a) => a.status === 'active'
+  )
+  const urgentTasks = projectHierarchy
+    ? getUrgentTasks(data.clientProjects.filter((p) => p.status === 'active'))
+    : []
+  const activeProjectCount = data.clientProjects.filter(
+    (p) => p.status === 'active'
+  ).length
+
+  const filterOptions = [
+    { value: 'ALL', label: 'All', meta: allActiveTopLevel.length },
+    ...activityStreams.map((s) => ({
+      value: s.id,
+      label: s.name,
+      color: s.color,
+      swatch: s.color,
+      meta: allActiveTopLevel.filter((a) => getActivityStreamId(a) === s.id)
+        .length,
+    })),
+  ]
+
+  const renderCard = (activity) => (
+    <SortableActivity key={activity.id} id={activity.id} disabled={!dndEnabled}>
+      {(dragHandle) => (
+        <ActivityCard dragHandle={dragHandle} {...cardPropsFor(activity)} />
+      )}
+    </SortableActivity>
+  )
+
   return (
-    <Box sx={{ pb: 6 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 4,
-        }}
+    <Box sx={{ maxWidth: 1280, mx: 'auto', width: '100%', pb: 8 }}>
+      <PageHeader
+        title={projectHierarchy ? 'Projects & activities' : 'Activities'}
+        meta={
+          projectHierarchy
+            ? `${activeProjectCount} active ${activeProjectCount === 1 ? 'project' : 'projects'}, ${allActiveTopLevel.length} ${allActiveTopLevel.length === 1 ? 'activity' : 'activities'}`
+            : `${allActiveTopLevel.length} active`
+        }
       >
-        <Typography variant="h4" sx={{ fontWeight: 900 }}>
-          Projects & Activities
-        </Typography>
         <NewButton
           showProjects={projectHierarchy}
           onAddProject={() => setAddProjectOpen(true)}
           onAddActivity={() => setAddActivityOpen(true)}
         />
-      </Box>
+      </PageHeader>
 
       {/* ── Main focus project pipeline ── */}
       {projectHierarchy && (
-        <Box sx={{ mb: 5 }}>
+        <Box component="section" sx={{ mb: 7 }}>
           <SectionHeader
-            title={mainFocusStream?.name || 'Main Focus'}
-            count={data.clientProjects.length}
-            countLabel={
-              data.clientProjects.length === 1 ? 'project' : 'projects'
-            }
-            subtitle="Dated engagements with a start, an end, and a status."
+            title={mainFocusStream?.name || 'Main focus'}
+            meta={`${data.clientProjects.length} ${data.clientProjects.length === 1 ? 'project' : 'projects'}`}
+            subtitle="Dated engagements with a start, an end and a status."
           />
-          <MainGoalUrgentCard
-            stream={
-              mainFocusStream && {
-                ...mainFocusStream,
-                abbrev: getStreamAbbrev(mainFocusStream),
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                lg: urgentTasks.length ? 'minmax(0, 1fr) 360px' : '1fr',
+              },
+              gap: 3,
+              alignItems: 'start',
+            }}
+          >
+            <ClientProjectsList
+              projects={data.clientProjects}
+              accentColor={mainFocusStream?.color}
+              onToggleStatus={handleToggleClientProjectStatus}
+              onDelete={handleDeleteClientProject}
+              onRename={handleRenameClientProject}
+              onOpenDetails={(projectId) =>
+                navigate(`/todos/project/${projectId}`)
               }
-            }
-            projects={data.clientProjects.filter(
-              (project) => project.status === 'active'
+            />
+            {urgentTasks.length > 0 && (
+              <DueNextPanel
+                stream={mainFocusStream}
+                tasks={urgentTasks}
+                onOpenProject={(projectId) =>
+                  navigate(`/todos/project/${projectId}`)
+                }
+                onToggleProjectTask={handleToggleClientProjectTask}
+              />
             )}
-            onOpenProject={(projectId) =>
-              navigate(`/todos/project/${projectId}`)
-            }
-            onToggleProjectTask={handleToggleClientProjectTask}
-          />
-          <ClientProjectsList
-            projects={data.clientProjects}
-            onToggleStatus={handleToggleClientProjectStatus}
-            onDelete={handleDeleteClientProject}
-            onRename={handleRenameClientProject}
-            onOpenDetails={(projectId) =>
-              navigate(`/todos/project/${projectId}`)
-            }
-          />
+          </Box>
         </Box>
       )}
 
       {/* ── Activities ── */}
-      <Box sx={{ mb: 5 }}>
+      <Box component="section">
         <SectionHeader
           title="Activities"
-          count={activeTopLevel.length}
-          countLabel="active"
+          meta={`${activeTopLevel.length} active`}
+          subtitle={
+            dndEnabled
+              ? 'Drag a card by its handle to reorder.'
+              : 'Show all streams to reorder.'
+          }
+          sx={{ flexWrap: 'wrap', mb: 2.5 }}
+          action={
+            activityStreams.length > 1 && (
+              <Segmented
+                size="sm"
+                ariaLabel="Filter by stream"
+                value={activityFilter}
+                onChange={setActivityFilter}
+                options={filterOptions}
+              />
+            )
+          }
         />
 
-        {/* Filter tabs */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-          <Box
-            component="button"
-            onClick={() => setActivityFilter('ALL')}
-            sx={filterTabStyles(
-              activityFilter === 'ALL',
-              'text.primary',
-              'background.default'
-            )}
-          >
-            All
-          </Box>
-          {activityStreams.map((s) => (
-            <Box
-              key={s.id}
-              component="button"
-              onClick={() => setActivityFilter(s.id)}
-              sx={filterTabStyles(activityFilter === s.id, s.color, '#000000')}
-            >
-              {s.name}
-            </Box>
-          ))}
-        </Box>
-
         {activeTopLevel.length === 0 && archivedActivities.length === 0 ? (
-          <Box
-            sx={{
-              py: 6,
-              textAlign: 'center',
-              border: '2px dashed',
-              borderColor: 'divider',
-              borderRadius: '20px',
-              color: 'text.secondary',
-            }}
-          >
-            <Typography variant="body2">
-              No activities yet.{' '}
-              <Box
-                component="span"
-                sx={{
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  fontWeight: 700,
-                }}
+          <EmptyState
+            title="No activities here yet."
+            action={
+              <InkButton
+                startIcon={<Add />}
                 onClick={() => setAddActivityOpen(true)}
               >
-                Add one
-              </Box>
-            </Typography>
-          </Box>
+                New activity
+              </InkButton>
+            }
+          >
+            Activities are ongoing pieces of work with their own todos.
+          </EmptyState>
         ) : (
           <>
             {activeTopLevel.length > 0 && (
@@ -800,22 +768,7 @@ const ActivitiesBoard = () => {
                         activity.id
                       ).filter((c) => c.status === 'active' && typeMatch(c))
 
-                      if (children.length === 0) {
-                        return (
-                          <SortableActivity
-                            key={activity.id}
-                            id={activity.id}
-                            disabled={!dndEnabled}
-                          >
-                            {(dragHandle) => (
-                              <ActivityCard
-                                dragHandle={dragHandle}
-                                {...cardPropsFor(activity)}
-                              />
-                            )}
-                          </SortableActivity>
-                        )
-                      }
+                      if (children.length === 0) return renderCard(activity)
 
                       return (
                         <Box
@@ -826,46 +779,23 @@ const ActivitiesBoard = () => {
                             gap: 1.5,
                           }}
                         >
-                          <SortableActivity
-                            id={activity.id}
-                            disabled={!dndEnabled}
-                          >
-                            {(dragHandle) => (
-                              <ActivityCard
-                                dragHandle={dragHandle}
-                                {...cardPropsFor(activity)}
-                              />
-                            )}
-                          </SortableActivity>
+                          {renderCard(activity)}
                           <Box
                             sx={{
                               display: 'flex',
                               flexDirection: 'column',
                               gap: 1.5,
                               pl: 2,
-                              ml: 1,
-                              borderLeft: '2px solid',
-                              borderColor: 'divider',
+                              ml: 2,
+                              borderLeft: '3px solid',
+                              borderColor: 'text.primary',
                             }}
                           >
                             <SortableContext
                               items={children.map((c) => c.id)}
                               strategy={verticalListSortingStrategy}
                             >
-                              {children.map((child) => (
-                                <SortableActivity
-                                  key={child.id}
-                                  id={child.id}
-                                  disabled={!dndEnabled}
-                                >
-                                  {(dragHandle) => (
-                                    <ActivityCard
-                                      dragHandle={dragHandle}
-                                      {...cardPropsFor(child)}
-                                    />
-                                  )}
-                                </SortableActivity>
-                              ))}
+                              {children.map(renderCard)}
                             </SortableContext>
                           </Box>
                         </Box>
@@ -877,45 +807,48 @@ const ActivitiesBoard = () => {
             )}
 
             {archivedActivities.length > 0 && (
-              <Box sx={{ mt: activeTopLevel.length > 0 ? 4 : 0 }}>
+              <Box sx={{ mt: activeTopLevel.length > 0 ? 5 : 0 }}>
                 <Box
                   component="button"
+                  type="button"
+                  aria-expanded={showCompleted}
                   onClick={() => setShowCompleted((s) => !s)}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1,
+                    gap: 0.75,
                     border: 'none',
                     background: 'none',
-                    p: 0.5,
-                    mb: 0.5,
+                    p: 0,
+                    mb: 1,
                     fontFamily: 'inherit',
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.1em',
-                    color: 'text.secondary',
+                    fontSize: '1rem',
+                    fontWeight: 900,
+                    color: 'text.primary',
                     cursor: 'pointer',
                   }}
                 >
-                  {showCompleted ? (
-                    <ExpandMore sx={{ fontSize: '0.9rem' }} />
-                  ) : (
-                    <ChevronRight sx={{ fontSize: '0.9rem' }} />
-                  )}
-                  COMPLETED
-                  <Typography
+                  {showCompleted ? <ExpandMore /> : <ChevronRight />}
+                  Completed
+                  <Box
                     component="span"
                     sx={{
-                      fontFamily: '"JetBrains Mono", monospace',
-                      fontSize: '0.66rem',
-                      color: 'text.disabled',
+                      fontFamily: MONO,
+                      fontSize: '0.8rem',
+                      color: 'text.secondary',
                     }}
                   >
                     {archivedActivities.length}
-                  </Typography>
+                  </Box>
                 </Box>
                 {showCompleted && (
-                  <Box>
+                  <Box
+                    sx={{
+                      border: '3px solid',
+                      borderColor: 'text.primary',
+                      bgcolor: 'background.paper',
+                    }}
+                  >
                     {archivedActivities.map((activity) => (
                       <CompletedActivityRow
                         key={activity.id}

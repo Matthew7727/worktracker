@@ -6,7 +6,7 @@ const Tile = ({ value, label, color }) => (
     sx={{
       border: '3px solid',
       borderColor: 'text.primary',
-      borderRadius: '14px',
+      borderRadius: 0,
       bgcolor: 'background.paper',
       p: 2.5,
     }}
@@ -25,9 +25,8 @@ const Tile = ({ value, label, color }) => (
     <Typography
       sx={{
         fontWeight: 700,
-        textTransform: 'uppercase',
         fontSize: 11,
-        letterSpacing: '0.06em',
+
         opacity: 0.6,
         mt: 1,
       }}

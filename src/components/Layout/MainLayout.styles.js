@@ -43,7 +43,6 @@ export const navItemStyles = (isActive) => ({
 })
 
 export const searchFieldStyles = {
-  borderRadius: '12px',
   bgcolor: 'background.paper',
   '& fieldset': { borderWidth: '2px', borderColor: 'text.primary' },
   maxWidth: '400px',
@@ -52,7 +51,6 @@ export const searchFieldStyles = {
 
 export const searchDialogStyles = {
   p: 2,
-  borderRadius: '24px',
   border: '4px solid',
   borderColor: 'text.primary',
   bgcolor: 'background.paper',
@@ -63,8 +61,7 @@ export const alertStyles = {
   fontWeight: 900,
   border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '16px',
-  boxShadow: '0 8px 0', // Shadow color inherits or needs specific handling
+  boxShadow: '4px 4px 0', // Shadow color inherits or needs specific handling
   color: 'text.primary', // Ensure text is visible
   '& .MuiAlert-icon': { fontSize: '1.5rem' },
 }
@@ -72,23 +69,23 @@ export const alertStyles = {
 export const fabStyles = {
   border: '3px solid',
   borderColor: 'text.primary',
-  boxShadow: '0 6px 0',
+  boxShadow: '4px 4px 0',
   color: 'text.primary', // Just in case
-  '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 0' },
+  '&:hover': { transform: 'translate(-2px, -2px)', boxShadow: '6px 6px 0' },
 }
 
 export const toolbarIconStyles = {
   border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '50%',
   p: 1.5,
-  transition: 'all 0.2s',
+  transition: 'all 0.15s',
   color: 'text.primary',
   '&:hover': {
     bgcolor: 'primary.main',
     color: 'background.paper',
     borderColor: 'primary.main', // Match border on hover
-    transform: 'translateY(-2px)',
+    transform: 'translate(-2px, -2px)',
+    boxShadow: '3px 3px 0 currentColor',
   },
 }
 

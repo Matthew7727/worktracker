@@ -4,7 +4,7 @@ import { Box, Typography } from '@mui/material'
 const cardSx = {
   border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '24px',
+  borderRadius: 0,
   bgcolor: 'background.paper',
   p: 3,
   flex: 1,
@@ -28,7 +28,7 @@ const TagInsights = ({ tagCounts }) => {
   return (
     <Box sx={cardSx}>
       <Typography sx={{ fontWeight: 900, fontSize: 16, mb: 2 }}>
-        Most-used tags · last 90 days
+        Most-used tags in the last 90 days
       </Typography>
       <Box
         sx={{
@@ -45,7 +45,7 @@ const TagInsights = ({ tagCounts }) => {
             sx={{
               border: '2px solid',
               borderColor: 'text.primary',
-              borderRadius: '12px',
+              borderRadius: 0,
               px: 1.5,
               py: 0.5,
               bgcolor: 'background.subtle',

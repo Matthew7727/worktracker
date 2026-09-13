@@ -2,18 +2,13 @@ import React, { useState } from 'react'
 import {
   Box,
   Typography,
-  Paper,
-  Stack,
-  TextField,
   IconButton,
-  Button,
   Switch,
   Tooltip,
   Menu,
-  Chip,
+  InputBase,
 } from '@mui/material'
 import {
-  Tune,
   Star,
   StarBorder,
   Archive,
@@ -38,6 +33,8 @@ import {
   getArchivedStreams,
   nextPaletteColor,
 } from '../../utils/streamConfig'
+import { SettingsSection, SettingRow } from './SettingsSection'
+import { InkButton } from '../shared/ui'
 
 const ColorSwatch = ({ stream, onPick }) => {
   const [anchorEl, setAnchorEl] = useState(null)
@@ -46,18 +43,22 @@ const ColorSwatch = ({ stream, onPick }) => {
       <Tooltip title="Change colour">
         <Box
           component="button"
+          type="button"
+          aria-label={`Change colour for ${stream.name}`}
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
+            width: 36,
+            height: 36,
             bgcolor: stream.color,
             border: '3px solid',
             borderColor: 'text.primary',
             cursor: 'pointer',
             flexShrink: 0,
-            '&:hover': { transform: 'scale(1.15)' },
-            transition: 'all 0.15s',
+            '&:focus-visible': {
+              outline: '3px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: 2,
+            },
           }}
         />
       </Tooltip>
@@ -66,26 +67,32 @@ const ColorSwatch = ({ stream, onPick }) => {
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
       >
-        <Box sx={{ display: 'flex', gap: 1, px: 2, py: 1 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(6, 32px)',
+            gap: 0.75,
+            px: 1.5,
+            py: 1,
+          }}
+        >
           {STREAM_PALETTE.map((c) => (
             <Box
               key={c}
               component="button"
+              type="button"
+              aria-label={`Use ${c}`}
               onClick={() => {
                 onPick(c)
                 setAnchorEl(null)
               }}
               sx={{
-                width: 26,
-                height: 26,
-                borderRadius: '50%',
+                width: 32,
+                height: 32,
                 bgcolor: c,
-                border: '3px solid',
-                borderColor:
-                  stream.color === c ? 'text.primary' : 'transparent',
+                border: stream.color === c ? '4px solid' : '2px solid',
+                borderColor: 'text.primary',
                 cursor: 'pointer',
-                '&:hover': { transform: 'scale(1.15)' },
-                transition: 'all 0.15s',
               }}
             />
           ))}
@@ -114,11 +121,11 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
         display: 'flex',
         alignItems: 'center',
         gap: 2,
-        p: 2.5,
-        bgcolor: 'action.hover',
-        borderRadius: '16px',
-        border: '3px solid',
-        borderColor: 'text.primary',
+        px: 3,
+        py: 1.5,
+        borderTop: '2px solid',
+        borderColor: 'divider',
+        '&:first-of-type': { borderTop: 'none' },
       }}
     >
       <ColorSwatch
@@ -129,10 +136,10 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
       />
 
       {editing ? (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
-          <TextField
-            size="small"
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
+          <InputBase
             fullWidth
+            autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
@@ -142,14 +149,20 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
                 setEditing(false)
               }
             }}
-            autoFocus
-            inputProps={{ maxLength: 40 }}
+            inputProps={{ maxLength: 40, 'aria-label': 'Stream name' }}
+            sx={{
+              fontWeight: 800,
+              fontSize: '1.05rem',
+              borderBottom: '3px solid',
+              borderColor: 'text.primary',
+            }}
           />
-          <IconButton size="small" onClick={saveRename}>
+          <IconButton size="small" aria-label="Save name" onClick={saveRename}>
             <Check fontSize="small" />
           </IconButton>
           <IconButton
             size="small"
+            aria-label="Cancel rename"
             onClick={() => {
               setName(stream.name)
               setEditing(false)
@@ -157,34 +170,51 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
           >
             <Close fontSize="small" />
           </IconButton>
-        </Stack>
+        </Box>
       ) : (
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          sx={{ flex: 1, minWidth: 0 }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.25,
+            flex: 1,
+            minWidth: 0,
+          }}
         >
-          <Typography sx={{ fontWeight: 900, wordBreak: 'break-word' }}>
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: '1.05rem',
+              wordBreak: 'break-word',
+            }}
+          >
             {stream.name}
           </Typography>
           {stream.mainFocus && (
-            <Chip
-              label="MAIN GOAL"
-              size="small"
+            <Box
               sx={{
-                height: 20,
-                fontWeight: 900,
-                fontSize: '0.6rem',
+                px: 0.75,
+                py: 0.1,
+                fontSize: '0.75rem',
+                fontWeight: 800,
                 bgcolor: stream.color,
                 color: '#000',
+                border: '2px solid',
+                borderColor: 'text.primary',
+                whiteSpace: 'nowrap',
               }}
-            />
+            >
+              Main goal
+            </Box>
           )}
-          <IconButton size="small" onClick={() => setEditing(true)}>
+          <IconButton
+            size="small"
+            aria-label={`Rename ${stream.name}`}
+            onClick={() => setEditing(true)}
+          >
             <Edit fontSize="small" />
           </IconButton>
-        </Stack>
+        </Box>
       )}
 
       <Tooltip
@@ -192,11 +222,14 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
       >
         <span>
           <IconButton
+            aria-label="Make main goal"
             onClick={() =>
               onUpdate((config) => setMainFocus(config, stream.id))
             }
             disabled={stream.mainFocus}
-            sx={{ color: stream.mainFocus ? '#f59e0b' : 'text.disabled' }}
+            sx={{
+              color: stream.mainFocus ? '#f59e0b !important' : 'text.secondary',
+            }}
           >
             {stream.mainFocus ? <Star /> : <StarBorder />}
           </IconButton>
@@ -207,11 +240,12 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
         title={
           canArchive
             ? 'Archive stream (history is kept)'
-            : 'Cannot archive — keep at least two active streams, and pick a different main goal first'
+            : 'To archive, keep at least two active streams and pick a different main goal first'
         }
       >
         <span>
           <IconButton
+            aria-label="Archive stream"
             onClick={() =>
               onUpdate((config) => setStreamArchived(config, stream.id, true))
             }
@@ -225,32 +259,9 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
   )
 }
 
-const FeatureToggle = ({ title, description, checked, onChange }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      p: 2.5,
-      bgcolor: 'action.hover',
-      borderRadius: '16px',
-      border: '3px solid',
-      borderColor: 'text.primary',
-    }}
-  >
-    <Box sx={{ pr: 2 }}>
-      <Typography sx={{ fontWeight: 900 }}>{title}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, opacity: 0.7 }}>
-        {description}
-      </Typography>
-    </Box>
-    <Switch checked={checked} onChange={(e) => onChange(e.target.checked)} />
-  </Box>
-)
-
 /**
- * Settings card for managing the workspace's streams: rename, recolour,
- * archive (never delete), switch the main goal, and toggle optional features.
+ * Settings sections for managing the workspace's streams (rename, recolour,
+ * archive, main goal) and the optional features they unlock.
  */
 const StreamSettings = () => {
   const {
@@ -266,6 +277,7 @@ const StreamSettings = () => {
 
   const active = getActiveStreams(streamConfig)
   const archived = getArchivedStreams(streamConfig)
+  const atMax = active.length >= MAX_STREAMS
 
   const applyUpdate = async (fn) => {
     try {
@@ -286,82 +298,78 @@ const StreamSettings = () => {
   }
 
   return (
-    <Paper
-      sx={{
-        p: 6,
-        borderRadius: '40px',
-        border: '4px solid',
-        borderColor: 'text.primary',
-        boxShadow: (theme) => `10px 10px 0px ${theme.palette.text.primary}`,
-      }}
-    >
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
-        <Tune sx={{ fontSize: '2.5rem' }} />
-        <Typography variant="h3" sx={{ fontWeight: 950 }}>
-          Work Streams
-        </Typography>
-      </Stack>
+    <>
+      <SettingsSection
+        id="streams"
+        title="Work streams"
+        description="The streams your days are split into. Rename or recolour them any time and your history follows. Star one as your main goal and the dashboard leads with it."
+        action={
+          !adding && (
+            <InkButton
+              tone="outline"
+              size="sm"
+              startIcon={<Add />}
+              onClick={() => setAdding(true)}
+              disabled={atMax}
+            >
+              {atMax ? `Maximum ${MAX_STREAMS}` : 'Add stream'}
+            </InkButton>
+          )
+        }
+      >
+        <Box>
+          {active.map((s) => (
+            <StreamRow
+              key={s.id}
+              stream={s}
+              canArchive={active.length > MIN_STREAMS && !s.mainFocus}
+              onUpdate={applyUpdate}
+            />
+          ))}
+        </Box>
 
-      <Typography variant="body1" sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}>
-        The streams your days are split into. Rename or recolour them any time —
-        your history is remapped automatically. Star one as your main goal and
-        the dashboard follows your priorities.
-      </Typography>
-
-      <Stack spacing={2} sx={{ mb: 3 }}>
-        {active.map((s) => (
-          <StreamRow
-            key={s.id}
-            stream={s}
-            canArchive={active.length > MIN_STREAMS && !s.mainFocus}
-            onUpdate={applyUpdate}
-          />
-        ))}
-      </Stack>
-
-      {adding ? (
-        <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder="New stream name…"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            autoFocus
-            inputProps={{ maxLength: 40 }}
-          />
-          <Button
-            variant="contained"
-            onClick={handleAdd}
-            sx={{ fontWeight: 900 }}
+        {adding && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 3,
+              py: 1.5,
+              borderTop: '3px solid',
+              borderColor: 'text.primary',
+              bgcolor: 'background.subtle',
+            }}
           >
-            Add
-          </Button>
-          <Button onClick={() => setAdding(false)} sx={{ fontWeight: 900 }}>
-            Cancel
-          </Button>
-        </Stack>
-      ) : (
-        <Button
-          startIcon={<Add />}
-          onClick={() => setAdding(true)}
-          disabled={active.length >= MAX_STREAMS}
-          sx={{ mb: 3, fontWeight: 900 }}
-        >
-          Add Stream{active.length >= MAX_STREAMS ? ' (max reached)' : ''}
-        </Button>
-      )}
+            <InputBase
+              fullWidth
+              autoFocus
+              placeholder="New stream name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAdd()
+                if (e.key === 'Escape') setAdding(false)
+              }}
+              inputProps={{ maxLength: 40, 'aria-label': 'New stream name' }}
+              sx={{ fontWeight: 800 }}
+            />
+            <InkButton tone="ghost" size="sm" onClick={() => setAdding(false)}>
+              Cancel
+            </InkButton>
+            <InkButton size="sm" onClick={handleAdd} disabled={!newName.trim()}>
+              Add stream
+            </InkButton>
+          </Box>
+        )}
 
-      {archived.length > 0 && (
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 900, opacity: 0.6, mb: 1.5, letterSpacing: 1 }}
-          >
-            ARCHIVED
-          </Typography>
-          <Stack spacing={1}>
+        {archived.length > 0 && (
+          <Box sx={{ borderTop: '3px solid', borderColor: 'text.primary' }}>
+            <Typography
+              sx={{ px: 3, pt: 1.5, fontWeight: 800, color: 'text.secondary' }}
+            >
+              Archived
+            </Typography>
             {archived.map((s) => (
               <Box
                 key={s.id}
@@ -369,35 +377,40 @@ const StreamSettings = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
-                  p: 1.5,
-                  borderRadius: '12px',
-                  border: '2px dashed',
-                  borderColor: 'divider',
-                  opacity: 0.7,
+                  px: 3,
+                  py: 0.75,
                 }}
               >
                 <Box
                   sx={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
+                    width: 16,
+                    height: 16,
                     bgcolor: s.color,
-                    flexShrink: 0,
+                    border: '2px solid',
+                    borderColor: 'text.primary',
+                    opacity: 0.5,
                   }}
                 />
-                <Typography sx={{ flex: 1, fontWeight: 700 }}>
+                <Typography
+                  sx={{ flex: 1, fontWeight: 700, color: 'text.secondary' }}
+                >
                   {s.name}
                 </Typography>
-                <Tooltip title="Restore stream">
+                <Tooltip
+                  title={
+                    atMax ? 'Archive another stream first' : 'Restore stream'
+                  }
+                >
                   <span>
                     <IconButton
                       size="small"
+                      aria-label={`Restore ${s.name}`}
                       onClick={() =>
                         applyUpdate((config) =>
                           setStreamArchived(config, s.id, false)
                         )
                       }
-                      disabled={active.length >= MAX_STREAMS}
+                      disabled={atMax}
                     >
                       <Unarchive fontSize="small" />
                     </IconButton>
@@ -405,35 +418,45 @@ const StreamSettings = () => {
                 </Tooltip>
               </Box>
             ))}
-          </Stack>
-        </Box>
-      )}
+          </Box>
+        )}
+      </SettingsSection>
 
-      <Typography
-        variant="body2"
-        sx={{ fontWeight: 900, opacity: 0.6, mb: 1.5, letterSpacing: 1 }}
+      <SettingsSection
+        id="features"
+        title="Features"
+        description="Optional tools that change what Entries, Activities and the Dashboard show."
       >
-        OPTIONAL FEATURES
-      </Typography>
-      <Stack spacing={2}>
-        <FeatureToggle
-          title="Utilisation target"
-          description={`Track what % of your logged work goes to ${mainFocusStream?.name || 'your main goal'}.`}
-          checked={!!streamConfig.features?.utilisation}
-          onChange={(v) =>
-            applyUpdate((config) => setFeature(config, 'utilisation', v))
-          }
-        />
-        <FeatureToggle
-          title="Project pipeline"
-          description={`Group ${mainFocusStream?.name || 'main goal'} into projects/engagements with their own tasks.`}
-          checked={!!streamConfig.features?.projectHierarchy}
-          onChange={(v) =>
-            applyUpdate((config) => setFeature(config, 'projectHierarchy', v))
-          }
-        />
-      </Stack>
-    </Paper>
+        <SettingRow
+          label="Utilisation target"
+          hint={`Predict what share of a standard week goes to ${mainFocusStream?.name || 'your main goal'}.`}
+        >
+          <Switch
+            checked={!!streamConfig.features?.utilisation}
+            onChange={(e) =>
+              applyUpdate((config) =>
+                setFeature(config, 'utilisation', e.target.checked)
+              )
+            }
+            inputProps={{ 'aria-label': 'Utilisation target' }}
+          />
+        </SettingRow>
+        <SettingRow
+          label="Project pipeline"
+          hint={`Group ${mainFocusStream?.name || 'your main goal'} into dated projects with their own todos.`}
+        >
+          <Switch
+            checked={!!streamConfig.features?.projectHierarchy}
+            onChange={(e) =>
+              applyUpdate((config) =>
+                setFeature(config, 'projectHierarchy', e.target.checked)
+              )
+            }
+            inputProps={{ 'aria-label': 'Project pipeline' }}
+          />
+        </SettingRow>
+      </SettingsSection>
+    </>
   )
 }
 

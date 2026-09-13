@@ -42,7 +42,7 @@ const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
         onKeyDown={(e) => e.key === 'Enter' && submit()}
         sx={{
           '& .MuiInputBase-root': {
-            borderRadius: '10px',
+            borderRadius: 0,
             fontSize: size === 'small' ? '0.85rem' : undefined,
           },
         }}
@@ -55,7 +55,7 @@ const AddRow = ({ placeholder, onAdd, size = 'small', indent = 0 }) => {
         sx={{
           border: '2px solid',
           borderColor: 'divider',
-          borderRadius: '10px',
+          borderRadius: 0,
           width: 38,
           height: 38,
           flexShrink: 0,
@@ -369,7 +369,7 @@ const TaskList = ({
           label="Add a todo"
           onAdd={onAddTask}
           sx={{
-            borderBottom: '1px dashed',
+            borderBottom: '2px solid',
             borderColor: 'divider',
             pb: 0.75,
             mb: 0.5,
@@ -396,19 +396,19 @@ const TaskList = ({
               background: 'none',
               p: 0.5,
               fontFamily: 'inherit',
-              fontSize: '0.7rem',
+              fontSize: '0.88rem',
               fontWeight: 800,
-              letterSpacing: '0.1em',
               color: 'text.secondary',
               cursor: 'pointer',
+              '&:hover': { color: 'text.primary' },
             }}
           >
             {showCompleted ? (
-              <ExpandMore sx={{ fontSize: '0.9rem' }} />
+              <ExpandMore sx={{ fontSize: '1.1rem' }} />
             ) : (
-              <ChevronRight sx={{ fontSize: '0.9rem' }} />
+              <ChevronRight sx={{ fontSize: '1.1rem' }} />
             )}
-            COMPLETED
+            Completed
             <Typography
               component="span"
               sx={{

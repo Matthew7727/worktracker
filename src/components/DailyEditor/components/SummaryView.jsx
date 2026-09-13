@@ -1,159 +1,182 @@
 import React from 'react'
-import { Box, Typography, Fade, Button, Stack, Paper } from '@mui/material'
+import { Box, Typography, Fade } from '@mui/material'
 import { Edit as EditIcon } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeRaw from 'rehype-raw'
 import { resolveEntryStreamId } from '../../../utils/markdownParser'
+import { InkButton, MONO } from '../../shared/ui'
+
+const markdownSx = {
+  fontSize: '1.02rem',
+  lineHeight: 1.65,
+  color: 'text.primary',
+  maxWidth: '68ch',
+  '& p': { mt: 0, mb: 1 },
+  '& p:last-child': { mb: 0 },
+  '& ul, & ol': { pl: 3, my: 0.5 },
+  '& code': {
+    fontFamily: MONO,
+    fontSize: '0.88em',
+    bgcolor: 'action.hover',
+    px: 0.5,
+  },
+}
+
+export const DaySheet = ({ status, onEdit, children }) => (
+  <Fade in={true}>
+    <Box
+      sx={{
+        border: '3px solid',
+        borderColor: 'text.primary',
+        bgcolor: 'background.paper',
+        boxShadow: (t) => `8px 8px 0 ${t.palette.text.primary}`,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          px: 3,
+          py: 2,
+          borderBottom: '3px solid',
+          borderColor: 'text.primary',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 14,
+              height: 14,
+              bgcolor: 'primary.main',
+              border: '2px solid',
+              borderColor: 'text.primary',
+            }}
+          />
+          <Typography sx={{ fontWeight: 900, fontSize: '1.1rem' }}>
+            {status}
+          </Typography>
+        </Box>
+        <InkButton
+          tone="outline"
+          size="sm"
+          startIcon={<EditIcon />}
+          onClick={onEdit}
+        >
+          Edit day
+        </InkButton>
+      </Box>
+      {children}
+    </Box>
+  </Fade>
+)
+
+const StreamRow = ({ stream, children, first }) => (
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr)' },
+      borderTop: first ? 'none' : '3px solid',
+      borderColor: 'text.primary',
+    }}
+  >
+    <Box
+      sx={{
+        px: 3,
+        py: 2.5,
+        borderLeft: '10px solid',
+        borderLeftColor: stream.color,
+        borderRight: { md: '2px solid' },
+        borderRightColor: { md: 'divider' },
+        bgcolor: 'background.subtle',
+      }}
+    >
+      <Typography sx={{ fontWeight: 900, lineHeight: 1.2 }}>
+        {stream.name}
+      </Typography>
+    </Box>
+    <Box
+      sx={{
+        px: 3,
+        py: 2.5,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2.5,
+      }}
+    >
+      {children}
+    </Box>
+  </Box>
+)
 
 const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
   const hasProjectEntries = projectEntries?.some((p) => p.content?.trim())
 
-  return (
-    <Fade in={true}>
-      <Box sx={{ maxWidth: '1000px', mx: 'auto', width: '100%', mt: 4 }}>
-        <Paper
-          sx={{
-            p: 6,
-            borderRadius: '40px',
-            border: '5px solid',
-            borderColor: 'text.primary',
-            boxShadow: (theme) =>
-              `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-            mb: 10,
-          }}
-        >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 6 }}
-          >
-            <Typography
-              variant="h2"
-              sx={{ fontWeight: 950, letterSpacing: '-2px' }}
-            >
-              JOURNAL SUMMARY
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<EditIcon />}
-              onClick={onEdit}
-              sx={{
-                bgcolor: 'text.primary',
-                color: 'background.paper',
-                fontWeight: 900,
-                px: 4,
-                '&:hover': { bgcolor: '#333' },
-              }}
-            >
-              EDIT DAY
-            </Button>
-          </Stack>
+  if (hasProjectEntries) {
+    const rows = streamDefs
+      .map((stream) => ({
+        stream,
+        entries: projectEntries.filter(
+          (p) => resolveEntryStreamId(p) === stream.id && p.content?.trim()
+        ),
+      }))
+      .filter((r) => r.entries.length > 0)
+    const entryCount = rows.reduce((n, r) => n + r.entries.length, 0)
 
-          {hasProjectEntries ? (
-            // New format: per-project entries grouped by stream
-            <Stack spacing={4}>
-              {streamDefs.map((stream) => {
-                const entries = projectEntries.filter(
-                  (p) =>
-                    resolveEntryStreamId(p) === stream.id && p.content?.trim()
-                )
-                if (entries.length === 0) return null
-                const typeColor = stream.color
-                return (
-                  <Box key={stream.id}>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontWeight: 950,
-                        color: typeColor,
-                        mb: 2,
-                        letterSpacing: '1px',
-                      }}
-                    >
-                      {stream.name.toUpperCase()}
-                    </Typography>
-                    <Stack spacing={3}>
-                      {entries.map((project) => (
-                        <Box key={project.title}>
-                          <Typography
-                            sx={{
-                              fontWeight: 900,
-                              fontSize: '1rem',
-                              mb: 1,
-                              pl: 3,
-                              borderLeft: `4px solid`,
-                              borderColor: typeColor,
-                            }}
-                          >
-                            {project.title}
-                          </Typography>
-                          <Box
-                            sx={{
-                              pl: 4,
-                              fontSize: '1.1rem',
-                              lineHeight: 1.6,
-                              color: 'text.secondary',
-                              '& p': { m: 0 },
-                            }}
-                          >
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm, remarkBreaks]}
-                              rehypePlugins={[rehypeRaw]}
-                            >
-                              {project.content}
-                            </ReactMarkdown>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </Box>
-                )
-              })}
-            </Stack>
-          ) : (
-            // Legacy format: stream blobs
-            <Stack spacing={6}>
-              {streamDefs.map((stream) => (
-                <Box key={stream.id}>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 950, color: stream.color, mb: 2 }}
+    return (
+      <DaySheet
+        onEdit={onEdit}
+        status={`Logged ${entryCount} ${entryCount === 1 ? 'entry' : 'entries'} across ${rows.length} ${rows.length === 1 ? 'stream' : 'streams'}`}
+      >
+        {rows.map(({ stream, entries }, i) => (
+          <StreamRow key={stream.id} stream={stream} first={i === 0}>
+            {entries.map((project) => (
+              <Box key={project.title}>
+                <Typography
+                  sx={{ fontWeight: 900, fontSize: '1.05rem', mb: 0.75 }}
+                >
+                  {project.title}
+                </Typography>
+                <Box sx={markdownSx}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    rehypePlugins={[rehypeRaw]}
                   >
-                    {stream.name.toUpperCase()}
-                  </Typography>
-                  <Box
-                    sx={{
-                      pl: 4,
-                      borderLeft: `4px solid ${stream.color}22`,
-                      fontSize: '1.25rem',
-                      lineHeight: 1.6,
-                      color: 'text.secondary',
-                      '& p': { m: 0 },
-                    }}
-                  >
-                    {streams[stream.id] ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkBreaks]}
-                        rehypePlugins={[rehypeRaw]}
-                      >
-                        {streams[stream.id]}
-                      </ReactMarkdown>
-                    ) : (
-                      <Typography sx={{ fontStyle: 'italic', opacity: 0.5 }}>
-                        No entry for this stream.
-                      </Typography>
-                    )}
-                  </Box>
+                    {project.content}
+                  </ReactMarkdown>
                 </Box>
-              ))}
-            </Stack>
+              </Box>
+            ))}
+          </StreamRow>
+        ))}
+      </DaySheet>
+    )
+  }
+
+  return (
+    <DaySheet onEdit={onEdit} status="Logged in the older stream format">
+      {streamDefs.map((stream, i) => (
+        <StreamRow key={stream.id} stream={stream} first={i === 0}>
+          {streams[stream.id] ? (
+            <Box sx={markdownSx}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                rehypePlugins={[rehypeRaw]}
+              >
+                {streams[stream.id]}
+              </ReactMarkdown>
+            </Box>
+          ) : (
+            <Typography sx={{ color: 'text.disabled' }}>
+              Nothing logged for this stream.
+            </Typography>
           )}
-        </Paper>
-      </Box>
-    </Fade>
+        </StreamRow>
+      ))}
+    </DaySheet>
   )
 }
 

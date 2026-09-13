@@ -35,11 +35,10 @@ const StreamBar = ({ label, value, total, color }) => {
 }
 
 const sectionLabel = {
+  fontSize: '1.6rem',
   fontWeight: 900,
-  mb: 3,
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-  opacity: 0.7,
+  letterSpacing: '-0.035em',
+  mb: 2.5,
 }
 
 const StreamAlignment = ({ entries, stats, loading }) => {
@@ -58,10 +57,10 @@ const StreamAlignment = ({ entries, stats, loading }) => {
         alignItems: 'flex-start',
       }}
     >
-      {/* Weekly Intensity */}
+      {/* This week */}
       <Box sx={{ flex: 2, width: '100%' }}>
         <Typography variant="h6" sx={sectionLabel}>
-          Weekly Intensity
+          This week
         </Typography>
         <Box sx={{ minHeight: 250 }}>
           {loading ? (
@@ -76,10 +75,10 @@ const StreamAlignment = ({ entries, stats, loading }) => {
         </Box>
       </Box>
 
-      {/* Stream Alignment */}
+      {/* Stream balance */}
       <Box sx={{ flex: 1, width: '100%' }}>
         <Typography variant="h6" sx={sectionLabel}>
-          Stream Alignment
+          Stream balance
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {loading ? (

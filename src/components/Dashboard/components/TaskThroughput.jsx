@@ -4,7 +4,7 @@ import { Box, Typography, Stack, LinearProgress } from '@mui/material'
 const cardSx = {
   border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '24px',
+  borderRadius: 0,
   bgcolor: 'background.paper',
   p: 3,
   flex: 1,
@@ -26,9 +26,8 @@ const MiniStat = ({ value, label, color }) => (
     <Typography
       sx={{
         fontWeight: 700,
-        textTransform: 'uppercase',
         fontSize: 10,
-        letterSpacing: '0.05em',
+
         opacity: 0.6,
         mt: 0.5,
       }}
@@ -82,7 +81,7 @@ const TaskThroughput = ({ perWeek, totals }) => {
                   bgcolor: empty ? 'transparent' : '#80b621',
                   border: empty ? '2px dashed' : '2px solid',
                   borderColor: empty ? 'divider' : 'text.primary',
-                  borderRadius: '6px 6px 0 0',
+                  borderRadius: 0,
                 }}
               />
             )
