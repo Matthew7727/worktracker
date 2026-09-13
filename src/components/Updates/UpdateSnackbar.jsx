@@ -53,7 +53,7 @@ const UpdateSnackbar = () => {
           p: 3,
           minWidth: 320,
           maxWidth: 420,
-          borderRadius: '20px',
+          borderRadius: 0,
           border: '3px solid',
           borderColor: 'text.primary',
           boxShadow: (theme) => `6px 6px 0px ${theme.palette.text.primary}`,

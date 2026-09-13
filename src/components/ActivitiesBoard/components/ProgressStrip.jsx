@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material'
+import { MONO } from '../../shared/ui'
 
-/** Thin progress bar + "done/total" fraction. Replaces the "1/3 todos complete" sentence. */
+/** Bordered progress bar + "done/total" fraction. */
 const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
   if (!total) return null
   const pct = Math.round((done / total) * 100)
@@ -8,11 +9,16 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
       <Box
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
         sx={{
           flex: 1,
-          height: 5,
-          borderRadius: '3px',
-          bgcolor: 'action.hover',
+          height: 10,
+          border: '2px solid',
+          borderColor: 'text.primary',
+          bgcolor: 'background.paper',
           overflow: 'hidden',
         }}
       >
@@ -20,8 +26,9 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
           sx={{
             width: `${pct}%`,
             height: '100%',
-            borderRadius: '3px',
             bgcolor: color,
+            borderRight: pct > 0 && pct < 100 ? '2px solid' : 'none',
+            borderColor: 'text.primary',
             transition: 'width 0.3s ease',
           }}
         />
@@ -29,11 +36,9 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
       <Typography
         component="span"
         sx={{
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.68rem',
-          fontWeight: 600,
-          color: 'text.secondary',
-          fontVariantNumeric: 'tabular-nums',
+          fontFamily: MONO,
+          fontSize: '0.75rem',
+          fontWeight: 700,
           flexShrink: 0,
         }}
       >

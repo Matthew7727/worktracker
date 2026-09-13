@@ -150,7 +150,7 @@ const ContributionGraph = ({ entries, streams = [] }) => {
                       width: `${blockSize}px`,
                       height: `${blockSize}px`,
                       backgroundColor: info.color,
-                      borderRadius: '3px',
+                      borderRadius: 0,
                       border: date ? '1px solid rgba(0,0,0,0.1)' : 'none',
                       transition: 'all 0.1s',
                       '&:hover': {
@@ -192,7 +192,7 @@ const LegendItem = ({ color, label }) => (
       sx={{
         width: 12,
         height: 12,
-        borderRadius: '2px',
+        borderRadius: 0,
         bgcolor: color,
         border: '1px solid',
         borderColor: 'text.primary',

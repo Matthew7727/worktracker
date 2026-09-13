@@ -32,9 +32,8 @@ const TodoAgeChip = ({ item }) => {
           <Box
             component="span"
             sx={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
+              width: 8,
+              height: 8,
               bgcolor: dotColor,
             }}
           />
@@ -43,8 +42,8 @@ const TodoAgeChip = ({ item }) => {
           component="span"
           sx={{
             fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.64rem',
-            fontWeight: 600,
+            fontSize: '0.72rem',
+            fontWeight: 700,
             color: 'text.secondary',
             fontVariantNumeric: 'tabular-nums',
           }}

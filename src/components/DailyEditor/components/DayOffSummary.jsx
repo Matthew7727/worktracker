@@ -1,65 +1,55 @@
 import React from 'react'
-import { Box, Typography, Fade, Stack, Paper, Button } from '@mui/material'
-import { Edit as EditIcon } from '@mui/icons-material'
+import { Box, Typography } from '@mui/material'
 import { DAY_STATUSES } from '../constants'
+import { DaySheet } from './SummaryView'
 
 const DayOffSummary = ({ dayStatus, dayNote, onEdit }) => {
   const status = DAY_STATUSES.find((s) => s.id === dayStatus) || DAY_STATUSES[0]
 
   return (
-    <Fade in={true}>
-      <Box sx={{ maxWidth: '1000px', mx: 'auto', width: '100%', mt: 4 }}>
-        <Paper
+    <DaySheet onEdit={onEdit} status={`Logged as a ${status.label} day`}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr)' },
+        }}
+      >
+        <Box
           sx={{
-            p: 6,
-            borderRadius: '40px',
-            border: '5px solid',
-            borderColor: 'text.primary',
-            boxShadow: (theme) =>
-              `15px 15px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-            mb: 10,
+            px: 3,
+            py: 4,
+            bgcolor: status.color,
+            color: '#000',
+            borderRight: { md: '3px solid' },
+            borderColor: { md: 'text.primary' },
           }}
         >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 4 }}
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: '2.25rem',
+              letterSpacing: '-0.04em',
+              lineHeight: 1,
+            }}
           >
-            <Typography
-              variant="h2"
-              sx={{ fontWeight: 950, letterSpacing: '-2px' }}
-            >
-              {status.label.toUpperCase()} DAY
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<EditIcon />}
-              onClick={onEdit}
-              sx={{
-                bgcolor: 'text.primary',
-                color: 'background.paper',
-                fontWeight: 900,
-                px: 4,
-                '&:hover': { bgcolor: '#333' },
-              }}
-            >
-              EDIT DAY
-            </Button>
-          </Stack>
-
-          {dayNote ? (
-            <Typography sx={{ fontSize: '1.25rem', color: 'text.secondary' }}>
-              {dayNote}
-            </Typography>
-          ) : (
-            <Typography sx={{ fontStyle: 'italic', opacity: 0.5 }}>
-              No note added for this day.
-            </Typography>
-          )}
-        </Paper>
+            {status.label}
+          </Typography>
+        </Box>
+        <Box sx={{ px: 3, py: 4 }}>
+          <Typography
+            sx={{
+              fontSize: '1.1rem',
+              lineHeight: 1.6,
+              maxWidth: '68ch',
+              color: dayNote ? 'text.primary' : 'text.disabled',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {dayNote || 'No note for this day.'}
+          </Typography>
+        </Box>
       </Box>
-    </Fade>
+    </DaySheet>
   )
 }
 

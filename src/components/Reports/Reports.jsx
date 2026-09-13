@@ -123,7 +123,7 @@ const Reports = () => {
             <Paper
               sx={{
                 p: 6,
-                borderRadius: '24px',
+                borderRadius: 0,
                 border: '3px solid',
                 borderColor: 'text.primary',
               }}
@@ -145,7 +145,7 @@ const Reports = () => {
                   label="DATE RANGE"
                   onChange={(e) => setRange(e.target.value)}
                   sx={{
-                    borderRadius: '16px',
+                    borderRadius: 0,
                     fontWeight: 900,
                     '& .MuiOutlinedInput-notchedOutline': {
                       borderWidth: '3px',
@@ -212,7 +212,7 @@ const Reports = () => {
                 justifyContent: 'center',
                 border: '3px dashed',
                 borderColor: 'text.primary',
-                borderRadius: '24px',
+                borderRadius: 0,
                 bgcolor: 'rgba(0,0,0,0.02)',
               }}
             >

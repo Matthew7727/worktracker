@@ -13,15 +13,11 @@ import {
   TableSortLabel,
   Typography,
 } from '@mui/material'
-import {
-  CheckCircle,
-  ChevronRight,
-  ExpandMore,
-  Star,
-} from '@mui/icons-material'
+import { ChevronRight, ExpandMore, Star } from '@mui/icons-material'
 import StreamTag from './StreamTag'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
+import { EmptyState, MONO } from '../../shared/ui'
 
 const SORT_FIELDS = {
   name: (todo) => todo.text || '',
@@ -120,9 +116,17 @@ const AllTodosView = ({
       component={Paper}
       elevation={0}
       sx={{
-        border: '1.5px solid',
-        borderColor: 'divider',
-        borderRadius: '18px',
+        border: '3px solid',
+        borderColor: 'text.primary',
+        '& .MuiTableCell-root': {
+          borderColor: 'divider',
+          borderBottomWidth: 2,
+        },
+        '& .MuiTableHead-root .MuiTableCell-root': {
+          bgcolor: 'background.subtle',
+          borderBottom: '3px solid',
+          borderColor: 'text.primary',
+        },
       }}
     >
       <Table
@@ -186,28 +190,19 @@ const AllTodosView = ({
                   }}
                 >
                   {todo.stream && (
-                    <StreamTag
-                      stream={todo.stream}
-                      label={todo.stream.abbrev || todo.stream.name}
-                      muted
-                    />
+                    <StreamTag stream={todo.stream} label={todo.stream.name} />
                   )}
                   <Box>
                     <Typography
                       className="todo-owner"
-                      variant="body2"
-                      sx={{ fontWeight: 700 }}
+                      sx={{ fontWeight: 800, fontSize: '0.9rem' }}
                     >
                       {todo.ownerTitle}
                     </Typography>
                     <Typography
-                      variant="caption"
-                      sx={{
-                        color: 'text.secondary',
-                        textTransform: 'capitalize',
-                      }}
+                      sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
                     >
-                      {todo.ownerType}
+                      {todo.ownerType === 'project' ? 'Project' : 'Activity'}
                     </Typography>
                   </Box>
                 </Box>
@@ -236,20 +231,9 @@ const AllTodosView = ({
       {openTodos.length > 0 ? (
         renderTable(openTodos)
       ) : (
-        <Box
-          sx={{
-            py: 5,
-            textAlign: 'center',
-            border: '2px dashed',
-            borderColor: 'divider',
-            borderRadius: '20px',
-            color: 'text.secondary',
-          }}
-        >
-          <Typography variant="body2">
-            No open todos. You’re all caught up.
-          </Typography>
-        </Box>
+        <EmptyState title="No open todos.">
+          Everything on your projects and activities is ticked off.
+        </EmptyState>
       )}
 
       {completedTodos.length > 0 && (
@@ -266,11 +250,10 @@ const AllTodosView = ({
               p: 1,
               border: 0,
               bgcolor: 'transparent',
-              color: 'text.secondary',
+              color: 'text.primary',
               fontFamily: 'inherit',
               cursor: 'pointer',
               textAlign: 'left',
-              '&:hover': { color: 'text.primary' },
             }}
           >
             {showCompleted ? (
@@ -278,24 +261,18 @@ const AllTodosView = ({
             ) : (
               <ChevronRight sx={{ fontSize: '1.1rem' }} />
             )}
-            <CheckCircle sx={{ fontSize: '1rem', color: 'primary.main' }} />
             <Typography
               component="span"
-              sx={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-              }}
+              sx={{ fontSize: '1rem', fontWeight: 900 }}
             >
               Completed
             </Typography>
             <Typography
               component="span"
               sx={{
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: '0.68rem',
-                color: 'text.disabled',
+                fontFamily: MONO,
+                fontSize: '0.8rem',
+                color: 'text.secondary',
               }}
             >
               {completedTodos.length}

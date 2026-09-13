@@ -1,13 +1,11 @@
 import React, { useMemo, useRef, useState } from 'react'
 import {
   Box,
-  Button,
   TextField,
   Autocomplete,
+  InputBase,
   IconButton,
   Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
 } from '@mui/material'
 import {
   FormatBold,
@@ -19,6 +17,7 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { getActivityStreamId } from '../../../utils/projectsManager'
 import { injectMarkdown } from '../../../utils/markdownHelpers'
+import { InkButton, Segmented, MONO } from '../../shared/ui'
 
 const serializeRichNode = (node) => {
   if (node.nodeType === Node.TEXT_NODE) return node.textContent || ''
@@ -65,6 +64,14 @@ const richHtmlToMarkdown = (element) =>
     .replace(/\n{3,}/g, '\n\n')
     .trimEnd()
 
+const writingSurface = {
+  minHeight: 160,
+  px: 2.25,
+  py: 1.5,
+  fontSize: '0.95rem',
+  lineHeight: 1.6,
+}
+
 // The rendered Markdown is intentionally frozen while this editor is mounted.
 // The browser owns the contentEditable DOM; changes are serialised back to
 // Markdown and become the source for the next mode switch.
@@ -77,30 +84,22 @@ const RichNoteEditor = ({ value, onChange, editorRef }) => {
       contentEditable
       suppressContentEditableWarning
       role="textbox"
-      aria-label="Rich text note"
+      aria-label="Note"
       aria-multiline="true"
       onInput={(event) => onChange(richHtmlToMarkdown(event.currentTarget))}
       sx={{
-        minHeight: 152,
-        mb: 1.5,
-        p: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: '12px',
+        ...writingSurface,
         cursor: 'text',
-        fontSize: '0.92rem',
-        lineHeight: 1.65,
         outline: 'none',
-        '&:focus': { borderColor: 'text.primary' },
+        '&:focus-visible': { bgcolor: 'action.hover' },
         '&:empty::before': {
-          content: '"Write your note…"',
+          content: '"Write the note"',
           color: 'text.disabled',
-          fontStyle: 'italic',
         },
         '& p': { mt: 0, mb: 1, '&:last-child': { mb: 0 } },
         '& ul, & ol': { mt: 0.5, mb: 1, pl: 3 },
         '& li': { mb: 0.35 },
-        '& strong': { fontWeight: 850, color: 'text.primary' },
+        '& strong': { fontWeight: 850 },
       }}
     >
       <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
@@ -108,6 +107,18 @@ const RichNoteEditor = ({ value, onChange, editorRef }) => {
       </ReactMarkdown>
     </Box>
   )
+}
+
+const FORMAT_ACTIONS = [
+  { type: 'bold', label: 'Bold', icon: <FormatBold /> },
+  { type: 'italic', label: 'Italic', icon: <FormatItalic /> },
+  { type: 'list', label: 'Bulleted list', icon: <FormatListBulleted /> },
+]
+
+const RICH_COMMANDS = {
+  bold: 'bold',
+  italic: 'italic',
+  list: 'insertUnorderedList',
 }
 
 // Inline note editor — renders in the flow of the page (no modal), right where
@@ -156,36 +167,33 @@ const NoteEditorInline = ({
     [activities, projects, streamById]
   )
 
+  const bandColor = linkedItem
+    ? linkedItem.linkType === 'activity'
+      ? streamById[getActivityStreamId(linkedItem)]?.color
+      : null
+    : null
+  const isEmpty = !title.trim() && !content.trim()
+
   const applyFormat = (type) => {
+    if (viewMode === 'rich') {
+      richEditorRef.current?.focus()
+      document.execCommand(RICH_COMMANDS[type], false)
+      setContent(richHtmlToMarkdown(richEditorRef.current))
+      return
+    }
     const input = contentRef.current
     const start = input?.selectionStart ?? content.length
     const end = input?.selectionEnd ?? content.length
-    const { newText, newCursorPosition } = injectMarkdown(
-      content,
-      start,
-      end,
-      type
-    )
+    const { newText, newCursor } = injectMarkdown(content, start, end, type)
     setContent(newText)
     requestAnimationFrame(() => {
       input?.focus()
-      input?.setSelectionRange(newCursorPosition, newCursorPosition)
+      input?.setSelectionRange(newCursor, newCursor)
     })
   }
 
-  const applyRichFormat = (type) => {
-    const commands = {
-      bold: 'bold',
-      italic: 'italic',
-      list: 'insertUnorderedList',
-    }
-    richEditorRef.current?.focus()
-    document.execCommand(commands[type], false)
-    setContent(richHtmlToMarkdown(richEditorRef.current))
-  }
-
   const handleSubmit = () => {
-    if (!title.trim() && !content.trim()) return
+    if (isEmpty) return
     onSave({
       title: title.trim(),
       content,
@@ -200,125 +208,102 @@ const NoteEditorInline = ({
 
   return (
     <Box
+      component="form"
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose?.()
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit()
+      }}
       sx={{
-        p: 2.5,
-        mb: 2,
-        maxWidth: 640,
-        border: '1.5px solid',
-        borderColor: 'divider',
-        borderRadius: '18px',
+        mb: 3,
+        breakInside: 'avoid',
         bgcolor: 'background.paper',
+        border: '3px solid',
+        borderColor: 'text.primary',
+        borderTop: '10px solid',
+        borderTopColor: bandColor || 'text.primary',
+        boxShadow: (t) => `8px 8px 0 ${t.palette.text.primary}`,
       }}
     >
-      <TextField
-        autoFocus
-        placeholder="Name"
-        fullWidth
-        variant="standard"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        InputProps={{ disableUnderline: true }}
-        sx={{
-          mb: 1.5,
-          '& .MuiInputBase-input': { fontWeight: 800, fontSize: '1rem' },
-          '& .MuiInputBase-input::placeholder': {
-            color: 'text.disabled',
-            opacity: 1,
-          },
-        }}
-      />
+      <Box sx={{ px: 2.25, pt: 1.75, pb: 1 }}>
+        <InputBase
+          autoFocus
+          fullWidth
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          sx={{ fontWeight: 900, fontSize: '1.2rem', letterSpacing: '-0.02em' }}
+        />
+      </Box>
+
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1,
-          mb: 1,
+          gap: 0.25,
+          px: 1,
+          py: 0.75,
+          borderTop: '2px solid',
+          borderBottom: '2px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.subtle',
         }}
       >
-        <ToggleButtonGroup
-          exclusive
-          size="small"
-          value={viewMode}
-          onChange={(_, value) => value && setViewMode(value)}
-          aria-label="Note view"
-          sx={{
-            '& .MuiToggleButton-root': {
-              px: 1.5,
-              py: 0.45,
-              border: 0,
-              borderRadius: '999px !important',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              textTransform: 'none',
-              '&.Mui-selected': {
-                bgcolor: 'text.primary',
-                color: 'background.paper',
-              },
-            },
-          }}
-        >
-          <ToggleButton value="rich">Rich view</ToggleButton>
-          <ToggleButton value="markdown">Markdown</ToggleButton>
-        </ToggleButtonGroup>
-
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {[
-            { type: 'bold', label: 'Bold', icon: <FormatBold /> },
-            { type: 'italic', label: 'Italic', icon: <FormatItalic /> },
-            {
-              type: 'list',
-              label: 'Bulleted list',
-              icon: <FormatListBulleted />,
-            },
-          ].map((action) => (
-            <Tooltip title={action.label} key={action.type}>
-              <IconButton
-                size="small"
-                aria-label={action.label}
-                onMouseDown={(event) => {
-                  if (viewMode === 'rich') event.preventDefault()
-                }}
-                onClick={() =>
-                  viewMode === 'rich'
-                    ? applyRichFormat(action.type)
-                    : applyFormat(action.type)
-                }
-                sx={{
-                  borderRadius: '8px',
-                  color: 'text.secondary',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                    color: 'text.primary',
-                  },
-                }}
-              >
-                {action.icon}
-              </IconButton>
-            </Tooltip>
-          ))}
+        {FORMAT_ACTIONS.map((action) => (
+          <Tooltip title={action.label} key={action.type}>
+            <IconButton
+              size="small"
+              aria-label={action.label}
+              onMouseDown={(event) => {
+                if (viewMode === 'rich') event.preventDefault()
+              }}
+              onClick={() => applyFormat(action.type)}
+              sx={{
+                p: 0.6,
+                color: 'text.secondary',
+                '& svg': { fontSize: '1.1rem' },
+                '&:hover': {
+                  bgcolor: 'text.primary',
+                  color: 'background.paper',
+                },
+              }}
+            >
+              {action.icon}
+            </IconButton>
+          </Tooltip>
+        ))}
+        <Box sx={{ ml: 'auto' }}>
+          <Segmented
+            size="sm"
+            ariaLabel="Note view"
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: 'rich', label: 'Rich' },
+              { value: 'markdown', label: 'Markdown' },
+            ]}
+            sx={{ borderWidth: '2px' }}
+          />
         </Box>
       </Box>
+
       {viewMode === 'markdown' ? (
-        <TextField
+        <InputBase
           inputRef={contentRef}
-          placeholder="Write your note using Markdown…"
           fullWidth
           multiline
           minRows={6}
-          variant="outlined"
+          placeholder="Write the note in Markdown"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           sx={{
-            mb: 1.5,
-            '& .MuiOutlinedInput-root': {
-              alignItems: 'flex-start',
-              borderRadius: '12px',
-              bgcolor: 'action.hover',
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: '0.84rem',
-              lineHeight: 1.6,
-            },
+            ...writingSurface,
+            alignItems: 'flex-start',
+            fontFamily: MONO,
+            fontSize: '0.85rem',
           }}
         />
       ) : (
@@ -328,93 +313,76 @@ const NoteEditorInline = ({
           editorRef={richEditorRef}
         />
       )}
+
       {!lockActivityId && !lockProjectId && (
-        <Autocomplete
-          options={linkOptions}
-          value={linkedItem}
-          onChange={(_, val) => setLinkedItem(val)}
-          getOptionLabel={(a) => a.title || ''}
-          groupBy={(item) =>
-            item.linkType === 'project'
-              ? 'Projects'
-              : streamById[getActivityStreamId(item)]?.name || 'Activities'
-          }
-          isOptionEqualToValue={(a, b) =>
-            a.id === b.id && a.linkType === b.linkType
-          }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="standard"
-              placeholder="Project or activity"
-              size="small"
-              InputProps={{ ...params.InputProps, disableUnderline: true }}
-              sx={{
-                '& .MuiInputBase-input::placeholder': {
-                  color: 'text.disabled',
-                  opacity: 1,
-                },
-              }}
-            />
-          )}
-          sx={{ mb: 1.5 }}
-        />
+        <Box
+          sx={{
+            px: 2.25,
+            py: 1,
+            borderTop: '2px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Autocomplete
+            options={linkOptions}
+            value={linkedItem}
+            onChange={(_, val) => setLinkedItem(val)}
+            getOptionLabel={(a) => a.title || ''}
+            groupBy={(item) =>
+              item.linkType === 'project'
+                ? 'Projects'
+                : streamById[getActivityStreamId(item)]?.name || 'Activities'
+            }
+            isOptionEqualToValue={(a, b) =>
+              a.id === b.id && a.linkType === b.linkType
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="standard"
+                placeholder="Link to a project or activity (optional)"
+                size="small"
+                InputProps={{ ...params.InputProps, disableUnderline: true }}
+                sx={{ '& input': { fontWeight: 700, fontSize: '0.88rem' } }}
+              />
+            )}
+          />
+        </Box>
       )}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          px: 1.5,
+          py: 1.25,
+          borderTop: '3px solid',
+          borderColor: 'text.primary',
+          bgcolor: 'background.subtle',
+        }}
+      >
         {note && onDelete && (
-          <Button
+          <InkButton
+            tone="ghost"
+            size="sm"
             onClick={onDelete}
-            sx={{
-              fontWeight: 900,
-              color: 'error.main',
-              mr: 'auto',
-              '&:hover': { bgcolor: 'transparent', opacity: 0.7 },
-            }}
+            sx={{ color: 'error.main', mr: 'auto' }}
           >
             Delete
-          </Button>
+          </InkButton>
         )}
-        <Button
+        <InkButton
+          tone="ghost"
+          size="sm"
           onClick={onClose}
-          sx={{
-            fontWeight: 900,
-            color: 'text.secondary',
-            ml: note && onDelete ? 0 : 'auto',
-            '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
-          }}
+          sx={{ ml: note && onDelete ? 0 : 'auto' }}
         >
           Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!title.trim() && !content.trim()}
-          sx={{
-            fontWeight: 900,
-            px: 3,
-            py: 1,
-            borderRadius: '16px',
-            backgroundImage: 'none',
-            bgcolor: 'background.paper',
-            color: 'text.primary',
-            border: '3px solid',
-            borderColor: 'text.primary',
-            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
-            '&:hover': {
-              bgcolor: 'action.hover',
-              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
-              transform: 'translate(2px, 2px)',
-            },
-            '&.Mui-disabled': {
-              opacity: 0.5,
-              boxShadow: 'none',
-              transform: 'none',
-              border: '3px solid #ccc',
-            },
-          }}
-        >
-          Save Note
-        </Button>
+        </InkButton>
+        <InkButton type="submit" size="sm" disabled={isEmpty}>
+          Save note
+        </InkButton>
       </Box>
     </Box>
   )

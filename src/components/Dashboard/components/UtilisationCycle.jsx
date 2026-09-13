@@ -4,15 +4,14 @@ import { Box, Typography, Stack } from '@mui/material'
 const cardSx = {
   border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '24px',
+  borderRadius: 0,
   bgcolor: 'background.paper',
   p: 3,
 }
 
 const label = {
   fontWeight: 900,
-  textTransform: 'uppercase',
-  letterSpacing: 1,
+
   opacity: 0.7,
   fontSize: 12,
 }
@@ -51,10 +50,10 @@ const UtilisationCycle = ({
         sx={{ mb: 1.5 }}
       >
         <Typography sx={{ fontWeight: 900, fontSize: 17 }}>
-          Fiscal cycle · Jun {cycleYear} → May {cycleYear + 1}
+          Fiscal cycle, June {cycleYear} to May {cycleYear + 1}
         </Typography>
         <Typography sx={{ ...label, opacity: 0.5 }}>
-          week {weekNumber} of {totalWeeks}
+          Week {weekNumber} of {totalWeeks}
         </Typography>
       </Stack>
 
@@ -74,7 +73,7 @@ const UtilisationCycle = ({
               >
                 {utilisationPrediction}%
               </Box>{' '}
-              · Target {utilisationTarget}%
+              against a {utilisationTarget}% target
             </Typography>
             <Typography sx={{ fontWeight: 900, color: diffColor }}>
               {diff >= 0 ? `▲ +${diff}% ahead` : `▼ ${Math.abs(diff)}% behind`}
@@ -152,7 +151,7 @@ const UtilisationCycle = ({
                         : '#aedd4d',
                     border: empty ? '2px dashed' : '2px solid',
                     borderColor: empty ? 'divider' : 'text.primary',
-                    borderRadius: '6px 6px 0 0',
+                    borderRadius: 0,
                   }}
                 />
               )

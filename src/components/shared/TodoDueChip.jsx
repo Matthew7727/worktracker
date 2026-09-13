@@ -2,20 +2,12 @@ import { Box, Tooltip, Typography } from '@mui/material'
 import { getTaskDueLabel, getTaskDueSeverity } from '../../utils/taskUrgency'
 
 const TONE = {
-  overdue: {
-    borderColor: '#dc4c3f',
-    color: '#dc4c3f',
-    bg: 'rgba(220, 76, 63, 0.08)',
-  },
-  soon: {
-    borderColor: '#d97706',
-    color: '#d97706',
-    bg: 'rgba(217, 119, 6, 0.08)',
-  },
+  overdue: { borderColor: '#c62f22', color: '#fff', bg: '#c62f22' },
+  soon: { borderColor: 'text.primary', color: '#000', bg: '#ffb020' },
   scheduled: {
     borderColor: 'divider',
     color: 'text.secondary',
-    bg: 'background.paper',
+    bg: 'transparent',
   },
 }
 
@@ -31,10 +23,9 @@ const TodoDueChip = ({ item }) => {
         sx={{
           display: 'inline-flex',
           alignItems: 'center',
-          px: 0.9,
-          py: 0.2,
-          borderRadius: '999px',
-          border: '1px solid',
+          px: 0.75,
+          py: 0.15,
+          border: '2px solid',
           borderColor: TONE[severity].borderColor,
           bgcolor: TONE[severity].bg,
           color: TONE[severity].color,
@@ -44,9 +35,9 @@ const TodoDueChip = ({ item }) => {
         <Typography
           component="span"
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.62rem',
-            fontWeight: 700,
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            whiteSpace: 'nowrap',
             color: 'inherit',
             fontVariantNumeric: 'tabular-nums',
           }}

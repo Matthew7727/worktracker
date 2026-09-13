@@ -94,15 +94,15 @@ const ActivityCard = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.5,
-        borderRadius: '18px',
-        border: '1.5px solid',
-        borderColor: 'divider',
+        p: 2.25,
+        pt: 1.5,
+        border: '2.5px solid',
+        borderColor: 'text.primary',
+        borderTop: '10px solid',
+        borderTopColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,
-        transition: 'border-color 0.15s',
-        '&:hover': { borderColor: 'text.secondary' },
         '&:hover .card-kebab': { opacity: 1 },
         '&:hover .card-drag-handle': { opacity: 1 },
       }}
@@ -115,11 +115,15 @@ const ActivityCard = ({
           justifyContent: 'space-between',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+        <StreamTag stream={stream} label={stream?.name || activity.type} />
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mr: -0.75 }}
+        >
           {dragHandle && (
             <IconButton
               size="small"
               className="card-drag-handle"
+              aria-label="Drag to reorder"
               {...dragHandle.attributes}
               {...dragHandle.listeners}
               sx={{
@@ -135,21 +139,21 @@ const ActivityCard = ({
               <DragIndicator fontSize="small" />
             </IconButton>
           )}
-          <StreamTag stream={stream} label={stream?.abbrev || activity.type} />
+          <IconButton
+            size="small"
+            className="card-kebab"
+            aria-label="Activity options"
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            sx={{
+              p: 0.25,
+              opacity: 0,
+              transition: 'opacity 0.15s',
+              '&:focus-visible': { opacity: 1 },
+            }}
+          >
+            <MoreVert fontSize="small" />
+          </IconButton>
         </Box>
-        <IconButton
-          size="small"
-          className="card-kebab"
-          onClick={(e) => setAnchorEl(e.currentTarget)}
-          sx={{
-            p: 0.25,
-            opacity: 0,
-            transition: 'opacity 0.15s',
-            '&:focus-visible': { opacity: 1 },
-          }}
-        >
-          <MoreVert fontSize="small" />
-        </IconButton>
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -224,10 +228,10 @@ const ActivityCard = ({
           }}
           onClick={openDetailsWithClickDelay}
           sx={{
-            fontSize: '1.05rem',
-            fontWeight: 800,
-            lineHeight: 1.3,
-            letterSpacing: '-0.01em',
+            fontSize: '1.2rem',
+            fontWeight: 900,
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
             wordBreak: 'break-word',
             cursor: onOpenDetails ? 'pointer' : 'default',
             '&:hover': onOpenDetails
@@ -302,7 +306,7 @@ const ActivityCard = ({
                 '&:hover': { color: 'text.primary' },
               }}
             >
-              + {hiddenCount} more →
+              +{hiddenCount} more open
             </Typography>
           )}
         </Box>
@@ -313,7 +317,7 @@ const ActivityCard = ({
         label="Add todo"
         onAdd={onAddTask}
         sx={{
-          borderTop: '1px dashed',
+          borderTop: '2px solid',
           borderColor: 'divider',
           pt: 1,
           mt: 'auto',

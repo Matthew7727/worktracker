@@ -1,16 +1,98 @@
 import React from 'react'
-import {
-  Box,
-  Typography,
-  Fade,
-  Stack,
-  TextField,
-  Chip,
-  Badge,
-} from '@mui/material'
-import { ArrowForward, CheckCircle } from '@mui/icons-material'
+import { Box, Typography, Fade, InputBase } from '@mui/material'
+import { ArrowForward, Check } from '@mui/icons-material'
 import { DAY_STATUSES } from '../constants'
-import { flowStyles } from '../DailyEditor.styles'
+import { InkButton, Segmented, MONO } from '../../shared/ui'
+
+const StepLabel = ({ children, meta }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      mb: 1.5,
+    }}
+  >
+    <Typography
+      component="h2"
+      sx={{ fontSize: '1.45rem', fontWeight: 900, letterSpacing: '-0.025em' }}
+    >
+      {children}
+    </Typography>
+    {meta && (
+      <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
+        {meta}
+      </Typography>
+    )}
+  </Box>
+)
+
+const ProjectToggle = ({ project, selected, doneCount, onToggle }) => (
+  <Box
+    component="button"
+    type="button"
+    role="checkbox"
+    aria-checked={selected}
+    onClick={onToggle}
+    sx={{
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1.5,
+      px: 2,
+      py: 1.5,
+      fontFamily: 'inherit',
+      textAlign: 'left',
+      border: 'none',
+      borderTop: '2px solid',
+      borderColor: 'divider',
+      cursor: 'pointer',
+      bgcolor: selected ? `${project.color}` : 'transparent',
+      color: selected ? '#000' : 'text.primary',
+      '&:hover': selected ? {} : { bgcolor: 'action.hover' },
+      '&:focus-visible': {
+        outline: '3px solid',
+        outlineColor: 'text.primary',
+        outlineOffset: -3,
+      },
+    }}
+  >
+    <Box
+      sx={{
+        width: 20,
+        height: 20,
+        flexShrink: 0,
+        border: '2.5px solid',
+        borderColor: selected ? '#000' : 'text.primary',
+        bgcolor: selected ? '#000' : 'background.paper',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {selected && <Check sx={{ fontSize: '0.9rem', color: project.color }} />}
+    </Box>
+    <Typography
+      sx={{ flex: 1, fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3 }}
+    >
+      {project.title}
+    </Typography>
+    {doneCount > 0 && (
+      <Typography
+        title="Todos you ticked off on this day"
+        sx={{
+          fontFamily: MONO,
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          flexShrink: 0,
+          opacity: selected ? 0.8 : 0.65,
+        }}
+      >
+        {doneCount} done
+      </Typography>
+    )}
+  </Box>
+)
 
 const ProjectSelectionView = ({
   dayStatus,
@@ -26,152 +108,198 @@ const ProjectSelectionView = ({
 }) => {
   const isWorking = dayStatus === 'working'
   const selectedStatus = DAY_STATUSES.find((s) => s.id === dayStatus)
-  const canStart = !isWorking || selectedFlowProjects.length > 0
+  const selectedCount = selectedFlowProjects.length
+
+  const streamGroups = []
+  allAvailableProjects.forEach((project) => {
+    let group = streamGroups.find((g) => g.streamId === project.streamId)
+    if (!group) {
+      group = {
+        streamId: project.streamId,
+        name: project.streamName,
+        color: project.color,
+        projects: [],
+      }
+      streamGroups.push(group)
+    }
+    group.projects.push(project)
+  })
 
   return (
-    <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
-      <Fade in={true}>
+    <Fade in={true}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 4 }}>
-            {DAY_STATUSES.map((status) => {
-              const isActive = dayStatus === status.id
-              return (
-                <Box
-                  key={status.id}
-                  component="button"
-                  onClick={() => onStatusChange(status.id)}
-                  sx={{
-                    fontFamily: 'inherit',
-                    fontWeight: 900,
-                    fontSize: '1rem',
-                    px: 3,
-                    py: 1.5,
-                    border: '3px solid',
-                    borderColor: 'text.primary',
-                    borderRadius: '14px',
-                    cursor: 'pointer',
-                    bgcolor: isActive ? status.color : 'transparent',
-                    color: isActive ? 'text.primary' : 'text.secondary',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {status.label}
-                </Box>
-              )
-            })}
-          </Box>
+          <StepLabel>What kind of day was it?</StepLabel>
+          <Segmented
+            ariaLabel="Day type"
+            value={dayStatus}
+            onChange={onStatusChange}
+            options={DAY_STATUSES.map((s) => ({
+              value: s.id,
+              label: s.label,
+              color: s.color,
+            }))}
+          />
+        </Box>
 
-          {isWorking && allAvailableProjects.length > 0 && (
-            <>
-              <Typography
+        {isWorking ? (
+          <Box>
+            <StepLabel
+              meta={
+                selectedCount > 0
+                  ? `${selectedCount} selected`
+                  : 'Pick one or more'
+              }
+            >
+              What did you work on?
+            </StepLabel>
+
+            {streamGroups.length === 0 ? (
+              <Box
                 sx={{
-                  mb: 2,
-                  fontWeight: 800,
-                  fontSize: '1.1rem',
-                  color: 'text.secondary',
+                  border: '2.5px dashed',
+                  borderColor: 'text.disabled',
+                  p: 4,
                 }}
               >
-                What did you work on today?
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 4 }}>
-                {allAvailableProjects.map((project) => {
-                  const isSelected = selectedFlowProjects.some(
-                    (p) => p.title === project.title
-                  )
-                  const doneCount = (
-                    completedTodosByTitle?.[project.title] || []
+                <Typography sx={{ fontWeight: 800 }}>
+                  No active projects or activities.
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Add one on the Activities page, then come back to log it.
+                </Typography>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: `repeat(${Math.min(streamGroups.length, 3)}, minmax(0, 1fr))`,
+                  },
+                  gap: 2.5,
+                  alignItems: 'start',
+                }}
+              >
+                {streamGroups.map((group) => {
+                  const picked = group.projects.filter((p) =>
+                    selectedFlowProjects.some((s) => s.title === p.title)
                   ).length
                   return (
-                    <Badge
-                      key={project.title}
-                      badgeContent={doneCount}
-                      color="success"
+                    <Box
+                      key={group.streamId}
                       sx={{
-                        '& .MuiBadge-badge': {
-                          fontWeight: 900,
-                          fontSize: '0.65rem',
-                          border: '2px solid',
-                          borderColor: 'background.default',
-                        },
+                        border: '3px solid',
+                        borderColor: 'text.primary',
+                        bgcolor: 'background.paper',
                       }}
                     >
-                      <Chip
-                        label={project.title}
-                        onClick={() => onToggleProject(project)}
+                      <Box
                         sx={{
-                          fontWeight: 800,
-                          fontSize: '0.85rem',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          borderRadius: 0,
-                          bgcolor: isSelected ? project.color : 'transparent',
-                          color: isSelected ? 'text.primary' : 'text.secondary',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                          '&:hover': {
-                            bgcolor: project.color,
-                            color: 'text.primary',
-                            opacity: 0.85,
-                          },
-                          '& .MuiChip-label': { px: 1.5 },
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          px: 2,
+                          py: 1.25,
+                          borderTop: '8px solid',
+                          borderTopColor: group.color,
                         }}
-                      />
-                    </Badge>
+                      >
+                        <Typography sx={{ fontWeight: 900 }}>
+                          {group.name}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: MONO,
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: 'text.secondary',
+                          }}
+                        >
+                          {picked}/{group.projects.length}
+                        </Typography>
+                      </Box>
+                      {group.projects.map((project) => (
+                        <ProjectToggle
+                          key={project.title}
+                          project={project}
+                          selected={selectedFlowProjects.some(
+                            (p) => p.title === project.title
+                          )}
+                          doneCount={
+                            (completedTodosByTitle?.[project.title] || [])
+                              .length
+                          }
+                          onToggle={() => onToggleProject(project)}
+                        />
+                      ))}
+                    </Box>
                   )
                 })}
               </Box>
-            </>
-          )}
-
-          {!isWorking && (
-            <TextField
-              fullWidth
-              multiline
-              minRows={2}
-              placeholder={`Add a note about this ${selectedStatus.label.toLowerCase()} day (optional)...`}
-              value={dayNote}
-              onChange={(e) => onNoteChange(e.target.value)}
-              sx={{ mb: 4 }}
-            />
-          )}
-
-          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+            )}
+          </Box>
+        ) : (
+          <Box>
+            <StepLabel>Anything to remember about it?</StepLabel>
             <Box
-              component="button"
-              onClick={() =>
-                isWorking
-                  ? onStart()
-                  : onSaveNonWorking(dayStatus, dayNote.trim())
-              }
-              disabled={isWorking && selectedFlowProjects.length === 0}
               sx={{
-                ...flowStyles.flowButton,
-                px: 4,
-                bgcolor: canStart
-                  ? selectedStatus.color
-                  : 'action.disabledBackground',
-                color: canStart ? 'text.primary' : 'text.disabled',
-                cursor: canStart ? 'pointer' : 'default',
-                '&:hover': canStart
-                  ? {
-                      ...flowStyles.flowButton['&:hover'],
-                      bgcolor: selectedStatus.color,
-                    }
-                  : {},
+                border: '3px solid',
+                borderColor: 'text.primary',
+                borderLeft: '10px solid',
+                borderLeftColor: selectedStatus.color,
+                bgcolor: 'background.paper',
+                px: 2.5,
+                py: 2,
               }}
             >
-              {isWorking ? 'START WRITING' : 'SAVE DAY'}
-              {isWorking ? (
-                <ArrowForward sx={{ fontSize: '1.2rem' }} />
-              ) : (
-                <CheckCircle sx={{ fontSize: '1.2rem' }} />
-              )}
-              <Box className="shine-layer" sx={flowStyles.shineLayer} />
+              <InputBase
+                fullWidth
+                multiline
+                minRows={3}
+                placeholder={`A note about this ${selectedStatus.label.toLowerCase()} day (optional)`}
+                value={dayNote}
+                onChange={(e) => onNoteChange(e.target.value)}
+                sx={{ fontSize: '1.05rem', lineHeight: 1.6 }}
+              />
             </Box>
-          </Stack>
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            gap: 2,
+            pt: 3,
+            borderTop: '3px solid',
+            borderColor: 'text.primary',
+          }}
+        >
+          {isWorking && selectedCount === 0 && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Select what you worked on to start writing.
+            </Typography>
+          )}
+          <InkButton
+            size="lg"
+            color={selectedStatus.color}
+            disabled={isWorking && selectedCount === 0}
+            onClick={() =>
+              isWorking
+                ? onStart()
+                : onSaveNonWorking(dayStatus, dayNote.trim())
+            }
+            endIcon={isWorking ? <ArrowForward /> : <Check />}
+          >
+            {isWorking
+              ? `Start writing${selectedCount > 0 ? ` (${selectedCount})` : ''}`
+              : `Save ${selectedStatus.label} day`}
+          </InkButton>
         </Box>
-      </Fade>
-    </Box>
+      </Box>
+    </Fade>
   )
 }
 

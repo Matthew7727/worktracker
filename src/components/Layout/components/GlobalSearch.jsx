@@ -95,7 +95,8 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
         <DialogTitle
           sx={{
             fontWeight: 900,
-            fontSize: '2rem',
+            fontSize: '1.75rem',
+            letterSpacing: '-0.035em',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -104,7 +105,7 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
             mb: 2,
           }}
         >
-          GLOBAL SEARCH
+          Search entries
           <IconButton
             onClick={() => setIsOpen(false)}
             aria-label="Close search"
@@ -116,7 +117,7 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
           <TextField
             fullWidth
             autoFocus
-            placeholder="Type keywords to find logs..."
+            placeholder="Search every day you've logged"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             variant="outlined"
@@ -125,7 +126,7 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
               '& .MuiOutlinedInput-root': {
                 fontSize: '1.5rem',
                 height: '4rem',
-                borderRadius: '16px',
+                borderRadius: 0,
                 '& fieldset': {
                   borderWidth: '3px',
                   borderColor: 'text.primary !important',
@@ -136,7 +137,7 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
           <Box sx={{ mt: 5, maxHeight: '500px', overflowY: 'auto', pr: 2 }}>
             {isSearching ? (
               <Typography sx={{ textAlign: 'center', p: 4, fontWeight: 800 }}>
-                SEARCHING...
+                Searching…
               </Typography>
             ) : results.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -151,14 +152,14 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                       transition: 'all 0.2s',
                       border: '3px solid',
                       borderColor: 'text.primary',
-                      borderRadius: '16px',
+                      borderRadius: 0,
                       '&:hover': {
-                        transform: 'translateY(-2px)',
+                        transform: 'translate(-2px, -2px)',
                         boxShadow: (theme) =>
-                          `0 8px 0 ${theme.palette.text.primary}`,
+                          `6px 6px 0 ${theme.palette.text.primary}`,
                       },
                       boxShadow: (theme) =>
-                        `0 4px 0 ${theme.palette.text.primary}`,
+                        `3px 3px 0 ${theme.palette.text.primary}`,
                     }}
                   >
                     <Box
@@ -171,8 +172,8 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                       <Typography
                         sx={{
                           fontWeight: 900,
-                          color: 'primary.main',
-                          fontSize: '1.25rem',
+                          fontFamily: '"JetBrains Mono", monospace',
+                          fontSize: '1.1rem',
                         }}
                       >
                         {res.date}
@@ -191,11 +192,10 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                       sx={{
                         fontSize: '1.1rem',
                         fontWeight: 600,
-                        fontStyle: 'italic',
                         lineHeight: '1.5',
                       }}
                     >
-                      "{res.snippet}"
+                      {res.snippet}
                     </Typography>
                   </Paper>
                 ))}
@@ -210,8 +210,8 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                 }}
               >
                 {query.length >= 3
-                  ? `NO RESULTS FOR "${query.toUpperCase()}"`
-                  : 'TYPE AT LEAST 3 CHARACTERS...'}
+                  ? `No days mention "${query}".`
+                  : 'Type at least 3 characters to search.'}
               </Typography>
             )}
           </Box>
