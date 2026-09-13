@@ -21,7 +21,11 @@ import {
   getWeekKey,
 } from '../../../utils/staffitManager'
 import { getProjectsByStream } from '../../../utils/DataManager'
-import { getWeekDays, getDefaultDate } from '../utils/weekDays'
+import {
+  getDateKey,
+  getRecentWorkingDays,
+  getDefaultDate,
+} from '../utils/weekDays'
 
 // Legacy stream ids that older app versions understand via dedicated
 // frontmatter keys. We keep writing those keys alongside the generic
@@ -144,14 +148,14 @@ export const useDailyEditor = () => {
     .map((p) => ({ ...p, content: projectDrafts[p.title] || '' }))
     .filter((p) => p.content.trim())
 
-  // Load completion status for each day of the current week
+  // Load completion status for the five most recent working days
   const loadWeekStatus = async () => {
     if (!selectedDirectory) return
-    const days = getWeekDays(new Date())
+    const days = getRecentWorkingDays(new Date())
     const status = {}
     await Promise.all(
       days.map(async (day) => {
-        const key = day.toISOString().split('T')[0]
+        const key = getDateKey(day)
         const filePath = getDailyFilePath(selectedDirectory, day)
         const result = await window.electronAPI.readFile(filePath)
         const filled = {}
