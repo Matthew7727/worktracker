@@ -6,6 +6,7 @@ import ProjectSelectionView from './components/ProjectSelectionView'
 import FlowView from './components/FlowView'
 import SummaryView from './components/SummaryView'
 import DayOffSummary from './components/DayOffSummary'
+import MeetingContext from './components/MeetingContext'
 
 const DailyEditor = () => {
   const {
@@ -72,6 +73,8 @@ const DailyEditor = () => {
         staffitHours={staffitHours}
         onSaveStaffitHours={handleSaveStaffitHours}
       />
+
+      <MeetingContext date={currentDate} />
 
       {viewMode === 'start' && (
         <ProjectSelectionView

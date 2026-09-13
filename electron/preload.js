@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
   selectDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
+  selectCalendarFile: () => ipcRenderer.invoke('dialog:openCalendarFile'),
   saveFile: (options) => ipcRenderer.invoke('dialog:saveFile', options),
   readFile: (path) => ipcRenderer.invoke('fs:readFile', path),
   writeFile: (path, content) =>

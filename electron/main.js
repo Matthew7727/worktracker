@@ -170,6 +170,14 @@ async function handleFileOpen() {
   }
 }
 
+async function handleCalendarFileOpen() {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [{ name: 'iCalendar files', extensions: ['ics'] }],
+  })
+  return canceled ? null : filePaths[0]
+}
+
 async function handleSaveDialog(event, options) {
   const { canceled, filePath } = await dialog.showSaveDialog(options)
   if (canceled) {
@@ -422,6 +430,7 @@ function performStartFlow() {
 app.whenReady().then(async () => {
   ipcMain.handle('app:getVersion', () => app.getVersion())
   ipcMain.handle('dialog:openDirectory', handleFileOpen)
+  ipcMain.handle('dialog:openCalendarFile', handleCalendarFileOpen)
   ipcMain.handle('dialog:saveFile', handleSaveDialog)
   ipcMain.handle('fs:readFile', handleReadFile)
   ipcMain.handle('fs:writeFile', handleWriteFile)

@@ -9,6 +9,7 @@ import {
   KeyboardArrowUp as KeyboardArrowUpIcon,
   Bolt,
   PushPin,
+  CalendarMonth,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { useThemeContext } from '../../context/ThemeContext'
@@ -64,6 +65,12 @@ const MainLayout = ({ children }) => {
       path: '/notes',
       icon: <PushPin />,
       activeColor: '#f45b69',
+    },
+    {
+      label: 'Calendar',
+      path: '/calendar',
+      icon: <CalendarMonth />,
+      activeColor: '#8a7cff',
     },
     {
       label: 'Workspace',

@@ -18,6 +18,12 @@ export const selectProjectDirectory = async () => {
   return await api.selectDirectory()
 }
 
+export const selectCalendarFile = async () => {
+  const api = getAPI()
+  if (!api?.selectCalendarFile) return null
+  return await api.selectCalendarFile()
+}
+
 export const readFile = async (filePath) => {
   const api = getAPI()
   if (!api) return { success: false, error: 'API not available' }

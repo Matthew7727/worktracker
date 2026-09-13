@@ -132,6 +132,8 @@ const NoteEditorInline = ({
   streamById = {},
   lockActivityId = null,
   lockProjectId = null,
+  lockMeetingId = null,
+  lockMeetingTitle = null,
   onSave,
   onDelete,
   onClose,
@@ -203,6 +205,8 @@ const NoteEditorInline = ({
       projectId: linkedItem?.linkType === 'project' ? linkedItem.id : null,
       projectTitle:
         linkedItem?.linkType === 'project' ? linkedItem.title : null,
+      meetingId: lockMeetingId || note?.meetingId || null,
+      meetingTitle: lockMeetingTitle || note?.meetingTitle || null,
     })
   }
 
