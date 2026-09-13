@@ -1,6 +1,5 @@
 import React from 'react'
 import { Box, Typography, Stack, Chip } from '@mui/material'
-import { EmojiEvents } from '@mui/icons-material'
 import { useAppContext } from '../../../context/AppContext'
 import { getActivityStreamId } from '../../../utils/projectsManager'
 import { getStreamAbbrev } from '../../../utils/streamConfig'
@@ -29,17 +28,15 @@ const RecentAccomplishments = ({ projects }) => {
   return (
     <Box>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <EmojiEvents sx={{ fontSize: 20, opacity: 0.7 }} />
         <Typography
           variant="body1"
           sx={{
+            fontSize: '1.6rem',
             fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-            opacity: 0.7,
+            letterSpacing: '-0.035em',
           }}
         >
-          Recent Accomplishments
+          Recent accomplishments
         </Typography>
       </Stack>
       {completed.length === 0 ? (

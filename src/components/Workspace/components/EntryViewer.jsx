@@ -1,204 +1,193 @@
 import React from 'react'
-import { Box, Paper, Typography, IconButton, Stack, Chip } from '@mui/material'
+import { Box, Typography, IconButton } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
+import { useAppContext } from '../../../context/AppContext'
+import { MONO } from '../../shared/ui'
 
-const ACCENT = '#00d2ff'
-
-const STREAM_COLORS = {
+// Older entries keep the three original stream names as H1 sections.
+const LEGACY_STREAM_COLORS = {
   'client work': '#80b621',
   'practice development': '#ffd166',
   'business development': '#eb8449',
 }
 
-const getH1Color = (children) => {
-  const text = String(children).toLowerCase().trim()
-  return STREAM_COLORS[text] ?? ACCENT
-}
-
-const markdownComponents = {
-  h1: ({ children }) => (
-    <h1
-      style={{
-        fontSize: '0.9rem',
-        fontWeight: 900,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        borderBottom: `2px solid ${getH1Color(children)}`,
-        paddingBottom: '4px',
-        marginTop: '20px',
-        marginBottom: '10px',
-      }}
-    >
-      {children}
-    </h1>
-  ),
-}
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return 'Unknown Date'
-  const d = new Date(dateStr + 'T12:00:00')
-  return d
-    .toLocaleDateString('default', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-    .toUpperCase()
-}
-
 const EntryViewer = ({ entry, onClose }) => {
-  return (
-    <Paper
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: 'none',
-        borderRadius: '24px',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
+  const { streams = [] } = useAppContext()
+
+  const colorForHeading = (children) => {
+    const text = String(children).toLowerCase().trim()
+    return (
+      streams.find((s) => s.name.toLowerCase() === text)?.color ||
+      LEGACY_STREAM_COLORS[text] ||
+      'text.primary'
+    )
+  }
+
+  const markdownComponents = {
+    h1: ({ children }) => (
       <Box
+        component="h2"
         sx={{
-          px: 2.5,
-          py: 1.25,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          fontSize: '1.2rem',
+          fontWeight: 900,
+          letterSpacing: '-0.02em',
+          borderLeft: '8px solid',
+          borderColor: colorForHeading(children),
+          pl: 1.5,
+          mt: 4,
+          mb: 1.5,
+          '&:first-of-type': { mt: 0 },
+        }}
+      >
+        {children}
+      </Box>
+    ),
+  }
+
+  const d = entry.date ? new Date(entry.date + 'T12:00:00') : null
+  const tags = [
+    ...(entry.metadata?.clientProjects || []).map((t) => [
+      t,
+      LEGACY_STREAM_COLORS['client work'],
+    ]),
+    ...(entry.metadata?.pdActivities || []).map((t) => [
+      t,
+      LEGACY_STREAM_COLORS['practice development'],
+    ]),
+    ...(entry.metadata?.bdActivities || []).map((t) => [
+      t,
+      LEGACY_STREAM_COLORS['business development'],
+    ]),
+  ]
+
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        component="header"
+        sx={{
+          px: 4,
+          pt: 3,
+          pb: 2.25,
+          borderBottom: '3px solid',
+          borderColor: 'text.primary',
           flexShrink: 0,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Typography
-            sx={{
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              letterSpacing: '0.08em',
-              color: 'text.secondary',
-              fontFamily: '"JetBrains Mono", monospace',
-              flex: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontWeight: 700,
+                color: 'text.secondary',
+                fontSize: '0.85rem',
+              }}
+            >
+              {entry.date || 'Unknown date'}
+            </Typography>
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: '2.25rem',
+                fontWeight: 900,
+                letterSpacing: '-0.04em',
+                lineHeight: 1,
+              }}
+            >
+              {d
+                ? d.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  })
+                : 'Entry'}
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={onClose}
+            aria-label="Close entry"
+            sx={{ border: '2.5px solid', borderColor: 'text.primary' }}
           >
-            {formatDate(entry.date)}
-          </Typography>
-          <IconButton onClick={onClose} size="small">
-            <Close sx={{ fontSize: 16 }} />
+            <Close fontSize="small" />
           </IconButton>
         </Box>
-
-        {(() => {
-          const clientProjects = entry.metadata?.clientProjects || []
-          const pdActivities = entry.metadata?.pdActivities || []
-          const bdActivities = entry.metadata?.bdActivities || []
-          const allTags = [
-            ...clientProjects.map((t) => ({
-              label: t,
-              color: STREAM_COLORS['client work'],
-            })),
-            ...pdActivities.map((t) => ({
-              label: t,
-              color: STREAM_COLORS['practice development'],
-            })),
-            ...bdActivities.map((t) => ({
-              label: t,
-              color: STREAM_COLORS['business development'],
-            })),
-          ]
-          if (allTags.length === 0) return null
-          return (
-            <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mt: 1 }}>
-              {allTags.map(({ label, color }) => (
-                <Chip
-                  key={label}
-                  label={label}
-                  size="small"
+        {tags.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
+            {tags.map(([label, color]) => (
+              <Box
+                key={label}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                }}
+              >
+                <Box
                   sx={{
-                    fontWeight: 800,
-                    fontSize: '0.6rem',
-                    height: 18,
+                    width: 10,
+                    height: 10,
+                    bgcolor: color,
                     border: '1.5px solid',
-                    borderColor: color,
-                    borderRadius: 0,
-                    bgcolor: `${color}22`,
-                    color: color,
-                    '& .MuiChip-label': { px: '6px' },
+                    borderColor: 'text.primary',
                   }}
                 />
-              ))}
-            </Stack>
-          )
-        })()}
+                {label}
+              </Box>
+            ))}
+          </Box>
+        )}
       </Box>
 
-      {/* Markdown content */}
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
-          px: 3,
-          py: 2.5,
-          '&::-webkit-scrollbar': { width: 4 },
-          '&::-webkit-scrollbar-thumb': { bgcolor: ACCENT },
-          // Markdown typography
-          '& h2': {
-            fontSize: '0.82rem',
-            fontWeight: 800,
-            marginTop: '14px',
-            marginBottom: '6px',
+          px: 4,
+          py: 3,
+          '& > *': { maxWidth: '70ch' },
+          '& h2, & h3': {
+            fontSize: '1rem',
+            fontWeight: 900,
+            mt: 2.5,
+            mb: 0.75,
           },
-          '& h3': {
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            marginTop: '10px',
-            marginBottom: '4px',
-          },
-          '& p': {
-            fontSize: '0.82rem',
-            lineHeight: 1.75,
-            marginBottom: '10px',
-          },
-          '& ul, & ol': { paddingLeft: '20px', marginBottom: '10px' },
-          '& li': { fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '2px' },
+          '& p, & li': { fontSize: '1rem', lineHeight: 1.65 },
+          '& p': { mt: 0, mb: 1.25 },
+          '& ul, & ol': { pl: 3, mb: 1.25 },
           '& strong': { fontWeight: 800 },
-          '& em': { fontStyle: 'italic' },
           '& code': {
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.72rem',
+            fontFamily: MONO,
+            fontSize: '0.88em',
             bgcolor: 'action.hover',
-            px: '4px',
-            py: '1px',
-            border: '1px solid',
-            borderColor: 'divider',
+            px: 0.5,
           },
           '& pre': {
-            bgcolor: 'action.hover',
+            bgcolor: 'background.subtle',
             border: '2px solid',
             borderColor: 'text.primary',
-            p: '12px',
+            p: 1.5,
             overflowX: 'auto',
-            mb: '12px',
-            '& code': { border: 'none', bgcolor: 'transparent', p: 0 },
+            '& code': { bgcolor: 'transparent', p: 0 },
           },
           '& blockquote': {
-            borderLeft: `3px solid ${ACCENT}`,
-            paddingLeft: '12px',
-            marginLeft: 0,
+            borderLeft: '4px solid',
+            borderColor: 'text.primary',
+            pl: 1.5,
+            ml: 0,
             color: 'text.secondary',
           },
           '& hr': {
             border: 'none',
-            borderTop: '2px solid',
+            borderTop: '3px solid',
             borderColor: 'text.primary',
-            my: '16px',
+            my: 3,
           },
-          '& a': { color: ACCENT, textDecoration: 'underline' },
+          '& a': { color: 'text.primary', textDecorationThickness: '2px' },
         }}
       >
         {entry.content ? (
@@ -209,12 +198,12 @@ const EntryViewer = ({ entry, onClose }) => {
             {entry.content}
           </ReactMarkdown>
         ) : (
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
-            No content
+          <Typography sx={{ color: 'text.secondary' }}>
+            This day has no written content.
           </Typography>
         )}
       </Box>
-    </Paper>
+    </Box>
   )
 }
 

@@ -300,7 +300,7 @@ export const useDailyEditor = () => {
       if (result.success) {
         setDayStatus('working')
         setDayNote('')
-        showNotification('Day archived successfully', 'success')
+        showNotification('Day saved', 'success')
         setViewMode('summary')
         loadWeekStatus()
       } else {

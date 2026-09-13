@@ -1,65 +1,68 @@
 import React, { useRef, useState } from 'react'
-import { Box, Paper, Typography, IconButton, TextField } from '@mui/material'
+import { Box, Typography, IconButton, TextField } from '@mui/material'
 import { Delete } from '@mui/icons-material'
 import ConfirmDialog from './ConfirmDialog'
 import ProgressStrip from './ProgressStrip'
+import { EmptyState, MONO } from '../../shared/ui'
 
 const DETAIL_NAVIGATION_DELAY_MS = 180
+const COLUMNS = {
+  xs: '84px minmax(0, 1fr) 32px',
+  md: '84px minmax(0, 1fr) 150px 170px 32px',
+}
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
   const [year, month, day] = dateStr.split('-')
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ]
-  return `${parseInt(day)} ${months[parseInt(month) - 1]} '${year.slice(2)}`
+  return `${parseInt(day)} ${MONTHS[parseInt(month) - 1]} '${year.slice(2)}`
 }
 
-const StatusPill = ({ isDone, onClick }) => (
+const headCell = {
+  fontSize: '0.78rem',
+  fontWeight: 800,
+  color: 'text.secondary',
+}
+
+const StatusToggle = ({ isDone, accentColor, onClick }) => (
   <Box
     component="button"
+    type="button"
     onClick={onClick}
-    title={isDone ? 'Click to reopen' : 'Click to mark done'}
+    title={isDone ? 'Reopen project' : 'Mark project done'}
     sx={{
       fontFamily: 'inherit',
-      fontSize: '0.66rem',
+      fontSize: '0.78rem',
       fontWeight: 800,
-      px: 1.5,
       py: 0.4,
-      borderRadius: '999px',
       cursor: 'pointer',
-      flexShrink: 0,
-      ...(isDone
-        ? {
-            bgcolor: 'transparent',
-            border: '1.5px solid',
-            borderColor: 'divider',
-            color: 'text.disabled',
-          }
-        : {
-            bgcolor: 'primary.main',
-            border: '1.5px solid transparent',
-            color: '#fff',
-          }),
+      border: '2px solid',
+      borderColor: isDone ? 'divider' : 'text.primary',
+      bgcolor: isDone ? 'transparent' : accentColor,
+      color: isDone ? 'text.secondary' : '#000',
+      '&:hover': { borderColor: 'text.primary' },
     }}
   >
     {isDone ? 'Done' : 'Active'}
   </Box>
 )
 
-const ProjectCard = ({
+const ProjectRow = ({
   project,
+  accentColor,
   onToggleStatus,
   onDelete,
   onRename,
@@ -92,24 +95,26 @@ const ProjectCard = ({
   }
 
   return (
-    <Paper
-      elevation={0}
+    <Box
+      role="row"
       sx={{
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: COLUMNS,
         alignItems: 'center',
         gap: 2,
-        px: 2.5,
-        py: 1.5,
-        borderRadius: '16px',
-        border: '1.5px solid',
+        px: 2,
+        py: 1.25,
+        borderTop: '2px solid',
         borderColor: 'divider',
-        opacity: isDone ? 0.6 : 1,
-        transition: 'border-color 0.15s, opacity 0.2s',
-        '&:hover': { borderColor: 'text.secondary' },
+        '&:hover': { bgcolor: 'action.hover' },
         '&:hover .row-delete': { opacity: 1 },
       }}
     >
-      <StatusPill isDone={isDone} onClick={onToggleStatus} />
+      <StatusToggle
+        isDone={isDone}
+        accentColor={accentColor}
+        onClick={onToggleStatus}
+      />
 
       {isEditing ? (
         <TextField
@@ -125,7 +130,6 @@ const ProjectCard = ({
             }
           }}
           autoFocus
-          sx={{ flex: 1 }}
         />
       ) : (
         <Typography
@@ -134,10 +138,9 @@ const ProjectCard = ({
             setIsEditing(true)
           }}
           onClick={openDetailsWithClickDelay}
-          title="Double-click to rename"
+          title="Open project. Double-click to rename."
           sx={{
-            flex: 1,
-            fontSize: '0.95rem',
+            fontSize: '1rem',
             fontWeight: 800,
             color: isDone ? 'text.secondary' : 'text.primary',
             cursor: 'pointer',
@@ -145,49 +148,61 @@ const ProjectCard = ({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            '&:hover': { textDecoration: 'underline' },
+            '&:hover': {
+              textDecoration: 'underline',
+              textDecorationThickness: 2,
+            },
           }}
         >
           {project.title}
         </Typography>
       )}
 
-      {tasks.length > 0 && (
-        <Box sx={{ width: 130, flexShrink: 0 }}>
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        {tasks.length > 0 ? (
           <ProgressStrip
             done={completedCount}
             total={tasks.length}
-            color={isDone ? 'text.disabled' : 'primary.main'}
+            color={isDone ? 'text.disabled' : accentColor}
           />
-        </Box>
-      )}
+        ) : (
+          <Typography sx={{ ...headCell, fontWeight: 600 }}>
+            No todos
+          </Typography>
+        )}
+      </Box>
 
       <Typography
         sx={{
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: '0.68rem',
+          display: { xs: 'none', md: 'block' },
+          fontFamily: MONO,
+          fontSize: '0.78rem',
           color: 'text.secondary',
-          fontVariantNumeric: 'tabular-nums',
-          flexShrink: 0,
-          fontStyle: isDone ? 'normal' : 'italic',
+          whiteSpace: 'nowrap',
         }}
       >
-        {formatDate(project.createdAt)} →{' '}
-        {isDone ? formatDate(project.completedAt) : 'ongoing'}
+        {formatDate(project.createdAt)} to{' '}
+        {isDone ? formatDate(project.completedAt) : 'now'}
       </Typography>
 
       <IconButton
         size="small"
         className="row-delete"
+        aria-label={`Delete ${project.title}`}
         onClick={() => setConfirmOpen(true)}
-        sx={{ opacity: 0, transition: 'opacity 0.15s', flexShrink: 0, p: 0.25 }}
+        sx={{
+          opacity: 0,
+          transition: 'opacity 0.15s',
+          p: 0.25,
+          '&:focus-visible': { opacity: 1 },
+        }}
       >
         <Delete fontSize="small" />
       </IconButton>
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Delete Project"
+        title="Delete project"
         message={`"${project.title}" will be permanently removed.`}
         confirmLabel="Delete"
         danger
@@ -197,12 +212,13 @@ const ProjectCard = ({
         }}
         onCancel={() => setConfirmOpen(false)}
       />
-    </Paper>
+    </Box>
   )
 }
 
 const ClientProjectsList = ({
   projects,
+  accentColor = 'primary.main',
   onToggleStatus,
   onDelete,
   onRename,
@@ -215,29 +231,50 @@ const ClientProjectsList = ({
 
   if (sorted.length === 0) {
     return (
-      <Box
-        sx={{
-          py: 2.5,
-          px: 2,
-          textAlign: 'center',
-          border: '2px dashed',
-          borderColor: 'divider',
-          borderRadius: '16px',
-        }}
-      >
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          No client projects yet.
-        </Typography>
-      </Box>
+      <EmptyState title="No projects yet.">
+        Create one from New to track an engagement end to end.
+      </EmptyState>
     )
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+    <Box
+      role="table"
+      aria-label="Projects"
+      sx={{
+        border: '3px solid',
+        borderColor: 'text.primary',
+        borderLeft: '10px solid',
+        borderLeftColor: accentColor,
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Box
+        role="row"
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: COLUMNS,
+          gap: 2,
+          px: 2,
+          py: 1,
+          bgcolor: 'background.subtle',
+        }}
+      >
+        <Typography sx={headCell}>Status</Typography>
+        <Typography sx={headCell}>Project</Typography>
+        <Typography sx={{ ...headCell, display: { xs: 'none', md: 'block' } }}>
+          Todos
+        </Typography>
+        <Typography sx={{ ...headCell, display: { xs: 'none', md: 'block' } }}>
+          Dates
+        </Typography>
+        <span />
+      </Box>
       {sorted.map((project) => (
-        <ProjectCard
+        <ProjectRow
           key={project.id}
           project={project}
+          accentColor={accentColor}
           onToggleStatus={() => onToggleStatus(project.id)}
           onDelete={() => onDelete(project.id)}
           onRename={(title) => onRename(project.id, title)}

@@ -1,13 +1,94 @@
 import React from 'react'
-import { Box, Typography, Fade, Stack, LinearProgress } from '@mui/material'
-import {
-  ArrowForward,
-  ArrowBack,
-  CheckCircle,
-  TaskAlt,
-} from '@mui/icons-material'
-import { flowStyles } from '../DailyEditor.styles'
+import { Box, Typography, Fade } from '@mui/material'
+import { ArrowForward, ArrowBack, Check, TaskAlt } from '@mui/icons-material'
 import EntryCard from './EntryCard'
+import { InkButton, EmptyState, MONO } from '../../shared/ui'
+
+const StepRail = ({ projects, drafts, currentStep, onJump }) => (
+  <Box
+    component="ol"
+    aria-label="Writing steps"
+    sx={{
+      listStyle: 'none',
+      m: 0,
+      p: 0,
+      border: '3px solid',
+      borderColor: 'text.primary',
+      bgcolor: 'background.paper',
+      position: { md: 'sticky' },
+      top: { md: 24 },
+    }}
+  >
+    {projects.map((project, i) => {
+      const isCurrent = i === currentStep
+      const hasDraft = !!drafts[project.title]?.trim()
+      return (
+        <Box component="li" key={project.title}>
+          <Box
+            component="button"
+            type="button"
+            onClick={() => onJump(i)}
+            aria-current={isCurrent ? 'step' : undefined}
+            sx={{
+              width: '100%',
+              display: 'grid',
+              gridTemplateColumns: '2.25rem 1fr auto',
+              alignItems: 'center',
+              gap: 1,
+              px: 1.5,
+              py: 1.5,
+              fontFamily: 'inherit',
+              textAlign: 'left',
+              border: 'none',
+              borderTop: i === 0 ? 'none' : '2px solid',
+              borderColor: 'divider',
+              borderLeft: '8px solid',
+              borderLeftColor: project.color,
+              cursor: 'pointer',
+              bgcolor: isCurrent ? 'text.primary' : 'transparent',
+              color: isCurrent ? 'background.paper' : 'text.primary',
+              '&:hover': isCurrent ? {} : { bgcolor: 'action.hover' },
+            }}
+          >
+            <Typography
+              sx={{ fontFamily: MONO, fontWeight: 700, fontSize: '0.85rem' }}
+            >
+              {String(i + 1).padStart(2, '0')}
+            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  lineHeight: 1.25,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {project.title}
+              </Typography>
+              <Typography
+                sx={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.7 }}
+              >
+                {project.streamName}
+              </Typography>
+            </Box>
+            {hasDraft && (
+              <Check
+                aria-label="Written"
+                sx={{
+                  fontSize: '1rem',
+                  color: isCurrent ? 'inherit' : project.color,
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+      )
+    })}
+  </Box>
+)
 
 const FlowView = ({
   selectedFlowProjects,
@@ -21,182 +102,191 @@ const FlowView = ({
 }) => {
   if (selectedFlowProjects.length === 0) {
     return (
-      <Box
-        sx={{
-          maxWidth: '900px',
-          mx: 'auto',
-          width: '100%',
-          mt: 4,
-          textAlign: 'center',
-        }}
+      <EmptyState
+        title="Nothing selected to write about."
+        action={
+          <Box sx={{ display: 'flex', gap: 1.5 }}>
+            <InkButton
+              tone="outline"
+              startIcon={<ArrowBack />}
+              onClick={onBackToSelect}
+            >
+              Pick projects
+            </InkButton>
+            <InkButton
+              color="primary.main"
+              endIcon={<Check />}
+              onClick={onSave}
+            >
+              Save day
+            </InkButton>
+          </Box>
+        }
       >
-        <Typography
-          variant="h4"
-          sx={{ mb: 4, fontWeight: 900, color: 'text.secondary' }}
-        >
-          No projects selected — nothing to log.
-        </Typography>
-        <Stack direction="row" justifyContent="center" gap={2}>
-          <Box
-            component="button"
-            onClick={onBackToSelect}
-            sx={{ ...flowStyles.flowButton, px: 4, bgcolor: 'transparent' }}
-          >
-            <ArrowBack sx={{ fontSize: '1.2rem' }} />
-            BACK
-            <Box className="shine-layer" sx={flowStyles.shineLayer} />
-          </Box>
-          <Box
-            component="button"
-            onClick={onSave}
-            sx={{
-              ...flowStyles.flowButton,
-              px: 4,
-              bgcolor: 'primary.main',
-              '&:hover': {
-                ...flowStyles.flowButton['&:hover'],
-                bgcolor: 'primary.main',
-              },
-            }}
-          >
-            SAVE DAY
-            <CheckCircle sx={{ fontSize: '1.2rem' }} />
-            <Box className="shine-layer" sx={flowStyles.shineLayer} />
-          </Box>
-        </Stack>
-      </Box>
+        Go back and choose what you worked on, or save the day as it is.
+      </EmptyState>
     )
   }
 
   const project = selectedFlowProjects[currentStep]
-  const isLastStep = currentStep === selectedFlowProjects.length - 1
+  const total = selectedFlowProjects.length
+  const isLastStep = currentStep === total - 1
   const color = project.color || 'primary.main'
-  const typeLabel = project.streamName ? project.streamName.toUpperCase() : ''
   const completedTodos = completedTodosByTitle?.[project.title] || []
 
   return (
-    <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%', mt: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <LinearProgress
-          variant="determinate"
-          value={((currentStep + 1) / selectedFlowProjects.length) * 100}
-          sx={{
-            height: 16,
-            borderRadius: 8,
-            border: '4px solid',
-            borderColor: 'text.primary',
-            bgcolor: 'background.paper',
-            '& .MuiLinearProgress-bar': { bgcolor: color },
-          }}
-        />
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '280px minmax(0, 1fr)' },
+        gap: 4,
+        alignItems: 'start',
+      }}
+    >
+      <Box>
         <Typography
           sx={{
-            mt: 1,
-            textAlign: 'right',
-            fontWeight: 950,
-            fontSize: '1.1rem',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            mb: 1,
+            color: 'text.secondary',
           }}
         >
-          STEP {currentStep + 1} OF {selectedFlowProjects.length}
+          Today&apos;s sheet
         </Typography>
+        <StepRail
+          projects={selectedFlowProjects}
+          drafts={projectDrafts}
+          currentStep={currentStep}
+          onJump={setCurrentStep}
+        />
+        <InkButton
+          tone="ghost"
+          size="sm"
+          startIcon={<ArrowBack />}
+          onClick={onBackToSelect}
+          sx={{ mt: 1.5, px: 0.5 }}
+        >
+          Change selection
+        </InkButton>
       </Box>
 
       <Fade in={true} key={currentStep}>
-        <Box>
-          {typeLabel && (
-            <Typography
+        <Box sx={{ minWidth: 0 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}
+          >
+            <Box
               sx={{
-                mb: 0.5,
-                fontWeight: 900,
+                px: 1,
+                py: 0.25,
+                bgcolor: color,
+                color: '#000',
+                fontWeight: 800,
                 fontSize: '0.8rem',
-                letterSpacing: '2px',
-                color,
+                border: '2px solid',
+                borderColor: 'text.primary',
               }}
             >
-              {typeLabel}
+              {project.streamName}
+            </Box>
+            <Typography
+              sx={{
+                fontFamily: MONO,
+                fontWeight: 700,
+                color: 'text.secondary',
+              }}
+            >
+              {currentStep + 1} of {total}
             </Typography>
-          )}
+          </Box>
 
           <Typography
-            variant="h3"
-            sx={{ mb: completedTodos.length ? 2 : 4, fontWeight: 950, color }}
+            component="h2"
+            sx={{
+              fontSize: { xs: '2rem', md: '2.75rem' },
+              fontWeight: 900,
+              letterSpacing: '-0.04em',
+              lineHeight: 1.02,
+              mb: 3,
+            }}
           >
-            What did you do on {project.title} today?
+            What did you do on {project.title}?
           </Typography>
 
           {completedTodos.length > 0 && (
             <Box
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 0.75,
-                mb: 4,
+                mb: 3,
+                borderLeft: '4px solid',
+                borderColor: color,
+                pl: 2,
+                py: 0.5,
               }}
             >
+              <Typography
+                sx={{ fontWeight: 800, fontSize: '0.85rem', mb: 0.75 }}
+              >
+                Ticked off today
+              </Typography>
               {completedTodos.map((todo) => (
-                <Stack
+                <Box
                   key={todo.id}
-                  direction="row"
-                  alignItems="center"
-                  spacing={1}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    py: 0.25,
+                  }}
                 >
-                  <TaskAlt sx={{ fontSize: '1.1rem', color }} />
-                  <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                  <TaskAlt sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                  <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>
                     {todo.text}
                   </Typography>
-                </Stack>
+                </Box>
               ))}
             </Box>
           )}
 
           <EntryCard
-            entry={{ content: projectDrafts[project.title] || '', tags: [] }}
-            onUpdateContent={(_id, content) =>
-              updateProjectDraft(project.title, content)
-            }
-            isStreamMode
-            borderColor={color}
+            key={project.title}
+            content={projectDrafts[project.title] || ''}
+            onChange={(content) => updateProjectDraft(project.title, content)}
+            accentColor={color}
           />
 
-          <Stack direction="row" justifyContent="space-between" sx={{ mt: 6 }}>
-            <Box
-              component="button"
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              mt: 4,
+              gap: 2,
+            }}
+          >
+            <InkButton
+              tone="outline"
+              startIcon={<ArrowBack />}
               onClick={() =>
                 currentStep === 0
                   ? onBackToSelect()
                   : setCurrentStep((prev) => prev - 1)
               }
-              sx={{ ...flowStyles.flowButton, px: 4, bgcolor: 'transparent' }}
             >
-              <ArrowBack sx={{ fontSize: '1.2rem' }} />
-              BACK
-              <Box className="shine-layer" sx={flowStyles.shineLayer} />
-            </Box>
-
-            <Box
-              component="button"
+              {currentStep === 0 ? 'Back to selection' : 'Previous'}
+            </InkButton>
+            <InkButton
+              size="lg"
+              color={color}
+              endIcon={isLastStep ? <Check /> : <ArrowForward />}
               onClick={() =>
                 isLastStep ? onSave() : setCurrentStep((prev) => prev + 1)
               }
-              sx={{
-                ...flowStyles.flowButton,
-                px: 4,
-                bgcolor: color,
-                '&:hover': {
-                  ...flowStyles.flowButton['&:hover'],
-                  bgcolor: color,
-                },
-              }}
             >
-              {isLastStep ? 'FINISH & SAVE' : 'NEXT'}
-              {isLastStep ? (
-                <CheckCircle sx={{ fontSize: '1.2rem' }} />
-              ) : (
-                <ArrowForward sx={{ fontSize: '1.2rem' }} />
-              )}
-              <Box className="shine-layer" sx={flowStyles.shineLayer} />
-            </Box>
-          </Stack>
+              {isLastStep
+                ? 'Save day'
+                : `Next: ${selectedFlowProjects[currentStep + 1].title}`}
+            </InkButton>
+          </Box>
         </Box>
       </Fade>
     </Box>

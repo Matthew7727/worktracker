@@ -14,7 +14,7 @@ const getCurrentWeekDays = () => {
     d.setDate(monday.getDate() + i)
     return {
       dateStr: d.toISOString().split('T')[0],
-      label: d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+      label: d.toLocaleDateString('en-GB', { weekday: 'short' }),
       isToday:
         d.toISOString().split('T')[0] === today.toISOString().split('T')[0],
     }
@@ -121,7 +121,7 @@ const WeeklyChart = ({ entries, streams = [] }) => {
                     : '6px',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '10px 10px 0 0',
+                borderRadius: 0,
                 overflow: 'hidden',
                 border: dailyTotals[index] > 0 ? '3px solid' : '2px dashed',
                 borderColor:

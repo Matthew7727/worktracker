@@ -1,54 +1,36 @@
-import React from 'react'
-import {
-  Box,
-  Zoom,
-  useScrollTrigger,
-  Fab,
-  IconButton,
-  Tooltip,
-} from '@mui/material'
+import React, { useState } from 'react'
+import { Box, Zoom, useScrollTrigger, Fab } from '@mui/material'
 import {
   Home,
   Notes,
   Settings,
   FolderOpen,
-  Assessment,
   MenuBook as DocsIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
   Bolt,
   PushPin,
-  LightMode,
-  DarkMode,
 } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { useThemeContext } from '../../context/ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-// Sub-components
-import Brand from './components/Brand'
-import FloatingPillNav from './components/FloatingPillNav'
+import BinderTabs from './components/BinderTabs'
 import FeedbackSystem from './components/FeedbackSystem'
-import { fabStyles, toolbarIconStyles } from './MainLayout.styles'
+import { fabStyles } from './MainLayout.styles'
 
-function ScrollTop({ children }) {
+function ScrollTop({ target, children }) {
   const trigger = useScrollTrigger({
+    target: target || undefined,
     disableHysteresis: true,
-    threshold: 100,
+    threshold: 400,
   })
 
-  const handleClick = (event) => {
-    const anchor = (event.target.ownerDocument || document).querySelector(
-      '#back-to-top-anchor'
-    )
-    if (anchor) anchor.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }
-
   return (
-    <Zoom in={trigger}>
+    <Zoom in={!!target && trigger}>
       <Box
-        onClick={handleClick}
+        onClick={() => target?.scrollTo({ top: 0, behavior: 'smooth' })}
         role="presentation"
-        sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 1000 }}
+        sx={{ position: 'fixed', bottom: 40, right: 112, zIndex: 1000 }}
       >
         {children}
       </Box>
@@ -61,6 +43,7 @@ const MainLayout = ({ children }) => {
   const { mode, toggleTheme } = useThemeContext()
   const navigate = useNavigate()
   const location = useLocation()
+  const [sheetEl, setSheetEl] = useState(null)
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: <Home />, activeColor: '#80b621' },
@@ -105,76 +88,50 @@ const MainLayout = ({ children }) => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div id="back-to-top-anchor" style={{ position: 'absolute', top: 0 }} />
-
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        bgcolor: 'background.desk',
+        pt: 2,
+        pl: 2,
+      }}
+    >
       <Box
+        component="main"
+        ref={setSheetEl}
         sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          height: '5rem',
-          display: 'flex',
-          alignItems: 'center',
-          px: '4rem',
-          pointerEvents: 'none',
+          flex: 1,
+          minWidth: 0,
+          overflowY: 'auto',
+          bgcolor: 'background.default',
+          border: '3px solid',
+          borderRight: 'none',
+          borderBottom: 'none',
+          borderColor: 'text.primary',
         }}
       >
-        <Box sx={{ pointerEvents: 'auto' }}>
-          <Brand onClick={() => navigate('/')} />
-        </Box>
-        <Box sx={{ flexGrow: 1 }} />
-        <Tooltip
-          title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-          arrow
-        >
-          <IconButton
-            onClick={toggleTheme}
-            size="small"
-            sx={{ ...toolbarIconStyles, pointerEvents: 'auto', p: 1 }}
-          >
-            {mode === 'light' ? (
-              <DarkMode fontSize="small" />
-            ) : (
-              <LightMode fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ py: 6, px: { xs: 3, md: '4rem' } }}>{children}</Box>
       </Box>
 
-      <FloatingPillNav
+      <BinderTabs
         items={navItems}
         currentPath={location.pathname}
         onNavigate={navigate}
         actions={actionItems}
         searchRootDir={selectedDirectory}
         onSearchResultClick={handleSearchResultClick}
+        mode={mode}
+        onToggleTheme={toggleTheme}
       />
 
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          pt: '4.5rem',
-          overflowY: 'auto',
-          bgcolor: 'background.default',
-        }}
-      >
-        <Box sx={{ py: 6, px: '4rem' }}>{children}</Box>
-      </Box>
-
-      <ScrollTop>
+      <ScrollTop target={sheetEl}>
         <Fab
-          color="primary"
-          size="large"
-          aria-label="scroll back to top"
-          sx={fabStyles}
+          size="medium"
+          aria-label="Back to top"
+          sx={{ ...fabStyles, bgcolor: 'background.paper' }}
         >
-          <KeyboardArrowUpIcon
-            sx={{ fontSize: '2rem', color: 'background.paper' }}
-          />
+          <KeyboardArrowUpIcon />
         </Fab>
       </ScrollTop>
 

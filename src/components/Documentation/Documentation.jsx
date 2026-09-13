@@ -37,7 +37,7 @@ const Documentation = () => {
               p: 3,
               border: '3px solid',
               borderColor: 'text.primary',
-              borderRadius: '24px',
+              borderRadius: 0,
               boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
               bgcolor: 'background.paper',
             }}
@@ -65,7 +65,7 @@ const Documentation = () => {
                   <ListItemButton
                     onClick={() => scrollToSection(section.id)}
                     sx={{
-                      borderRadius: '12px',
+                      borderRadius: 0,
                       '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' },
                     }}
                   >
@@ -100,7 +100,7 @@ const Documentation = () => {
               mt: 10,
               p: 4,
               bgcolor: 'primary.main',
-              borderRadius: '24px',
+              borderRadius: 0,
               color: 'background.paper',
               border: '3px solid',
               borderColor: 'text.primary',

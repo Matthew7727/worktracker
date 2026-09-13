@@ -1,29 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Typography,
-  Grid,
-  Paper,
-  Button,
-  Switch,
-  Stack,
-  Fade,
-  TextField,
-  Divider,
-  LinearProgress,
-} from '@mui/material'
-import {
-  NotificationsActive,
-  Schedule,
-  BugReport,
-  SystemUpdateAlt,
-  TrendingUp,
-  Assessment,
-} from '@mui/icons-material'
+import { Box, Switch } from '@mui/material'
 import { useAppContext } from '../../context/AppContext'
 import { useUpdate } from '../../context/UpdateContext'
 import StreamSettings from './StreamSettings'
+import { SettingsSection, SettingRow, NumberField } from './SettingsSection'
+import { InkButton, PageHeader } from '../shared/ui'
 
 const Settings = () => {
   const navigate = useNavigate()
@@ -151,824 +133,336 @@ const Settings = () => {
     // We don't auto-save time to avoid too many writes, or we can use a debouncer
   }
 
+  const isMock = !!window.electronAPI?.isMock
+  const sections = [
+    { id: 'streams', label: 'Work streams' },
+    { id: 'features', label: 'Features' },
+    { id: 'reminders', label: 'Reminders' },
+    utilisationEnabled && { id: 'utilisation', label: 'Utilisation' },
+    { id: 'workspace', label: 'Workspace' },
+    { id: 'updates', label: 'Updates' },
+    isMock && { id: 'developer', label: 'Developer' },
+  ].filter(Boolean)
+
+  const versionLabel = appVersion ? `v${appVersion}` : 'Version unknown'
+  const updateStateText = {
+    idle: 'Check to see whether a newer version is out.',
+    checking: 'Checking for a newer version…',
+    'up-to-date': "You're on the latest version.",
+    available: `Version ${updateInfo?.version} is ready to download.`,
+    downloading: `Downloading ${Math.floor(updateProgress?.percent || 0)}%`,
+    downloaded: 'The update is downloaded. Restart to install it.',
+    error: `The update failed: ${updateError}`,
+  }[updateStatus]
+
   return (
-    <Fade in={true} timeout={600}>
+    <Box sx={{ maxWidth: 1280, mx: 'auto', width: '100%', pb: 10 }}>
+      <PageHeader title="Settings" meta={`Work Tracker ${versionLabel}`} />
+
       <Box
-        className="settings-page"
         sx={{
-          maxWidth: '1000px',
-          mx: 'auto',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          pb: 10,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '200px minmax(0, 1fr)' },
+          gap: 5,
+          alignItems: 'start',
         }}
       >
-        <Typography variant="h1" sx={{ textAlign: 'center', fontWeight: 950 }}>
-          Settings
-        </Typography>
+        <Box
+          component="nav"
+          aria-label="Settings sections"
+          sx={{
+            position: { md: 'sticky' },
+            top: { md: 24 },
+            display: { xs: 'none', md: 'block' },
+            borderLeft: '3px solid',
+            borderColor: 'text.primary',
+          }}
+        >
+          {sections.map((s) => (
+            <Box
+              key={s.id}
+              component="button"
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(s.id)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              sx={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                border: 'none',
+                background: 'none',
+                px: 2,
+                py: 0.9,
+                fontFamily: 'inherit',
+                fontWeight: 800,
+                fontSize: '0.95rem',
+                color: 'text.secondary',
+                cursor: 'pointer',
+                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+              }}
+            >
+              {s.label}
+            </Box>
+          ))}
+        </Box>
 
-        <Grid container spacing={6} justifyContent="center">
-          <Grid item xs={12} md={10}>
-            <Stack spacing={4}>
-              {/* Work Streams Section */}
-              <StreamSettings />
+        <Box
+          sx={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}
+        >
+          <StreamSettings />
 
-              {/* Notifications Section */}
-              <Paper
+          <SettingsSection
+            id="reminders"
+            title="Reminders"
+            description="A daily desktop nudge to log your day before you forget what happened."
+          >
+            <SettingRow
+              label="Daily reminder"
+              hint="Show a notification every weekday."
+            >
+              <Switch
+                checked={notifEnabled}
+                onChange={handleToggleNotifs}
+                inputProps={{ 'aria-label': 'Daily reminder' }}
+              />
+            </SettingRow>
+            <SettingRow
+              label="Reminder time"
+              hint="When the notification appears."
+            >
+              <NumberField
+                type="time"
+                label="Reminder time"
+                width={120}
+                value={notifTime}
+                onChange={handleTimeChange}
+                disabled={!notifEnabled}
+              />
+              <InkButton
+                size="sm"
+                onClick={() => handleSaveSettings(notifEnabled, notifTime)}
+                disabled={!notifEnabled || isSaving}
+              >
+                {isSaving ? 'Saving…' : 'Save time'}
+              </InkButton>
+            </SettingRow>
+          </SettingsSection>
+
+          {utilisationEnabled && (
+            <SettingsSection
+              id="utilisation"
+              title="Utilisation"
+              description="Predicted from the client hours you declare in STAFFIT each week, measured against your standard week across the 1 June to 31 May cycle."
+            >
+              <SettingRow
+                label="Target"
+                hint="Share of a standard week that should be chargeable."
+              >
+                <NumberField
+                  label="Utilisation target"
+                  unit="%"
+                  value={utilisationTarget}
+                  onChange={(e) => setUtilisationTarget(e.target.value)}
+                  inputProps={{ min: 0, max: 100, step: 5 }}
+                />
+              </SettingRow>
+              <SettingRow
+                label="Standard week"
+                hint="Hours in a full working week."
+              >
+                <NumberField
+                  label="Standard week hours"
+                  unit="hrs"
+                  value={standardWeeklyHours}
+                  onChange={(e) => setStandardWeeklyHours(e.target.value)}
+                  inputProps={{ min: 0, step: 0.5 }}
+                />
+              </SettingRow>
+              <SettingRow
+                label=""
                 sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.text.primary}`,
+                  justifyContent: 'flex-end',
+                  py: 1.5,
+                  bgcolor: 'background.subtle',
                 }}
               >
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={2}
-                  sx={{ mb: 4 }}
+                <InkButton
+                  size="sm"
+                  onClick={() =>
+                    handleSaveUtilisation(
+                      utilisationTarget,
+                      standardWeeklyHours
+                    )
+                  }
+                  disabled={isUtilSaving}
                 >
-                  <NotificationsActive sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
-                    Daily Reminders
-                  </Typography>
-                </Stack>
+                  {isUtilSaving ? 'Saving…' : 'Save utilisation'}
+                </InkButton>
+              </SettingRow>
+            </SettingsSection>
+          )}
 
-                <Typography
-                  variant="body1"
-                  sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
-                >
-                  Stay consistent by scheduling a daily nudge to log your
-                  achievements.
-                </Typography>
+          <SettingsSection
+            id="workspace"
+            title="Workspace"
+            description="The folder where every entry, activity and note is stored as a Markdown file."
+          >
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                fontFamily: '"JetBrains Mono", monospace',
+                fontWeight: 700,
+                wordBreak: 'break-all',
+                bgcolor: 'background.subtle',
+                borderBottom: '2px solid',
+                borderColor: 'divider',
+              }}
+            >
+              {selectedDirectory}
+            </Box>
+            <SettingRow
+              label="Stream setup"
+              hint="Walk through choosing and naming your streams again."
+            >
+              <InkButton tone="outline" size="sm" onClick={rerunStreamSetup}>
+                Re-run setup
+              </InkButton>
+            </SettingRow>
+            <SettingRow
+              label="Reports"
+              hint="Export your history as Markdown or JSON."
+            >
+              <InkButton
+                tone="outline"
+                size="sm"
+                onClick={() => navigate('/reports')}
+              >
+                Open reports
+              </InkButton>
+            </SettingRow>
+            <SettingRow
+              label="Switch workspace"
+              hint="Open a different folder. Nothing in this one is deleted."
+            >
+              <InkButton
+                color="#ff6b6b"
+                size="sm"
+                onClick={() => setProjectDirectory(null)}
+              >
+                Switch workspace
+              </InkButton>
+            </SettingRow>
+          </SettingsSection>
 
-                <Stack spacing={4}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'action.hover',
-                      borderRadius: '20px',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                        Enable Notifications
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, opacity: 0.7 }}
-                      >
-                        Get a desktop alert at your preferred time.
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={notifEnabled}
-                      onChange={handleToggleNotifs}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: 'primary.main',
-                        },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiLinearProgress-bar':
-                          { bgcolor: 'primary.main' },
-                      }}
-                    />
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'action.hover',
-                      borderRadius: '20px',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Schedule />
-                      <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                          Reminder Time
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600, opacity: 0.7 }}
-                        >
-                          When should we nudge you?
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <TextField
-                        type="time"
-                        value={notifTime}
-                        onChange={handleTimeChange}
-                        disabled={!notifEnabled}
-                        sx={{
-                          '& .MuiInputBase-root': {
-                            fontWeight: 900,
-                            fontSize: '1.2rem',
-                            borderRadius: '12px',
-                            border: '2px solid',
-                            borderColor: 'text.primary',
-                          },
-                        }}
-                      />
-                      <Button
-                        variant="contained"
-                        onClick={() =>
-                          handleSaveSettings(notifEnabled, notifTime)
-                        }
-                        disabled={!notifEnabled || isSaving}
-                        sx={{
-                          fontWeight: 900,
-                          px: 3,
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: '#f0f0f0',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
-                          '&.Mui-disabled': {
-                            opacity: 0.5,
-                            boxShadow: 'none',
-                            transform: 'none',
-                            border: '2px solid #999',
-                            bgcolor: '#f0f0f0',
-                          },
-                        }}
-                      >
-                        UPDATE
-                      </Button>
-                    </Stack>
-                  </Box>
-                </Stack>
-              </Paper>
-
-              {/* Utilisation Target Section */}
-              {utilisationEnabled && (
-                <Paper
-                  sx={{
-                    p: 6,
-                    borderRadius: '40px',
-                    border: '4px solid',
-                    borderColor: 'text.primary',
-                    boxShadow: (theme) =>
-                      `10px 10px 0px ${theme.palette.text.primary}`,
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ mb: 4 }}
-                  >
-                    <TrendingUp sx={{ fontSize: '2.5rem' }} />
-                    <Typography variant="h3" sx={{ fontWeight: 950 }}>
-                      Utilisation Target
-                    </Typography>
-                  </Stack>
-
-                  <Typography
-                    variant="body1"
-                    sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
-                  >
-                    Utilisation is predicted from the hours you declare in
-                    STAFFIT each week (client work only), tracked against your
-                    standard week, over the 1 June – 31 May cycle.
-                  </Typography>
-
-                  <Stack spacing={2}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 3,
-                        bgcolor: 'action.hover',
-                        borderRadius: '20px',
-                        border: '3px solid',
-                        borderColor: 'text.primary',
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                          Utilisation Target
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600, opacity: 0.7 }}
-                        >
-                          What % of a standard week should be chargeable?
-                        </Typography>
-                      </Box>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <TextField
-                          type="number"
-                          value={utilisationTarget}
-                          onChange={(e) => setUtilisationTarget(e.target.value)}
-                          inputProps={{ min: 0, max: 100, step: 5 }}
-                          sx={{
-                            width: 100,
-                            '& .MuiInputBase-root': {
-                              fontWeight: 900,
-                              fontSize: '1.2rem',
-                              borderRadius: '12px',
-                              border: '2px solid',
-                              borderColor: 'text.primary',
-                            },
-                          }}
-                        />
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                          %
-                        </Typography>
-                      </Stack>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 3,
-                        bgcolor: 'action.hover',
-                        borderRadius: '20px',
-                        border: '3px solid',
-                        borderColor: 'text.primary',
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                          Standard Week
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 600, opacity: 0.7 }}
-                        >
-                          Hours in a full, standard working week
-                        </Typography>
-                      </Box>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <TextField
-                          type="number"
-                          value={standardWeeklyHours}
-                          onChange={(e) =>
-                            setStandardWeeklyHours(e.target.value)
-                          }
-                          inputProps={{ min: 0, step: 0.5 }}
-                          sx={{
-                            width: 100,
-                            '& .MuiInputBase-root': {
-                              fontWeight: 900,
-                              fontSize: '1.2rem',
-                              borderRadius: '12px',
-                              border: '2px solid',
-                              borderColor: 'text.primary',
-                            },
-                          }}
-                        />
-                        <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                          hrs
-                        </Typography>
-                      </Stack>
-                    </Box>
-
-                    <Button
-                      variant="contained"
-                      onClick={() =>
-                        handleSaveUtilisation(
-                          utilisationTarget,
-                          standardWeeklyHours
+          <SettingsSection
+            id="updates"
+            title="Updates"
+            description={`You're running Work Tracker ${versionLabel}.`}
+          >
+            <SettingRow
+              label={updateStateText}
+              hint={
+                updateStatus === 'downloaded'
+                  ? 'Your data is saved; restarting is safe.'
+                  : null
+              }
+            >
+              {(updateStatus === 'idle' || updateStatus === 'up-to-date') && (
+                <InkButton
+                  tone="outline"
+                  size="sm"
+                  onClick={() => {
+                    checkForUpdates().then((res) => {
+                      if (res && res.status === 'dev') {
+                        showNotification(
+                          'Update checks are unavailable in development mode.',
+                          'info'
                         )
                       }
-                      disabled={isUtilSaving}
-                      sx={{
-                        fontWeight: 900,
-                        alignSelf: 'flex-end',
-                        px: 3,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                        '&.Mui-disabled': {
-                          opacity: 0.5,
-                          boxShadow: 'none',
-                          border: '2px solid #999',
-                          bgcolor: '#f0f0f0',
-                        },
-                      }}
-                    >
-                      SAVE
-                    </Button>
-                  </Stack>
-                </Paper>
-              )}
-
-              {/* Workspace Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
-                <Typography variant="h4" sx={{ mb: 4, fontWeight: 950 }}>
-                  Active Workspace
-                </Typography>
-                <Box
-                  sx={{
-                    mb: 4,
-                    fontFamily: '"JetBrains Mono", monospace',
-                    bgcolor: 'rgba(0,0,0,0.04)',
-                    p: 3,
-                    borderRadius: '16px',
-                    border: '2px solid',
-                    borderColor: 'text.primary',
-                    wordBreak: 'break-all',
-                    fontWeight: 800,
-                    fontSize: '1.1rem',
+                    })
                   }}
                 >
-                  {selectedDirectory}
-                </Box>
-                <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={2}
-                  sx={{ justifyContent: 'center' }}
+                  Check for updates
+                </InkButton>
+              )}
+              {updateStatus === 'checking' && (
+                <InkButton size="sm" disabled>
+                  Checking…
+                </InkButton>
+              )}
+              {updateStatus === 'available' && (
+                <InkButton
+                  size="sm"
+                  color="primary.main"
+                  onClick={downloadUpdate}
                 >
-                  <Button
-                    variant="contained"
-                    onClick={rerunStreamSetup}
-                    sx={{
-                      px: 4,
-                      py: 1.5,
-                      fontWeight: 900,
-                      backgroundImage: 'none',
-                      bgcolor: 'background.paper',
-                      color: 'text.primary',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      boxShadow: (theme) =>
-                        `4px 4px 0px ${theme.palette.text.primary}`,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                        boxShadow: (theme) =>
-                          `2px 2px 0px ${theme.palette.text.primary}`,
-                        transform: 'translate(2px, 2px)',
-                      },
-                    }}
-                  >
-                    RE-RUN STARTUP SETUP
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => setProjectDirectory(null)}
-                    sx={{
-                      px: 4,
-                      py: 1.5,
-                      fontWeight: 900,
-                      backgroundImage: 'none',
-                      bgcolor: '#f44336',
-                      color: 'background.paper',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      boxShadow: (theme) =>
-                        `4px 4px 0px ${theme.palette.text.primary}`,
-                      '&:hover': {
-                        bgcolor: '#d32f2f',
-                        boxShadow: (theme) =>
-                          `2px 2px 0px ${theme.palette.text.primary}`,
-                        transform: 'translate(2px, 2px)',
-                      },
-                    }}
-                  >
-                    SWITCH WORKSPACE
-                  </Button>
-                </Stack>
-              </Paper>
-
-              {/* Reports Shortcut Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={2}
-                  sx={{ mb: 4 }}
+                  Download update
+                </InkButton>
+              )}
+              {updateStatus === 'downloaded' && (
+                <InkButton
+                  size="sm"
+                  color="primary.main"
+                  onClick={installUpdate}
                 >
-                  <Assessment sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
-                    Reports & Analytics
-                  </Typography>
-                </Stack>
-                <Typography
-                  variant="body1"
-                  sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
-                >
-                  View deep insights of where your time has been spent across
-                  your work streams over an extended period.
-                </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate('/reports')}
-                    sx={{
-                      px: 4,
-                      py: 1.5,
-                      fontWeight: 900,
-                      backgroundImage: 'none',
-                      bgcolor: 'background.paper',
-                      color: 'text.primary',
-                      border: '2px solid',
-                      borderColor: 'text.primary',
-                      boxShadow: (theme) =>
-                        `4px 4px 0px ${theme.palette.text.primary}`,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                        boxShadow: (theme) =>
-                          `2px 2px 0px ${theme.palette.text.primary}`,
-                        transform: 'translate(2px, 2px)',
-                      },
-                    }}
-                  >
-                    OPEN REPORTS DASHBOARD
-                  </Button>
-                </Box>
-              </Paper>
-
-              {/* App Updates Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '40px',
-                  border: '4px solid',
-                  borderColor: 'text.primary',
-                  boxShadow: (theme) =>
-                    `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={2}
-                  sx={{ mb: 4 }}
-                >
-                  <SystemUpdateAlt sx={{ fontSize: '2.5rem' }} />
-                  <Typography variant="h3" sx={{ fontWeight: 950 }}>
-                    Application Updates
-                  </Typography>
-                </Stack>
-
-                <Typography variant="h6" sx={{ mb: 4, fontWeight: 800 }}>
-                  Current Version: {appVersion ? `v${appVersion}` : 'Unknown'}
-                </Typography>
-
+                  Restart and install
+                </InkButton>
+              )}
+              {updateStatus === 'error' && (
+                <InkButton tone="outline" size="sm" onClick={resetUpdate}>
+                  Try again
+                </InkButton>
+              )}
+            </SettingRow>
+            {updateStatus === 'downloading' && (
+              <Box sx={{ px: 3, pb: 2.5 }}>
                 <Box
                   sx={{
-                    p: 4,
-                    bgcolor: 'action.hover',
-                    borderRadius: '20px',
+                    height: 16,
                     border: '3px solid',
                     borderColor: 'text.primary',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                   }}
                 >
-                  {updateStatus === 'up-to-date' ? (
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 800, mb: 2, color: '#4caf50' }}
-                    >
-                      ✓ You&apos;re on the latest version
-                    </Typography>
-                  ) : null}
-
-                  {updateStatus === 'idle' || updateStatus === 'up-to-date' ? (
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        checkForUpdates().then((res) => {
-                          if (res && res.status === 'dev') {
-                            showNotification(
-                              'Cannot check for updates in development mode.',
-                              'info'
-                            )
-                          }
-                        })
-                      }}
-                      sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        py: 1.5,
-                        fontSize: '1.1rem',
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                      }}
-                    >
-                      CHECK FOR UPDATES
-                    </Button>
-                  ) : null}
-
-                  {updateStatus === 'checking' ? (
-                    <Button
-                      disabled
-                      variant="contained"
-                      sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        py: 1.5,
-                        fontSize: '1.1rem',
-                        backgroundImage: 'none',
-                        bgcolor: '#e0e0e0',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: 'none',
-                        opacity: 0.7,
-                      }}
-                    >
-                      CHECKING...
-                    </Button>
-                  ) : null}
-
-                  {updateStatus === 'available' ? (
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
-                        Version {updateInfo?.version} is available
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={downloadUpdate}
-                        sx={{
-                          fontWeight: 900,
-                          px: 4,
-                          py: 1.5,
-                          fontSize: '1.1rem',
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
-                        }}
-                      >
-                        DOWNLOAD UPDATE
-                      </Button>
-                    </Box>
-                  ) : null}
-
-                  {updateStatus === 'downloading' ? (
-                    <Box sx={{ width: '100%', maxWidth: '500px' }}>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 800, mb: 2, textAlign: 'center' }}
-                      >
-                        Downloading Update...{' '}
-                        {Math.floor(updateProgress?.percent || 0)}%
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={updateProgress?.percent || 0}
-                        sx={{
-                          height: 16,
-                          borderRadius: 8,
-                          border: '3px solid',
-                          borderColor: 'text.primary',
-                          bgcolor: 'background.paper',
-                          '& .MuiLinearProgress-bar': { bgcolor: '#4caf50' },
-                        }}
-                      />
-                    </Box>
-                  ) : null}
-
-                  {updateStatus === 'downloaded' ? (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      onClick={installUpdate}
-                      sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        py: 1.5,
-                        fontSize: '1.1rem',
-                        backgroundImage: 'none',
-                        bgcolor: '#4caf50',
-                        color: '#fff',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#388e3c',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                      }}
-                    >
-                      RESTART & INSTALL
-                    </Button>
-                  ) : null}
-
-                  {updateStatus === 'error' ? (
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant="body1"
-                        color="error"
-                        sx={{ fontWeight: 800, mb: 3 }}
-                      >
-                        Error: {updateError}
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={resetUpdate}
-                        sx={{
-                          fontWeight: 900,
-                          px: 4,
-                          py: 1.5,
-                          backgroundImage: 'none',
-                          bgcolor: 'background.paper',
-                          color: 'text.primary',
-                          border: '2px solid',
-                          borderColor: 'text.primary',
-                          boxShadow: (theme) =>
-                            `4px 4px 0px ${theme.palette.text.primary}`,
-                          '&:hover': {
-                            bgcolor: '#f0f0f0',
-                            boxShadow: (theme) =>
-                              `2px 2px 0px ${theme.palette.text.primary}`,
-                            transform: 'translate(2px, 2px)',
-                          },
-                        }}
-                      >
-                        TRY AGAIN
-                      </Button>
-                    </Box>
-                  ) : null}
+                  <Box
+                    sx={{
+                      height: '100%',
+                      width: `${updateProgress?.percent || 0}%`,
+                      bgcolor: 'primary.main',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
                 </Box>
-              </Paper>
+              </Box>
+            )}
+          </SettingsSection>
 
-              {/* About Section */}
-              <Paper
-                sx={{
-                  p: 6,
-                  borderRadius: '24px',
-                  border: '4px dashed',
-                  borderColor: 'text.primary',
-                  bgcolor: 'transparent',
-                }}
+          {isMock && (
+            <SettingsSection
+              id="developer"
+              title="Developer"
+              description="Only shown when the app runs in a browser against mock data."
+            >
+              <SettingRow
+                label="Test notification"
+                hint="Fire the reminder notification now."
               >
-                <Typography variant="h5" sx={{ mb: 2, fontWeight: 950 }}>
-                  About System
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 800, mb: 1 }}>
-                  Work Tracker {appVersion ? `v${appVersion}` : 'Unknown'}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 600, opacity: 0.7 }}
+                <InkButton
+                  tone="outline"
+                  size="sm"
+                  onClick={() => window.electronAPI?.testNotification?.()}
                 >
-                  Built with Electron, React & High-Contrast Stream-Based Design
-                </Typography>
-              </Paper>
-
-              {/* Developer Tools Section (Browser Mock Only) */}
-              {window.electronAPI && window.electronAPI.isMock && (
-                <Paper
-                  sx={{
-                    p: 6,
-                    borderRadius: '40px',
-                    border: '4px solid',
-                    borderColor: 'text.primary',
-                    boxShadow: (theme) =>
-                      `10px 10px 0px ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ mb: 4 }}
-                  >
-                    <BugReport sx={{ fontSize: '2.5rem' }} />
-                    <Typography variant="h3" sx={{ fontWeight: 950 }}>
-                      Developer Tools
-                    </Typography>
-                  </Stack>
-
-                  <Typography
-                    variant="body1"
-                    sx={{ mb: 4, fontWeight: 700, opacity: 0.8 }}
-                  >
-                    Browser dev mode testing tools. These are only visible when
-                    running locally over the browser web down view.
-                  </Typography>
-
-                  <Stack
-                    direction="row"
-                    spacing={3}
-                    justifyContent="center"
-                    flexWrap="wrap"
-                    useFlexGap
-                    sx={{ gap: 3 }}
-                  >
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        if (
-                          window.electronAPI &&
-                          window.electronAPI.testNotification
-                        ) {
-                          window.electronAPI.testNotification()
-                        }
-                      }}
-                      sx={{
-                        fontWeight: 900,
-                        px: 4,
-                        py: 1.5,
-                        backgroundImage: 'none',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary',
-                        border: '2px solid',
-                        borderColor: 'text.primary',
-                        boxShadow: (theme) =>
-                          `4px 4px 0px ${theme.palette.text.primary}`,
-                        '&:hover': {
-                          bgcolor: '#f0f0f0',
-                          boxShadow: (theme) =>
-                            `2px 2px 0px ${theme.palette.text.primary}`,
-                          transform: 'translate(2px, 2px)',
-                        },
-                      }}
-                    >
-                      TEST NOTIFICATION
-                    </Button>
-                  </Stack>
-                </Paper>
-              )}
-            </Stack>
-          </Grid>
-        </Grid>
+                  Send test
+                </InkButton>
+              </SettingRow>
+            </SettingsSection>
+          )}
+        </Box>
       </Box>
-    </Fade>
+    </Box>
   )
 }
 

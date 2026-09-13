@@ -1,37 +1,17 @@
-import React, { useState, useRef } from 'react'
+import React, { useRef, useState } from 'react'
+import { Paper, Box, IconButton, TextField, Tooltip } from '@mui/material'
 import {
-  Paper,
-  Box,
-  Stack,
-  Typography,
-  IconButton,
-  Button,
-  Chip,
-  TextField,
-  CircularProgress,
-  Tooltip,
-  Collapse,
-} from '@mui/material'
-import {
-  Save,
-  Delete,
-  AccessTime,
-  LocalOffer,
   FormatBold,
   FormatItalic,
-  Abc,
-  Title,
-  List as ListIcon,
-  Link as LinkIcon,
-  Edit,
-  KeyboardArrowDown,
-  KeyboardArrowUp,
-  Code as CodeIcon,
   FormatStrikethrough,
-  FormatQuote,
   FormatAlignLeft,
   FormatAlignCenter,
   FormatAlignRight,
+  Title,
+  List as ListIcon,
+  FormatQuote,
+  Code as CodeIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -44,417 +24,160 @@ import {
   toolbarBtnStyles,
 } from '../DailyEditor.styles'
 import { injectMarkdown } from '../../../utils/markdownHelpers'
+import { Segmented } from '../../shared/ui'
 
-const EntryCard = ({
-  entry,
-  onSave,
-  onDelete,
-  onUpdateContent,
-  onUpdateTags,
-  onAddTag,
-  onRemoveTag,
-  isStreamMode,
-  borderColor,
-}) => {
-  const [isEditing, setIsEditing] = useState(
-    entry.isNew || isStreamMode || false
-  )
-  const [isExpanded, setIsExpanded] = useState(false)
-  const textareaRef = useRef(null)
+const TOOL_GROUPS = [
+  [
+    ['bold', 'Bold', FormatBold],
+    ['italic', 'Italic', FormatItalic],
+    ['strikethrough', 'Strikethrough', FormatStrikethrough],
+  ],
+  [
+    ['heading', 'Heading', Title],
+    ['list', 'List', ListIcon],
+    ['blockquote', 'Quote', FormatQuote],
+    ['code', 'Code', CodeIcon],
+    ['link', 'Link', LinkIcon],
+  ],
+  [
+    ['align-left', 'Align left', FormatAlignLeft],
+    ['align-center', 'Align center', FormatAlignCenter],
+    ['align-right', 'Align right', FormatAlignRight],
+  ],
+]
 
-  const handleToolbarAction = (type) => {
-    const textarea = textareaRef.current?.querySelector('textarea')
+const openLink = (e, url) => {
+  e.preventDefault()
+  if (window.electronAPI?.openExternal) window.electronAPI.openExternal(url)
+  else window.open(url, '_blank')
+}
+
+const EntryCard = ({ content, onChange, accentColor = 'primary.main' }) => {
+  const [mode, setMode] = useState('write')
+  const fieldRef = useRef(null)
+
+  const applyTool = (type) => {
+    const textarea = fieldRef.current?.querySelector('textarea')
     if (!textarea) return
-
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-
     const { newText, newCursor } = injectMarkdown(
-      entry.content,
-      start,
-      end,
+      content,
+      textarea.selectionStart,
+      textarea.selectionEnd,
       type
     )
-    onUpdateContent(entry.id, newText)
-
-    // Reset focus and cursor after state update
+    onChange(newText)
     setTimeout(() => {
       textarea.focus()
       textarea.setSelectionRange(newCursor, newCursor)
     }, 0)
   }
 
-  const handleSave = async () => {
-    if (onSave) {
-      await onSave(entry.id)
-    }
-    setIsEditing(false)
-  }
-
-  const handleLinkClick = (e, url) => {
-    e.preventDefault()
-    if (window.electronAPI && window.electronAPI.openExternal) {
-      window.electronAPI.openExternal(url)
-    } else {
-      window.open(url, '_blank')
-    }
-  }
-
-  const isLongContent = entry.content.length > 300
-  const displayContent =
-    !isEditing && !isExpanded && isLongContent
-      ? entry.content.substring(0, 300) + '...'
-      : entry.content
-
   return (
     <Paper
       sx={{
         ...cardStyles,
-        borderColor:
-          borderColor || (entry.isNew ? 'primary.main' : 'text.primary'),
+        borderTop: '10px solid',
+        borderTopColor: accentColor,
       }}
     >
-      {/* Header Area */}
-      {!isStreamMode && (
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Stack direction="row" spacing={2} alignItems="center">
-            {entry.time && (
-              <Chip
-                icon={<AccessTime sx={{ fontSize: '1.2rem !important' }} />}
-                label={entry.time}
-                sx={{
-                  bgcolor: 'rgba(128, 182, 33, 0.15)',
-                  color: 'primary.main',
-                  border: '1px solid currentColor',
-                  fontWeight: 900,
-                  fontSize: '1rem',
-                }}
-              />
-            )}
-            {isEditing && (
-              <TextField
-                size="small"
-                placeholder="Add tag..."
-                value={entry.newTag || ''}
-                onChange={(e) => onUpdateTags(entry.id, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    onAddTag(entry.id)
-                  }
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <LocalOffer
-                      sx={{ mr: 1, fontSize: '0.9rem', opacity: 0.5 }}
-                    />
-                  ),
-                  sx: {
-                    height: '32px',
-                    fontSize: '0.85rem',
-                    fontWeight: 800,
-                    borderRadius: '8px',
-                    bgcolor: 'rgba(0,0,0,0.03)',
-                    '& fieldset': {
-                      border: 'none',
-                      borderColor: 'transparent',
-                    },
-                    '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.1)' },
-                    '&.Mui-focused fieldset': { borderColor: 'primary.main' },
-                  },
-                }}
-                sx={{ width: '130px' }}
-              />
-            )}
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              {entry.tags?.map((tag) => (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  onDelete={
-                    isEditing ? () => onRemoveTag(entry.id, tag) : undefined
-                  }
-                  color="secondary"
-                  variant="outlined"
+      <Box sx={markdownToolbarStyles}>
+        {mode === 'write' &&
+          TOOL_GROUPS.map((group, gi) => (
+            <React.Fragment key={gi}>
+              {gi > 0 && (
+                <Box
                   sx={{
-                    borderWidth: '2px',
-                    fontWeight: 900,
-                    '&:hover': { borderWidth: '2px' },
+                    width: '2px',
+                    height: 20,
+                    bgcolor: 'divider',
+                    mx: 0.75,
                   }}
                 />
+              )}
+              {group.map(([type, label, icon]) => (
+                <Tooltip key={type} title={label}>
+                  <IconButton
+                    size="small"
+                    aria-label={label}
+                    sx={toolbarBtnStyles}
+                    onClick={() => applyTool(type)}
+                  >
+                    {React.createElement(icon)}
+                  </IconButton>
+                </Tooltip>
               ))}
-            </Stack>
-          </Stack>
-          <Stack direction="row" spacing={2}>
-            {!isEditing && (
-              <IconButton
-                onClick={() => setIsEditing(true)}
-                aria-label="Edit contribution"
-                sx={{
-                  border: '2px solid',
-                  borderColor: 'text.primary',
-                  '&:hover': {
-                    bgcolor: 'primary.main',
-                    color: 'background.paper',
-                  },
-                }}
-              >
-                <Edit />
-              </IconButton>
-            )}
-            <IconButton
-              onClick={() => onDelete(entry)}
-              sx={{
-                border: '2px solid',
-                borderColor: 'text.primary',
-                color: 'error.main',
-                '&:hover': { bgcolor: 'error.main', color: 'background.paper' },
-              }}
-            >
-              <Delete />
-            </IconButton>
-            {isEditing && (
-              <Button
-                variant="contained"
-                startIcon={
-                  entry.isSaving ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <Save />
-                  )
-                }
-                onClick={handleSave}
-                disabled={entry.isSaving}
-                sx={{ px: 4 }}
-              >
-                {entry.isSaving ? 'SAVING...' : 'SAVE'}
-              </Button>
-            )}
-          </Stack>
+            </React.Fragment>
+          ))}
+        <Box sx={{ ml: 'auto' }}>
+          <Segmented
+            size="sm"
+            ariaLabel="Editor mode"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'write', label: 'Write' },
+              { value: 'preview', label: 'Preview' },
+            ]}
+            sx={{ borderWidth: '2px' }}
+          />
         </Box>
-      )}
+      </Box>
 
-      {/* Markdown Toolbar (Only when editing) */}
-      <Collapse in={isEditing}>
+      {mode === 'write' ? (
+        <TextField
+          ref={fieldRef}
+          autoFocus
+          multiline
+          minRows={10}
+          fullWidth
+          placeholder="What moved forward? Decisions, blockers, who you worked with…"
+          value={content}
+          onChange={(e) => onChange(e.target.value)}
+          variant="filled"
+          InputProps={entryBodyStyles}
+        />
+      ) : (
         <Box
+          onClick={() => setMode('write')}
           sx={{
-            ...markdownToolbarStyles,
-            flexWrap: 'wrap',
-            mt: isStreamMode ? 0 : 2,
+            ...entryBodyStyles.sx,
+            minHeight: 280,
+            cursor: 'text',
+            '& p': { mt: 0, mb: 1 },
+            '& ul, & ol': { pl: 3, my: 1 },
+            '& a': { color: 'text.primary', textDecorationThickness: '2px' },
+            '& blockquote': {
+              m: 0,
+              pl: 2,
+              borderLeft: '4px solid',
+              borderColor: accentColor,
+              color: 'text.secondary',
+            },
+            '& code': {
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '0.9em',
+              bgcolor: 'action.hover',
+              px: 0.5,
+            },
           }}
         >
-          <Tooltip title="Bold">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('bold')}
-            >
-              <FormatBold />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Italic">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('italic')}
-            >
-              <FormatItalic />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Strikethrough">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('strikethrough')}
-            >
-              <FormatStrikethrough />
-            </IconButton>
-          </Tooltip>
-          <Box
-            sx={{
-              width: '2px',
-              height: '20px',
-              bgcolor: 'rgba(0,0,0,0.1)',
-              mx: 0.5,
-            }}
-          />
-          <Tooltip title="Align Left">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('align-left')}
-            >
-              <FormatAlignLeft />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Align Center">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('align-center')}
-            >
-              <FormatAlignCenter />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Align Right">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('align-right')}
-            >
-              <FormatAlignRight />
-            </IconButton>
-          </Tooltip>
-          <Box
-            sx={{
-              width: '2px',
-              height: '20px',
-              bgcolor: 'rgba(0,0,0,0.1)',
-              mx: 0.5,
-            }}
-          />
-          <Tooltip title="Heading">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('heading')}
-            >
-              <Title />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="List">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('list')}
-              aria-label="Add list item"
-            >
-              <ListIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Blockquote">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('blockquote')}
-            >
-              <FormatQuote />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Code">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('code')}
-            >
-              <CodeIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Link">
-            <IconButton
-              size="small"
-              sx={toolbarBtnStyles}
-              onClick={() => handleToolbarAction('link')}
-            >
-              <LinkIcon />
-            </IconButton>
-          </Tooltip>
-          {isStreamMode && (
-            <Box sx={{ ml: 'auto' }}>
-              <Button
-                size="small"
-                onClick={() => setIsEditing(false)}
-                sx={{ fontWeight: 800, color: 'text.secondary' }}
-              >
-                Preview
-              </Button>
-            </Box>
-          )}
-        </Box>
-      </Collapse>
-
-      {/* Content Area */}
-      <Box sx={{ position: 'relative' }}>
-        {isEditing ? (
-          <TextField
-            ref={textareaRef}
-            multiline
-            rows={6}
-            fullWidth
-            placeholder="Describe what you accomplished..."
-            value={entry.content}
-            onChange={(e) => onUpdateContent(entry.id, e.target.value)}
-            variant="filled"
-            InputProps={entryBodyStyles}
-          />
-        ) : (
-          <Box
-            onClick={() => setIsEditing(true)}
-            sx={{
-              ...entryBodyStyles.sx,
-              cursor: 'pointer',
-              minHeight: '100px',
-              position: 'relative',
-              overflow: 'hidden',
-              // Tighten up paragraph spacing
-              '& p': { mb: 0.5, mt: 0, '&:last-child': { mb: 0 } },
-              '& ul, & ol': { pl: 3, mb: 1, mt: 0 },
-              '& li': { mb: 0.2 },
-              '& div': { mb: 1 }, // For alignment divs
-            }}
-          >
+          {content.trim() ? (
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkBreaks]}
               rehypePlugins={[rehypeRaw]}
               components={{
-                a: ({ ...props }) => (
-                  <a
-                    {...props}
-                    onClick={(e) => handleLinkClick(e, props.href)}
-                    style={{
-                      color: '#80b621',
-                      textDecoration: 'underline',
-                      cursor: 'pointer',
-                    }}
-                  />
+                a: (props) => (
+                  <a {...props} onClick={(e) => openLink(e, props.href)} />
                 ),
               }}
             >
-              {displayContent || '*Click to add content...*'}
+              {content}
             </ReactMarkdown>
-
-            {isLongContent && (
-              <Button
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsExpanded(!isExpanded)
-                }}
-                startIcon={
-                  isExpanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />
-                }
-                sx={{
-                  fontWeight: 800,
-                  mt: 1,
-                  color: 'primary.main',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    textDecoration: 'underline',
-                  },
-                }}
-              >
-                {isExpanded ? 'Show Less' : 'Read More'}
-              </Button>
-            )}
-          </Box>
-        )}
-      </Box>
+          ) : (
+            <Box sx={{ color: 'text.disabled' }}>Nothing written yet.</Box>
+          )}
+        </Box>
+      )}
     </Paper>
   )
 }

@@ -1,56 +1,39 @@
 import React, { useState } from 'react'
-import {
-  Box,
-  Stack,
-  Typography,
-  Menu,
-  MenuItem,
-  InputBase,
-} from '@mui/material'
+import { Box, Typography, Menu, MenuItem, InputBase } from '@mui/material'
 import { MoreHoriz } from '@mui/icons-material'
-import { keyframes } from '@emotion/react'
 import { getWeekDays } from '../utils/weekDays'
 import { DAY_STATUSES } from '../constants'
+import { MONO } from '../../shared/ui'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+const RULE = '3px solid'
 
-const shineLoop = keyframes`
-  0%   { transform: translateX(-150%) skewX(-15deg); }
-  100% { transform: translateX(250%) skewX(-15deg); }
-`
-
-const formatDate = (date) =>
-  date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-
-const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
+const DayStatusMenu = ({ day, currentStatus, onSetStatus, inverted }) => {
   const [anchorEl, setAnchorEl] = useState(null)
 
   return (
     <>
       <Box
         component="span"
+        role="button"
+        aria-label="Set day type"
         onClick={(e) => {
           e.stopPropagation()
           setAnchorEl(e.currentTarget)
         }}
         sx={{
           position: 'absolute',
-          top: 2,
-          right: 2,
+          top: 6,
+          right: 6,
           zIndex: 3,
           display: 'flex',
           p: 0.25,
-          borderRadius: '50%',
-          color: 'text.disabled',
-          '&:hover': { color: 'text.primary' },
+          color: inverted ? 'background.paper' : 'text.secondary',
+          opacity: 0.6,
+          '&:hover': { opacity: 1 },
         }}
       >
-        <MoreHoriz sx={{ fontSize: '0.9rem' }} />
+        <MoreHoriz sx={{ fontSize: '1.05rem' }} />
       </Box>
       <Menu
         anchorEl={anchorEl}
@@ -69,7 +52,17 @@ const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
               setAnchorEl(null)
               onSetStatus(day, status.id)
             }}
+            sx={{ fontWeight: 700, gap: 1.25 }}
           >
+            <Box
+              sx={{
+                width: 10,
+                height: 10,
+                bgcolor: status.color,
+                border: '1.5px solid',
+                borderColor: 'text.primary',
+              }}
+            />
             {status.label}
           </MenuItem>
         ))}
@@ -78,7 +71,7 @@ const DayStatusMenu = ({ day, currentStatus, onSetStatus }) => {
   )
 }
 
-const StaffitHoursBox = ({ hours, onSave }) => {
+const StaffitCell = ({ hours, onSave }) => {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
 
@@ -88,71 +81,92 @@ const StaffitHoursBox = ({ hours, onSave }) => {
     onSave(isNaN(parsed) ? null : parsed)
   }
 
+  const hasHours = hours != null && hours !== ''
+
   return (
     <Box
-      component="button"
+      component={editing ? 'div' : 'button'}
+      type={editing ? undefined : 'button'}
       onClick={() => {
+        if (editing) return
         setValue(hours ?? '')
         setEditing(true)
       }}
+      title="Hours declared in STAFFIT this week"
       sx={{
-        px: 3,
-        py: 1.5,
         fontFamily: 'inherit',
-        border: '4px solid',
+        textAlign: 'left',
+        border: 'none',
+        borderLeft: RULE,
         borderColor: 'text.primary',
-        borderRadius: 0,
-        cursor: editing ? 'text' : 'pointer',
-        bgcolor: 'background.paper',
+        bgcolor: 'background.subtle',
         color: 'text.primary',
+        cursor: editing ? 'text' : 'pointer',
+        p: 2,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        gap: 1,
-        minWidth: 96,
+        justifyContent: 'space-between',
+        minHeight: 132,
+        '&:hover': { bgcolor: 'action.hover' },
       }}
     >
-      <Typography
-        sx={{
-          fontWeight: 950,
-          fontSize: '0.65rem',
-          letterSpacing: '0.06em',
-        }}
-      >
-        STAFFIT / WK
+      <Typography sx={{ fontWeight: 800, fontSize: '0.85rem' }}>
+        STAFFIT
       </Typography>
-      {editing ? (
-        <InputBase
-          autoFocus
-          type="number"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit()
-            if (e.key === 'Escape') {
-              setValue(hours ?? '')
-              setEditing(false)
-            }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          inputProps={{
-            step: 0.5,
-            min: 0,
-            style: {
-              textAlign: 'center',
-              fontWeight: 950,
-              fontSize: '1rem',
-              width: 56,
-              padding: 0,
-            },
-          }}
-        />
-      ) : (
-        <Typography sx={{ fontWeight: 950, fontSize: '1rem' }}>
-          {hours != null && hours !== '' ? hours : '—'}
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+        {editing ? (
+          <InputBase
+            autoFocus
+            type="number"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit()
+              if (e.key === 'Escape') {
+                setValue(hours ?? '')
+                setEditing(false)
+              }
+            }}
+            inputProps={{
+              step: 0.5,
+              min: 0,
+              'aria-label': 'STAFFIT hours this week',
+              style: {
+                fontFamily: MONO,
+                fontWeight: 700,
+                fontSize: '2.4rem',
+                width: 88,
+                padding: 0,
+                lineHeight: 1,
+              },
+            }}
+          />
+        ) : (
+          <Typography
+            sx={{
+              fontFamily: MONO,
+              fontWeight: 700,
+              fontSize: '2.4rem',
+              lineHeight: 1,
+              letterSpacing: '-0.04em',
+              color: hasHours ? 'text.primary' : 'text.disabled',
+            }}
+          >
+            {hasHours ? hours : '—'}
+          </Typography>
+        )}
+        <Typography
+          sx={{ fontFamily: MONO, fontWeight: 700, color: 'text.secondary' }}
+        >
+          h
         </Typography>
-      )}
+      </Box>
+      <Typography
+        sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'text.secondary' }}
+      >
+        {editing ? 'Enter to save' : hasHours ? 'Click to edit' : 'Add hours'}
+      </Typography>
     </Box>
   )
 }
@@ -167,137 +181,198 @@ const WeekDayPicker = ({
   onSaveStaffitHours,
 }) => {
   const weekDays = getWeekDays(new Date())
+  const todayKey = new Date().toDateString()
+  const activeStreams = streams.filter((s) => !s.archived)
 
   return (
-    <Stack alignItems="center" sx={{ mt: 2, mb: 4 }} spacing={2}>
-      <Typography variant="h2" sx={{ fontWeight: 950, textAlign: 'center' }}>
-        {formatDate(currentDate)}
-      </Typography>
+    <Box sx={{ mb: 5 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 2,
+          flexWrap: 'wrap',
+          mb: 2.5,
+        }}
+      >
+        <Typography
+          component="h1"
+          sx={{
+            fontSize: { xs: '2.5rem', md: '4rem' },
+            fontWeight: 900,
+            letterSpacing: '-0.05em',
+            lineHeight: 0.9,
+          }}
+        >
+          {currentDate.toLocaleDateString('en-GB', { weekday: 'long' })}{' '}
+          <Box component="span" sx={{ color: 'text.secondary', ml: '0.12em' }}>
+            {currentDate.toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+            })}
+          </Box>
+        </Typography>
+        <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
+          Week of{' '}
+          {weekDays[0].toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+          })}
+        </Typography>
+      </Box>
 
-      <Stack direction="row" spacing={1.5} alignItems="center">
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: onSaveStaffitHours
+            ? 'repeat(5, minmax(0, 1fr)) minmax(120px, 0.9fr)'
+            : 'repeat(5, minmax(0, 1fr))',
+          border: RULE,
+          borderColor: 'text.primary',
+          bgcolor: 'background.paper',
+          boxShadow: (t) => `6px 6px 0 ${t.palette.text.primary}`,
+        }}
+      >
         {weekDays.map((day, i) => {
           const isSelected = day.toDateString() === currentDate.toDateString()
+          const isToday = day.toDateString() === todayKey
           const dateKey = day.toISOString().split('T')[0]
           const status = weekStatus[dateKey] || {}
           const dayStatus = status.dayStatus || 'working'
           const isNonWorking = dayStatus !== 'working'
           const statusConfig = DAY_STATUSES.find((s) => s.id === dayStatus)
+          const filledCount = activeStreams.filter(
+            (s) => status.filled?.[s.id]
+          ).length
 
           return (
             <Box
-              key={i}
+              key={dateKey}
               component="button"
+              type="button"
               onClick={() => onSelectDay(day)}
+              aria-pressed={isSelected}
+              aria-label={`${day.toDateString()}${isNonWorking ? `, ${statusConfig.label}` : `, ${filledCount} of ${activeStreams.length} streams logged`}`}
               sx={{
-                px: 3,
-                py: 1.5,
+                position: 'relative',
                 fontFamily: 'inherit',
-                fontWeight: 950,
-                fontSize: '1rem',
-                border: '4px solid',
+                textAlign: 'left',
+                border: 'none',
+                borderLeft: i === 0 ? 'none' : RULE,
                 borderColor: 'text.primary',
-                borderRadius: '16px',
+                p: 2,
+                minHeight: 132,
                 cursor: 'pointer',
-                bgcolor: isNonWorking
-                  ? `${statusConfig.color}33`
-                  : 'background.paper',
-                color: 'text.primary',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                gap: 1,
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                transform: isSelected ? 'translate(-2px, -2px)' : 'none',
-                boxShadow: isSelected
-                  ? (theme) => `4px 4px 0px ${theme.palette.text.primary}`
-                  : 'none',
-                '&:hover': {
-                  transform: 'translate(-2px, -2px)',
-                  boxShadow: (theme) =>
-                    `4px 4px 0px ${theme.palette.text.primary}`,
-                  ...(!isSelected && {
-                    '& .shine-swipe': {
-                      animation: `${shineLoop} 1.2s linear infinite`,
-                      opacity: 1,
-                    },
-                  }),
+                justifyContent: 'space-between',
+                gap: 1.5,
+                bgcolor: isSelected ? 'text.primary' : 'transparent',
+                color: isSelected ? 'background.paper' : 'text.primary',
+                transition: 'background-color 0.12s ease',
+                '&:hover': isSelected ? {} : { bgcolor: 'action.hover' },
+                '&:focus-visible': {
+                  outline: '3px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: -6,
                 },
               }}
             >
-              {/* Shine sweep layer — only animates on hover when not selected */}
-              <Box
-                className="shine-swipe"
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '50%',
-                  height: '100%',
-                  opacity: 0,
-                  background:
-                    'linear-gradient(90deg, transparent, #80b621, transparent)',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
-              />
-
               {onQuickSetDayStatus && (
                 <DayStatusMenu
                   day={day}
                   currentStatus={dayStatus}
                   onSetStatus={onQuickSetDayStatus}
+                  inverted={isSelected}
                 />
               )}
 
-              {DAY_LABELS[i]}
-
-              {isNonWorking ? (
+              <Box>
                 <Typography
-                  variant="caption"
+                  sx={{ fontWeight: 800, fontSize: '0.85rem', lineHeight: 1 }}
+                >
+                  {DAY_LABELS[i]}
+                  {isToday && (
+                    <Box
+                      component="span"
+                      sx={{
+                        ml: 0.75,
+                        px: 0.6,
+                        py: 0.1,
+                        fontSize: '0.68rem',
+                        bgcolor: 'primary.main',
+                        color: '#000',
+                      }}
+                    >
+                      Today
+                    </Box>
+                  )}
+                </Typography>
+                <Typography
                   sx={{
-                    fontWeight: 900,
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.05em',
+                    fontFamily: MONO,
+                    fontWeight: 700,
+                    fontSize: '2.4rem',
+                    lineHeight: 1,
+                    letterSpacing: '-0.04em',
+                    mt: 0.75,
                   }}
                 >
-                  {statusConfig.label.toUpperCase()}
+                  {String(day.getDate()).padStart(2, '0')}
                 </Typography>
+              </Box>
+
+              {isNonWorking ? (
+                <Box
+                  sx={{
+                    alignSelf: 'flex-start',
+                    px: 0.75,
+                    py: 0.25,
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    bgcolor: statusConfig.color,
+                    color: '#000',
+                    border: '2px solid',
+                    borderColor: isSelected
+                      ? 'background.paper'
+                      : 'text.primary',
+                  }}
+                >
+                  {statusConfig.label}
+                </Box>
               ) : (
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  {streams
-                    .filter((s) => !s.archived)
-                    .map((stream) => {
-                      const isFilled = status.filled?.[stream.id]
-                      return (
-                        <Box
-                          key={stream.id}
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            bgcolor: isFilled ? stream.color : 'transparent',
-                            border: isFilled ? 'none' : '2px solid',
-                            borderColor: isFilled
-                              ? 'transparent'
-                              : 'text.disabled',
-                            position: 'relative',
-                            zIndex: 2,
-                          }}
-                        />
-                      )
-                    })}
-                </Stack>
+                <Box sx={{ display: 'flex', gap: '3px' }}>
+                  {activeStreams.map((stream) => {
+                    const isFilled = status.filled?.[stream.id]
+                    return (
+                      <Box
+                        key={stream.id}
+                        title={stream.name}
+                        sx={{
+                          flex: 1,
+                          height: 10,
+                          bgcolor: isFilled ? stream.color : 'transparent',
+                          border: '2px solid',
+                          borderColor: isFilled
+                            ? stream.color
+                            : isSelected
+                              ? '#8a8a82'
+                              : 'divider',
+                        }}
+                      />
+                    )
+                  })}
+                </Box>
               )}
             </Box>
           )
         })}
         {onSaveStaffitHours && (
-          <StaffitHoursBox hours={staffitHours} onSave={onSaveStaffitHours} />
+          <StaffitCell hours={staffitHours} onSave={onSaveStaffitHours} />
         )}
-      </Stack>
-    </Stack>
+      </Box>
+    </Box>
   )
 }
 

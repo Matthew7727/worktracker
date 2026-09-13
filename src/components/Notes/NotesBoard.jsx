@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { loadProjects, getActivityStreamId } from '../../utils/projectsManager'
@@ -13,21 +13,16 @@ import {
 } from '../../utils/notesManager'
 import NoteCard from './components/NoteCard'
 import NoteEditorInline from './components/NoteEditorInline'
-
-// Small deterministic "pin" tilt per note, so the board doesn't shuffle on
-// every re-render but still reads like a corkboard.
-const rotationFor = (id) => {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0
-  return ((hash % 5) - 2) * 0.6 // -1.2deg .. 1.2deg
-}
+import { InkButton, PageHeader, Segmented, EmptyState } from '../shared/ui'
 
 const NotesBoard = () => {
   const navigate = useNavigate()
-  const { selectedDirectory, streamConfig } = useAppContext()
+  const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
   const [notes, setNotes] = useState([])
   const [activities, setActivities] = useState([])
+  const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
   // null = no editor open; 'new' = creating a fresh note; a note object =
   // editing that note in place (rendered inline where its card would be).
   const [editorTarget, setEditorTarget] = useState(null)
@@ -52,6 +47,7 @@ const NotesBoard = () => {
     ])
     setNotes(notesData)
     setActivities(projectsData.activities || [])
+    setProjects(projectsData.clientProjects || [])
     setLoading(false)
   }
 
@@ -61,21 +57,13 @@ const NotesBoard = () => {
   }, [selectedDirectory])
 
   const streamForNote = (note) => {
+    if (note.projectId) return mainFocusStream || null
     if (!note.activityId) return null
     const activity = activities.find((a) => a.id === note.activityId)
     return activity ? streamById[getActivityStreamId(activity)] : null
   }
 
-  const openNewNote = () => {
-    setEditorTarget('new')
-  }
-
-  const openExistingNote = (note) => {
-    setEditorTarget(note)
-  }
-
   const closeEditor = () => setEditorTarget(null)
-
   const editingNote = editorTarget === 'new' ? null : editorTarget
 
   const handleSave = async (fields) => {
@@ -97,94 +85,76 @@ const NotesBoard = () => {
     refresh()
   }
 
-  return (
-    <Box sx={{ pb: 6 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 4,
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 900 }}>
-          Notes
-        </Typography>
-        <Box
-          component="button"
-          onClick={openNewNote}
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.75,
-            fontFamily: 'inherit',
-            fontSize: '0.85rem',
-            fontWeight: 900,
-            px: 2.5,
-            py: 1,
-            borderRadius: '25px',
-            border: '2px solid',
-            borderColor: 'text.primary',
-            color: 'text.primary',
-            bgcolor: 'background.paper',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-            '&:hover': {
-              boxShadow: '4px 4px 0px',
-              transform: 'translate(-1px, -1px)',
-            },
-          }}
-        >
-          <Add sx={{ fontSize: '1rem' }} />
-          New Note
-        </Box>
-      </Box>
+  const linkedCount = notes.filter((n) => n.activityId || n.projectId).length
+  const visibleNotes = notes.filter((n) =>
+    filter === 'linked'
+      ? n.activityId || n.projectId
+      : filter === 'unfiled'
+        ? !n.activityId && !n.projectId
+        : true
+  )
+  const showEmpty = !loading && notes.length === 0 && editorTarget !== 'new'
 
-      {editorTarget === 'new' && (
-        <NoteEditorInline
-          note={null}
-          activities={activities}
-          streamById={streamById}
-          onSave={handleSave}
-          onClose={closeEditor}
+  return (
+    <Box sx={{ maxWidth: 1280, mx: 'auto', width: '100%', pb: 8 }}>
+      <PageHeader title="Notes" meta={`${notes.length} pinned`}>
+        <InkButton
+          color="#f45b69"
+          startIcon={<Add />}
+          onClick={() => setEditorTarget('new')}
+        >
+          New note
+        </InkButton>
+      </PageHeader>
+
+      {notes.length > 0 && (
+        <Segmented
+          size="sm"
+          ariaLabel="Filter notes"
+          value={filter}
+          onChange={setFilter}
+          sx={{ mb: 3 }}
+          options={[
+            { value: 'all', label: 'All', meta: notes.length },
+            { value: 'linked', label: 'Linked to work', meta: linkedCount },
+            {
+              value: 'unfiled',
+              label: 'Unfiled',
+              meta: notes.length - linkedCount,
+            },
+          ]}
         />
       )}
 
-      {!loading && notes.length === 0 && editorTarget !== 'new' ? (
-        <Box
-          sx={{
-            py: 6,
-            textAlign: 'center',
-            border: '2px dashed',
-            borderColor: 'divider',
-            borderRadius: '20px',
-            color: 'text.secondary',
-          }}
-        >
-          <Typography variant="body2">
-            No notes yet.{' '}
-            <Box
-              component="span"
-              sx={{
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontWeight: 700,
-              }}
-              onClick={openNewNote}
+      {showEmpty ? (
+        <EmptyState
+          title="Nothing pinned yet."
+          action={
+            <InkButton
+              startIcon={<Add />}
+              onClick={() => setEditorTarget('new')}
             >
-              Pin one
-            </Box>
-          </Typography>
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            maxWidth: 480,
-          }}
+              New note
+            </InkButton>
+          }
         >
-          {notes.map((note) =>
+          Notes hold the things that don&apos;t belong in a day entry: meeting
+          prep, contacts, reference links. Link one to a project or activity to
+          keep it with that work.
+        </EmptyState>
+      ) : (
+        <Box sx={{ columnWidth: 300, columnGap: 3, pt: 1 }}>
+          {editorTarget === 'new' && (
+            <NoteEditorInline
+              note={null}
+              activities={activities}
+              projects={projects}
+              streamById={streamById}
+              onSave={handleSave}
+              onClose={closeEditor}
+            />
+          )}
+          {visibleNotes.map((note) =>
             editorTarget &&
             editorTarget !== 'new' &&
             editorTarget.id === note.id ? (
@@ -192,6 +162,7 @@ const NotesBoard = () => {
                 key={note.id}
                 note={note}
                 activities={activities}
+                projects={projects}
                 streamById={streamById}
                 onSave={handleSave}
                 onDelete={handleDelete}
@@ -202,10 +173,9 @@ const NotesBoard = () => {
                 key={note.id}
                 note={note}
                 stream={streamForNote(note)}
-                rotation={rotationFor(note.id)}
-                onOpen={() => openExistingNote(note)}
-                onOpenActivity={(activityId) =>
-                  navigate(`/todos/activity/${activityId}`)
+                onOpen={() => setEditorTarget(note)}
+                onOpenLinkedItem={(type, id) =>
+                  navigate(`/todos/${type}/${id}`)
                 }
               />
             )

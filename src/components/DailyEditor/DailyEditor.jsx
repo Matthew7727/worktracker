@@ -53,7 +53,16 @@ const DailyEditor = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        maxWidth: 1200,
+        mx: 'auto',
+        width: '100%',
+        pb: 8,
+      }}
+    >
       <WeekDayPicker
         currentDate={currentDate}
         onSelectDay={setCurrentDate}

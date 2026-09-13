@@ -8,6 +8,7 @@ import { parseMarkdown, stringifyMarkdown } from './markdownParser'
 
 // Notes are each their own markdown file:
 //   - Linked to an activity: [rootDir]/notes/<activityId>/<noteId>.md
+//   - Linked to a project: [rootDir]/notes/projects/<projectId>/<noteId>.md
 //   - Free-standing (not linked): [rootDir]/notes/<noteId>.md
 const getNotesDir = (rootDir) => `${rootDir}/notes`
 
@@ -15,15 +16,19 @@ const generateId = () =>
   Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
 
 export const getNoteFilePath = (rootDir, note) =>
-  note.activityId
-    ? `${getNotesDir(rootDir)}/${note.activityId}/${note.id}.md`
-    : `${getNotesDir(rootDir)}/${note.id}.md`
+  note.projectId
+    ? `${getNotesDir(rootDir)}/projects/${note.projectId}/${note.id}.md`
+    : note.activityId
+      ? `${getNotesDir(rootDir)}/${note.activityId}/${note.id}.md`
+      : `${getNotesDir(rootDir)}/${note.id}.md`
 
 export const createNote = (options = {}) => ({
   id: generateId(),
   title: options.title || '',
   activityId: options.activityId || null,
   activityTitle: options.activityTitle || null,
+  projectId: options.projectId || null,
+  projectTitle: options.projectTitle || null,
   content: options.content || '',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -36,6 +41,8 @@ const noteFromFile = (filePath, raw) => {
     title: frontmatter.title || '',
     activityId: frontmatter.activityId || null,
     activityTitle: frontmatter.activityTitle || null,
+    projectId: frontmatter.projectId || null,
+    projectTitle: frontmatter.projectTitle || null,
     createdAt: frontmatter.createdAt || null,
     updatedAt: frontmatter.updatedAt || null,
     content: body,
@@ -49,6 +56,8 @@ const noteToFileContent = (note) =>
     title: note.title || '',
     activityId: note.activityId || null,
     activityTitle: note.activityTitle || null,
+    projectId: note.projectId || null,
+    projectTitle: note.projectTitle || null,
     createdAt: note.createdAt,
     updatedAt: note.updatedAt,
   })
@@ -101,3 +110,7 @@ export const deleteNote = async (rootDir, note) => {
 /** Notes linked to a specific activity, newest first. */
 export const getNotesForActivity = (notes, activityId) =>
   (notes || []).filter((n) => n.activityId === activityId)
+
+/** Notes linked to a project, newest first. */
+export const getNotesForProject = (notes, projectId) =>
+  (notes || []).filter((n) => n.projectId === projectId)

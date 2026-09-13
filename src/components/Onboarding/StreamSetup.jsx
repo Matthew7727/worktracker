@@ -29,7 +29,7 @@ const ColorDot = ({ color, selected, onClick, size = 28 }) => (
     sx={{
       width: size,
       height: size,
-      borderRadius: '50%',
+      borderRadius: 0,
       bgcolor: color,
       border: '3px solid',
       borderColor: selected ? 'text.primary' : 'transparent',
@@ -63,7 +63,7 @@ const ToggleRow = ({ title, description, checked, onChange }) => (
       alignItems: 'center',
       p: 2.5,
       bgcolor: 'action.hover',
-      borderRadius: '16px',
+      borderRadius: 0,
       border: '3px solid',
       borderColor: 'text.primary',
     }}
@@ -157,7 +157,7 @@ const StreamSetup = () => {
           p: { xs: 4, md: 6 },
           maxWidth: '720px',
           width: '100%',
-          borderRadius: '32px',
+          borderRadius: 0,
           border: '4px solid',
           borderColor: 'text.primary',
         }}

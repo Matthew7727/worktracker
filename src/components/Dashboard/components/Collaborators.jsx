@@ -5,7 +5,7 @@ import { getInitials } from '../../../utils/dashboardInsights'
 const cardSx = {
   border: '3px solid',
   borderColor: 'text.primary',
-  borderRadius: '24px',
+  borderRadius: 0,
   bgcolor: 'background.paper',
   p: 3,
   flex: 1,

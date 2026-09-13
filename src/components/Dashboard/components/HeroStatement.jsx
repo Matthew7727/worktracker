@@ -259,15 +259,29 @@ const HeroStatement = ({
   }
 
   const spotlight = pool.length > 0 ? pool[seed % pool.length] : null
-  const hStyle = { fontWeight: 800, lineHeight: 1.4, color: 'text.primary' }
+  const hStyle = {
+    fontWeight: 900,
+    fontSize: { xs: '2.1rem', md: '3.1rem' },
+    lineHeight: 1.08,
+    letterSpacing: '-0.04em',
+    color: 'text.primary',
+    '& span': {
+      fontSize: 'inherit',
+      lineHeight: 'inherit',
+      letterSpacing: 'inherit',
+    },
+  }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box
+      component="header"
+      sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2, pb: 1 }}
+    >
       <Typography variant="h3" sx={hStyle}>
         {anchor}
       </Typography>
       {spotlight && (
-        <Typography variant="h3" sx={hStyle}>
+        <Typography variant="h3" sx={{ ...hStyle, color: 'text.secondary' }}>
           {spotlight}
         </Typography>
       )}
