@@ -21,6 +21,7 @@ import { EmptyState, MONO } from '../../shared/ui'
 
 const SORT_FIELDS = {
   name: (todo) => todo.text || '',
+  stream: (todo) => todo.stream?.name || '',
   context: (todo) => todo.ownerTitle || '',
   dueDate: (todo) => todo.dueDate || null,
 }
@@ -130,17 +131,22 @@ const AllTodosView = ({
       }}
     >
       <Table
-        sx={{ minWidth: 720 }}
+        sx={{ minWidth: 880 }}
         aria-label={completed ? 'Completed todos' : 'All open todos'}
       >
         <TableHead>
           <TableRow>
             <TableCell sx={{ width: 52 }} />
             <TableCell>{sortableHeader('name', 'Todo')}</TableCell>
-            <TableCell>
+            <TableCell sx={{ width: 180 }}>
+              {sortableHeader('stream', 'Stream')}
+            </TableCell>
+            <TableCell sx={{ width: 240 }}>
               {sortableHeader('context', 'Project / activity')}
             </TableCell>
-            <TableCell>{sortableHeader('dueDate', 'Due date')}</TableCell>
+            <TableCell sx={{ width: 190 }}>
+              {sortableHeader('dueDate', 'Due date')}
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -178,20 +184,25 @@ const AllTodosView = ({
                 </Box>
               </TableCell>
               <TableCell>
+                {todo.stream ? (
+                  <StreamTag stream={todo.stream} label={todo.stream.name} />
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+                    —
+                  </Typography>
+                )}
+              </TableCell>
+              <TableCell>
                 <Box
                   onClick={() => onOpenItem(todo.ownerType, todo.ownerId)}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1,
                     cursor: 'pointer',
                     width: 'fit-content',
                     '&:hover .todo-owner': { textDecoration: 'underline' },
                   }}
                 >
-                  {todo.stream && (
-                    <StreamTag stream={todo.stream} label={todo.stream.name} />
-                  )}
                   <Box>
                     <Typography
                       className="todo-owner"
