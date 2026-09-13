@@ -158,7 +158,9 @@ jobs:
           IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
             | sed -n 's/.*\"\(Developer ID Application:.*\)\"/\1/p' | head -n 1)
           test -n "$IDENTITY"
-          echo "CSC_NAME=$IDENTITY" >> "$GITHUB_ENV"
+          # electron-builder chooses the Developer ID certificate class itself;
+          # its CSC_NAME must contain only the certificate's subject suffix.
+          echo "CSC_NAME=${IDENTITY#Developer ID Application: }" >> "$GITHUB_ENV"
           echo "Imported Developer ID Application certificate."
 
       - name: Package, sign, and notarize macOS app
