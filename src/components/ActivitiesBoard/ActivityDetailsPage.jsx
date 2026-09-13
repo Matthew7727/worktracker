@@ -39,6 +39,7 @@ import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
+import { loadMeetings } from '../../utils/calendarManager'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -137,6 +138,7 @@ const ActivityDetailsPage = () => {
   const [addSubOpen, setAddSubOpen] = useState(false)
   const [confirm, setConfirm] = useState(EMPTY_CONFIRM)
   const [notes, setNotes] = useState([])
+  const [meetings, setMeetings] = useState([])
   // null = no editor open; 'new' = creating a fresh note; a note object =
   // editing that note in place, right where its card would be.
   const [noteEditorTarget, setNoteEditorTarget] = useState(null)
@@ -168,6 +170,11 @@ const ActivityDetailsPage = () => {
   useEffect(() => {
     refreshNotes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDirectory])
+
+  useEffect(() => {
+    if (!selectedDirectory) return
+    loadMeetings(selectedDirectory).then(setMeetings)
   }, [selectedDirectory])
 
   const isProject = itemType === 'project'
@@ -329,6 +336,9 @@ const ActivityDetailsPage = () => {
   const linkedNotes = isProject
     ? getNotesForProject(notes, itemId)
     : getNotesForActivity(notes, itemId)
+  const linkedMeetings = meetings
+    .filter((meeting) => meeting.activityIds?.includes(itemId))
+    .sort((a, b) => a.startAt.localeCompare(b.startAt))
 
   const openNewNote = () => {
     setNoteEditorTarget('new')
@@ -694,6 +704,50 @@ const ActivityDetailsPage = () => {
             )}
             {noteEditorTarget === null && (
               <AddLink onClick={openNewNote}>Add note</AddLink>
+            )}
+          </Panel>
+
+          <Panel label="Meetings" meta={linkedMeetings.length || null}>
+            {linkedMeetings.length > 0 ? (
+              <Stack spacing={1}>
+                {linkedMeetings.map((meeting) => (
+                  <Box
+                    key={meeting.id}
+                    sx={{
+                      p: 1.25,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: 800 }}>
+                      {meeting.title}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        mt: 0.25,
+                        fontFamily: MONO,
+                        fontSize: '0.78rem',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      {new Date(meeting.startAt).toLocaleString('en-GB', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                      {meeting.attendees?.length
+                        ? ` · ${meeting.attendees.length} attendees`
+                        : ''}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Link a calendar meeting to see it here.
+              </Typography>
             )}
           </Panel>
 

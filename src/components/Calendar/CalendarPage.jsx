@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Box, Chip, CircularProgress, Stack, Typography } from '@mui/material'
+import {
+  Autocomplete,
+  Box,
+  Chip,
+  CircularProgress,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { FileUpload, Groups, Place } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { selectCalendarFile, readFile } from '../../services/fileSystem'
@@ -9,7 +17,11 @@ import {
   loadMeetings,
   updateMeeting,
 } from '../../utils/calendarManager'
-import { loadProjects } from '../../utils/projectsManager'
+import {
+  createTask,
+  loadProjects,
+  saveProjects,
+} from '../../utils/projectsManager'
 import { createNote, loadNotes, saveNote } from '../../utils/notesManager'
 import { InkButton, PageHeader, Segmented, EmptyState } from '../shared/ui'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
@@ -101,6 +113,31 @@ const CalendarPage = () => {
     setNoteMeeting(null)
     setNotes(await loadNotes(selectedDirectory))
   }
+  const addFollowUp = async (meeting) => {
+    if ((meeting.activityIds || []).length !== 1) return
+    const targetId = meeting.activityIds[0]
+    const projects = await loadProjects(selectedDirectory)
+    const listKey = projects.activities.some((item) => item.id === targetId)
+      ? 'activities'
+      : 'clientProjects'
+    const target = projects[listKey].find((item) => item.id === targetId)
+    if (!target) return
+    await saveProjects(selectedDirectory, {
+      ...projects,
+      [listKey]: projects[listKey].map((item) =>
+        item.id === targetId
+          ? {
+              ...item,
+              tasks: [
+                ...(item.tasks || []),
+                createTask(`Follow up: ${meeting.title}`),
+              ],
+            }
+          : item
+      ),
+    })
+    showNotification(`Follow-up added to ${target.title}`, 'success')
+  }
 
   if (loading) {
     return <CircularProgress />
@@ -180,6 +217,7 @@ const CalendarPage = () => {
                             ).length
                           }
                           onNewNote={() => setNoteMeeting(meeting)}
+                          onAddFollowUp={() => addFollowUp(meeting)}
                           onUpdate={async (changes) => {
                             const updated = await updateMeeting(
                               selectedDirectory,
@@ -230,6 +268,7 @@ const MeetingCard = ({
   activities,
   noteCount,
   onNewNote,
+  onAddFollowUp,
   onUpdate,
 }) => {
   const linkedActivities = activities.filter((activity) =>
@@ -280,27 +319,50 @@ const MeetingCard = ({
           </Typography>
         </Stack>
       )}
-      <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
-        {linkedActivities.map((activity) => (
-          <Chip key={activity.id} label={activity.title} size="small" />
-        ))}
-        {activities
-          .filter((activity) => !meeting.activityIds?.includes(activity.id))
-          .slice(0, 1)
-          .map((activity) => (
-            <Chip
-              key={activity.id}
-              label={`+ ${activity.title}`}
-              size="small"
-              variant="outlined"
-              onClick={() =>
-                onUpdate({
-                  activityIds: [...(meeting.activityIds || []), activity.id],
-                })
-              }
-            />
-          ))}
-      </Stack>
+      <Autocomplete
+        multiple
+        size="small"
+        options={activities}
+        value={linkedActivities}
+        getOptionLabel={(activity) => activity.title}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        onChange={(_, values) =>
+          onUpdate({ activityIds: values.map((activity) => activity.id) })
+        }
+        renderInput={(params) => (
+          <TextField {...params} label="Linked work" placeholder="Link…" />
+        )}
+        sx={{ mt: 1.25 }}
+      />
+      {(meeting.description || meeting.attendees?.length > 0) && (
+        <Box component="details" sx={{ mt: 1.25 }}>
+          <Typography
+            component="summary"
+            sx={{ cursor: 'pointer', fontWeight: 800, fontSize: '0.82rem' }}
+          >
+            Meeting details
+          </Typography>
+          {meeting.description && (
+            <Typography
+              sx={{
+                mt: 0.75,
+                whiteSpace: 'pre-wrap',
+                fontSize: '0.85rem',
+                lineHeight: 1.5,
+              }}
+            >
+              {meeting.description}
+            </Typography>
+          )}
+          {meeting.attendees?.length > 0 && (
+            <Typography
+              sx={{ mt: 0.75, fontSize: '0.82rem', color: 'text.secondary' }}
+            >
+              {meeting.attendees.map((attendee) => attendee.name).join(', ')}
+            </Typography>
+          )}
+        </Box>
+      )}
       <InkButton
         tone="ghost"
         size="sm"
@@ -309,6 +371,16 @@ const MeetingCard = ({
       >
         {noteCount ? `Add note (${noteCount})` : 'Add note'}
       </InkButton>
+      {(meeting.activityIds || []).length === 1 && (
+        <InkButton
+          tone="ghost"
+          size="sm"
+          onClick={onAddFollowUp}
+          sx={{ ml: -1 }}
+        >
+          Add follow-up
+        </InkButton>
+      )}
     </Box>
   )
 }
