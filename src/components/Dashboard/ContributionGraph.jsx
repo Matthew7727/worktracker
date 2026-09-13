@@ -1,6 +1,7 @@
 import React from 'react'
 import { Tooltip, Box, Typography, Stack } from '@mui/material'
 import { getStreamAbbrev } from '../../utils/streamConfig'
+import { getDateKey, isWeekend } from '../DailyEditor/utils/weekDays'
 
 const NEUTRAL_COLORS = {
   mixed: '#777',
@@ -20,7 +21,8 @@ const DAY_STATUS_LABELS = {
 }
 
 const ContributionGraph = ({ entries, streams = [] }) => {
-  // 1. Generate last 365 days
+  // 1. Generate the last year of working days. Weekend entries remain
+  // available in Entries, but aren't part of the default contribution view.
   const today = new Date()
   const days = []
   for (let i = 364; i >= 0; i--) {
@@ -35,25 +37,21 @@ const ContributionGraph = ({ entries, streams = [] }) => {
     entryMap.set(e.date, e)
   })
 
-  // 3. Group by weeks
+  // 3. Group Monday–Friday into weeks. Omitting weekend rows makes the graph
+  // match the default working-week rhythm and keeps them out of streak views.
   const weeks = []
-  let currentWeek = new Array(7).fill(null)
-  const firstDayOfWeek = days[0].getDay()
+  let currentWeek = new Array(5).fill(null)
 
-  for (let i = 0; i < firstDayOfWeek; i++) {
-    currentWeek[i] = null
-  }
-
-  for (const date of days) {
+  for (const date of days.filter((day) => !isWeekend(day))) {
     const dayOfWeek = date.getDay()
-    currentWeek[dayOfWeek] = date
+    currentWeek[dayOfWeek - 1] = date
 
-    if (dayOfWeek === 6) {
+    if (dayOfWeek === 5) {
       weeks.push(currentWeek)
-      currentWeek = new Array(7).fill(null)
+      currentWeek = new Array(5).fill(null)
     }
   }
-  if (currentWeek.some((d) => d !== null)) {
+  if (currentWeek.some(Boolean)) {
     weeks.push(currentWeek)
   }
 
@@ -62,7 +60,7 @@ const ContributionGraph = ({ entries, streams = [] }) => {
 
   const getDayInfo = (date) => {
     if (!date) return { color: 'transparent', title: '' }
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getDateKey(date)
     const entry = entryMap.get(dateStr)
 
     if (!entry)

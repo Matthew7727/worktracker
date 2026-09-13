@@ -7,7 +7,10 @@ import {
 import { loadProjects } from '../../../utils/projectsManager'
 import { loadStaffitHours } from '../../../utils/staffitManager'
 import { getUtilisationPrediction } from '../../../utils/utilisationUtils'
-import { calculateWorkingDayStreak } from '../../DailyEditor/utils/weekDays'
+import {
+  calculateWorkingDayStreak,
+  isWeekend,
+} from '../../DailyEditor/utils/weekDays'
 
 const useDashboardData = () => {
   const { selectedDirectory, refreshTrigger, streamConfig, streams } =
@@ -58,15 +61,20 @@ const useDashboardData = () => {
           getUtilisationPrediction(staffitHours, settings.standardWeeklyHours)
         )
 
-        setAllEntries(resolvedEntries)
+        // Weekend logs are intentionally available from Entries when needed,
+        // but dashboard totals and trends use the default working-week view.
+        const workingEntries = resolvedEntries.filter(
+          (entry) => !isWeekend(new Date(`${entry.date}T00:00:00`))
+        )
+        setAllEntries(workingEntries)
         setProjects(projectsData)
 
         const uniqueDates = Array.from(
-          new Set(resolvedEntries.map((e) => e.date))
+          new Set(workingEntries.map((e) => e.date))
         )
 
         const { byTitle: mentionsByTitle, byStream: mentionsByStream } =
-          getEntryMentionCounts(resolvedEntries)
+          getEntryMentionCounts(workingEntries)
 
         // Balance score: how evenly effort (entry mentions) spreads across
         // the active streams — client work included, on the same footing.
