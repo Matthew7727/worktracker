@@ -30,7 +30,11 @@ const RailItem = ({ icon, label, isActive, accent, onClick, title }) => (
       whiteSpace: 'nowrap',
       transition: 'background-color 0.1s linear, color 0.1s linear',
       bgcolor: isActive ? accent || 'text.primary' : 'transparent',
-      color: isActive ? '#000' : 'text.primary',
+      color: isActive
+        ? accent
+          ? '#000'
+          : 'background.default'
+        : 'text.primary',
       '&:hover': {
         bgcolor: isActive ? accent || 'text.primary' : 'action.hover',
       },

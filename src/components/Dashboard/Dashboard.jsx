@@ -87,8 +87,8 @@ const Dashboard = () => {
       value: stats.currentStreak,
       label: 'Day streak',
       sub: stats.currentStreak > 0 ? '🔥 on a roll' : 'log to start',
-      valueColor: stats.currentStreak > 0 ? '#80b621' : undefined,
-      subColor: stats.currentStreak > 0 ? '#80b621' : undefined,
+      valueColor: stats.currentStreak > 0 ? 'success.main' : undefined,
+      subColor: stats.currentStreak > 0 ? 'success.main' : undefined,
     },
     { value: days, label: 'Days logged' },
     utilisationEnabled && utilisationPrediction !== null
@@ -102,13 +102,13 @@ const Dashboard = () => {
           valueColor:
             utilisationTarget !== null &&
             utilisationPrediction >= utilisationTarget
-              ? '#80b621'
+              ? 'success.main'
               : undefined,
           subColor:
             utilisationTarget !== null &&
             utilisationPrediction >= utilisationTarget
-              ? '#80b621'
-              : '#d32f2f',
+              ? 'success.main'
+              : 'error.main',
         }
       : null,
     stats.balanceScore > 0
@@ -125,8 +125,8 @@ const Dashboard = () => {
           })(),
           subColor:
             taskTotals.lastWeek - taskTotals.prevWeek >= 0
-              ? '#80b621'
-              : '#d32f2f',
+              ? 'success.main'
+              : 'error.main',
         }
       : null,
   ]

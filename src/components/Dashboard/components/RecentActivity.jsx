@@ -168,16 +168,28 @@ const RecentActivityContent = ({
                     {Object.entries(entry.streamCounts).map(
                       ([stream, count]) =>
                         count > 0 ? (
-                          <Typography
+                          <Stack
                             key={stream}
-                            variant="caption"
-                            sx={{
-                              fontWeight: 800,
-                              color: STREAM_COLORS[stream],
-                            }}
+                            direction="row"
+                            alignItems="center"
+                            spacing={0.5}
                           >
-                            {STREAM_LABELS[stream]} {count}
-                          </Typography>
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                bgcolor: STREAM_COLORS[stream],
+                                border: `${RULE.hair}px solid`,
+                                borderColor: 'text.primary',
+                              }}
+                            />
+                            <Typography
+                              variant="caption"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              {STREAM_LABELS[stream]} {count}
+                            </Typography>
+                          </Stack>
                         ) : null
                     )}
                   </Stack>

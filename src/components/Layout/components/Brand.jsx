@@ -7,7 +7,7 @@ import { brandStyles, brandCellStyles } from '../MainLayout.styles'
 const Brand = ({ onClick }) => (
   <Box onClick={onClick} sx={brandCellStyles}>
     <Typography variant="h6" component="span" sx={brandStyles}>
-      WORK<span>/TRACKER</span>
+      WORK<span>TRACKER</span>
     </Typography>
   </Box>
 )

@@ -99,7 +99,10 @@ export const getTheme = (mode) => {
         contrastText: '#000000',
       },
       secondary: { main: '#ffd166', contrastText: '#000000' },
-      error: { main: mode === 'light' ? '#d92b1f' : '#ff6b5e' },
+      // Signal colours are picked to stay legible as text on their own canvas.
+      error: { main: mode === 'light' ? '#c4241a' : '#ff8478' },
+      success: { main: mode === 'light' ? '#4f7d00' : '#aedd4d' },
+      warning: { main: mode === 'light' ? '#a35c00' : '#ffbb45' },
       text: { primary: s.ink, secondary: s.inkMuted },
       background: {
         default: s.canvas,
@@ -199,8 +202,11 @@ export const getTheme = (mode) => {
             },
           },
           text: {
-            '&:hover': { backgroundColor: 'transparent', color: s.accent },
+            color: s.ink,
+            '&:hover': { backgroundColor: s.ink, color: s.canvas },
           },
+          textPrimary: { color: s.ink },
+          outlinedPrimary: { color: s.ink, borderColor: s.rule },
         },
       },
       MuiIconButton: {

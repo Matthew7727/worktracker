@@ -6,7 +6,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
-import { Box, CircularProgress } from '@mui/material'
+import { Box, LinearProgress, Typography } from '@mui/material'
 import { useAppContext } from './context/AppContext'
 import WelcomeScreen from './components/Onboarding/WelcomeScreen'
 import StreamSetup from './components/Onboarding/StreamSetup'
@@ -56,11 +56,14 @@ function App() {
         sx={{
           height: '100vh',
           display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <CircularProgress />
+        <Typography variant="h6">Opening your workspace</Typography>
+        <LinearProgress sx={{ width: 280 }} />
       </Box>
     )
   } else if (needsStreamSetup) {

@@ -37,6 +37,7 @@ const dashedPanelSx = {
   border: `${RULE.base}px dashed`,
   borderColor: 'text.primary',
   bgcolor: 'transparent',
+  boxShadow: 'none',
 }
 
 const ledgerRowSx = {
@@ -60,6 +61,30 @@ const inputRootSx = {
   borderColor: 'text.primary',
 }
 
+const switchSx = {
+  '& .MuiSwitch-thumb': {
+    borderRadius: 0,
+    boxShadow: 'none',
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+  },
+  '& .MuiSwitch-track': {
+    borderRadius: 0,
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+    opacity: 1,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb': {
+    bgcolor: SIGNAL.go,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    bgcolor: 'background.paper',
+    opacity: 1,
+  },
+}
+
 const buttonHoverSx = {
   boxShadow: (theme) => hardShadow(OFFSET.press, theme.palette.text.primary),
   transform: `translate(${OFFSET.press}px, ${OFFSET.press}px)`,
@@ -81,15 +106,17 @@ const hardButtonSx = {
     opacity: 0.5,
     boxShadow: 'none',
     transform: 'none',
-    border: `${RULE.hair}px solid #999`,
-    bgcolor: '#f0f0f0',
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+    color: 'text.primary',
   },
 }
 
 const successButtonSx = {
   ...hardButtonSx,
   bgcolor: SIGNAL.go,
-  color: '#fff',
+  color: '#000',
   '&:hover': {
     ...buttonHoverSx,
     bgcolor: SIGNAL.goDark,
@@ -302,13 +329,7 @@ const Settings = () => {
                     <Switch
                       checked={notifEnabled}
                       onChange={handleToggleNotifs}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: 'primary.main',
-                        },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiLinearProgress-bar':
-                          { bgcolor: 'primary.main' },
-                      }}
+                      sx={switchSx}
                     />
                   </Box>
 
@@ -518,7 +539,7 @@ const Settings = () => {
                       px: 4,
                       py: 1.5,
                       bgcolor: SIGNAL.stop,
-                      color: 'background.paper',
+                      color: '#fff',
                       '&:hover': {
                         ...buttonHoverSx,
                         bgcolor: SIGNAL.stop,
@@ -604,7 +625,7 @@ const Settings = () => {
                   {updateStatus === 'up-to-date' ? (
                     <Typography
                       variant="h6"
-                      sx={{ fontWeight: 800, mb: 2, color: SIGNAL.go }}
+                      sx={{ fontWeight: 800, mb: 2, color: 'success.main' }}
                     >
                       ✓ You&apos;re on the latest version
                     </Typography>
@@ -644,7 +665,7 @@ const Settings = () => {
                         py: 1.5,
                         fontSize: '1.1rem',
                         backgroundImage: 'none',
-                        bgcolor: '#e0e0e0',
+                        bgcolor: 'background.paper',
                         color: 'text.primary',
                         border: `${RULE.hair}px solid`,
                         borderColor: 'text.primary',

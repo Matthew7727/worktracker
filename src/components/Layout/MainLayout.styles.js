@@ -24,7 +24,7 @@ export const brandCellStyles = {
   cursor: 'pointer',
   borderRight: `${RULE.base}px solid`,
   borderColor: 'divider',
-  '&:hover span span': { color: 'text.primary' },
+  '&:hover span span': { bgcolor: 'text.primary', color: 'background.default' },
 }
 
 export const brandStyles = {
@@ -32,7 +32,12 @@ export const brandStyles = {
   letterSpacing: '-0.04em',
   lineHeight: 1,
   whiteSpace: 'nowrap',
-  '& span': { color: 'primary.main' },
+  '& span': {
+    bgcolor: 'primary.main',
+    color: '#000',
+    px: 0.5,
+    ml: 0.5,
+  },
 }
 
 export const navItemStyles = (isActive) => ({

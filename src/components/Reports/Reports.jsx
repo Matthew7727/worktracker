@@ -224,9 +224,9 @@ const Reports = () => {
                 <br />
                 <Box
                   component="span"
-                  sx={{ color: 'primary.main', fontWeight: 800 }}
+                  sx={{ bgcolor: 'primary.main', color: '#000', px: 0.75 }}
                 >
-                  NOTION & OBSIDIAN.
+                  Notion and Obsidian
                 </Box>
               </Typography>
             </Paper>

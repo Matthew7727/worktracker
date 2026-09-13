@@ -183,7 +183,7 @@ const ProjectsSummary = () => {
                           fontWeight: 800,
                           fontSize: '0.65rem',
                           bgcolor: color,
-                          color: 'background.paper',
+                          color: '#000',
                           border: `${RULE.hair}px solid`,
                           borderColor: 'text.primary',
                           height: 20,

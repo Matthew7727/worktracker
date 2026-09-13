@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { Add, Delete, RocketLaunch } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
-import { RULE, OFFSET, hardShadow } from '../../styles/tokens'
+import { RULE, OFFSET, hardShadow, SIGNAL } from '../../styles/tokens'
 import {
   STREAM_PALETTE,
   MAX_STREAMS,
@@ -21,6 +21,30 @@ import {
   createConfig,
   slugify,
 } from '../../utils/streamConfig'
+
+const switchSx = {
+  '& .MuiSwitch-thumb': {
+    borderRadius: 0,
+    boxShadow: 'none',
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+  },
+  '& .MuiSwitch-track': {
+    borderRadius: 0,
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+    opacity: 1,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb': {
+    bgcolor: SIGNAL.go,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    bgcolor: 'background.paper',
+    opacity: 1,
+  },
+}
 
 const ColorDot = ({ color, selected, onClick, size = 28 }) => (
   <Box
@@ -83,7 +107,11 @@ const ToggleRow = ({ title, description, checked, onChange }) => (
         {description}
       </Typography>
     </Box>
-    <Switch checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <Switch
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      sx={switchSx}
+    />
   </Box>
 )
 

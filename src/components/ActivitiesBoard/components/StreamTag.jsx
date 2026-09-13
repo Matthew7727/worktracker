@@ -1,5 +1,4 @@
 import { Box } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { RULE } from '../../../styles/tokens'
 
 /** Tinted stream tag: colour block + abbrev. The single stream signal on a card. */
@@ -17,9 +16,9 @@ const StreamTag = ({ stream, label, muted = false, size = 'small' }) => {
         px: 1.25,
         py: 0.25,
         border: `${RULE.hair}px solid`,
-        borderColor: muted ? 'divider' : color,
-        bgcolor: alpha(color, muted ? 0.08 : 0.14),
-        color: muted ? 'text.disabled' : color,
+        borderColor: muted ? 'divider' : 'text.primary',
+        bgcolor: muted ? 'transparent' : color,
+        color: muted ? 'text.secondary' : '#000',
         fontSize: size === 'small' ? '0.64rem' : '0.72rem',
         fontWeight: 800,
         flexShrink: 0,

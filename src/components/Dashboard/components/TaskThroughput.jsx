@@ -120,7 +120,7 @@ const TaskThroughput = ({ perWeek, totals }) => {
           <MiniStat
             value={totals.closedThisCycle}
             label="Closed this cycle"
-            color="#80b621"
+            color="success.main"
           />
         </Stack>
         {totals.subtasksTotal > 0 && (

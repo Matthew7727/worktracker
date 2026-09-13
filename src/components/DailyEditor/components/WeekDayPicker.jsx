@@ -223,7 +223,11 @@ const WeekDayPicker = ({
                   : isNonWorking
                     ? statusConfig.color
                     : 'background.paper',
-                color: isSelected ? 'background.paper' : 'text.primary',
+                color: isSelected
+                  ? 'background.default'
+                  : isNonWorking
+                    ? '#000'
+                    : 'text.primary',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -249,9 +253,7 @@ const WeekDayPicker = ({
                       ? statusConfig.color
                       : 'text.primary',
                   color:
-                    isSelected || !isNonWorking
-                      ? 'background.paper'
-                      : 'text.primary',
+                    isSelected || !isNonWorking ? 'background.default' : '#000',
                 },
               }}
             >

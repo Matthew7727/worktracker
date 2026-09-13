@@ -35,7 +35,8 @@ const UtilisationCycle = ({
     utilisationPrediction !== null && utilisationTarget !== null
       ? utilisationPrediction - utilisationTarget
       : null
-  const diffColor = diff === null ? '#888' : diff >= 0 ? '#80b621' : '#d32f2f'
+  const diffColor =
+    diff === null ? 'text.secondary' : diff >= 0 ? 'success.main' : 'error.main'
 
   const capacity =
     standardWeeklyHours || Math.max(...weeks.map((w) => w.hours), 1)

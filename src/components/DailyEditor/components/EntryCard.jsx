@@ -421,8 +421,10 @@ const EntryCard = ({
                     {...props}
                     onClick={(e) => handleLinkClick(e, props.href)}
                     style={{
-                      color: '#80b621',
+                      color: 'inherit',
                       textDecoration: 'underline',
+                      textDecorationThickness: '3px',
+                      textUnderlineOffset: '3px',
                       cursor: 'pointer',
                     }}
                   />

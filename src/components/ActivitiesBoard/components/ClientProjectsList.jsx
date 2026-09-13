@@ -48,8 +48,8 @@ const StatusPill = ({ isDone, onClick }) => (
           }
         : {
             bgcolor: 'primary.main',
-            borderColor: 'primary.dark',
-            color: '#fff',
+            borderColor: 'text.primary',
+            color: '#000',
           }),
     }}
   >

@@ -8,30 +8,32 @@ const Tile = ({ value, label, color }) => (
       border: `${RULE.base}px solid`,
       borderColor: 'text.primary',
       bgcolor: 'background.paper',
-      p: 2.5,
     }}
   >
-    <Typography
-      sx={{
-        fontFamily: FONT.data,
-        fontWeight: 700,
-        fontSize: 34,
-        lineHeight: 1,
-        color,
-      }}
-    >
-      {value}
-    </Typography>
-    <Typography
-      sx={{
-        fontWeight: 800,
-        fontSize: 11,
-        opacity: 0.6,
-        mt: 1,
-      }}
-    >
-      {label}
-    </Typography>
+    <Box sx={{ height: 10, bgcolor: color }} />
+    <Box sx={{ p: 2.5 }}>
+      <Typography
+        sx={{
+          fontFamily: FONT.data,
+          fontWeight: 700,
+          fontSize: 34,
+          lineHeight: 1,
+          letterSpacing: '-0.03em',
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: 13,
+          color: 'text.secondary',
+          mt: 1,
+        }}
+      >
+        {label}
+      </Typography>
+    </Box>
   </Box>
 )
 

@@ -55,7 +55,7 @@ const Collaborators = ({ collaborators }) => {
                   width: 38,
                   height: 38,
                   bgcolor: colorFor(c.name),
-                  color: '#fff',
+                  color: '#000',
                   fontWeight: 800,
                   fontSize: 14,
                   border: `${RULE.base}px solid`,

@@ -47,12 +47,12 @@ const DayTypeView = ({
                     borderColor: 'text.primary',
                     cursor: 'pointer',
                     bgcolor: isActive ? status.color : 'transparent',
-                    color: isActive ? 'text.primary' : 'text.secondary',
+                    color: isActive ? '#000' : 'text.secondary',
                     transition:
                       'transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease',
                     '&:hover': {
                       bgcolor: isActive ? status.color : 'text.primary',
-                      color: isActive ? 'text.primary' : 'background.paper',
+                      color: isActive ? '#000' : 'background.default',
                       transform: `translate(-${OFFSET.press}px, -${OFFSET.press}px)`,
                       boxShadow: (theme) =>
                         hardShadow(OFFSET.base, theme.palette.text.primary),

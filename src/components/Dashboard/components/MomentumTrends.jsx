@@ -59,15 +59,15 @@ const MomentumTrends = ({ entries }) => {
   const stackedStreams = [...streams].reverse()
 
   let TrendIcon = TrendingFlat
-  let trendColor = '#888'
+  let trendColor = 'text.secondary'
   let trendText = 'steady'
   if (deltaPct !== null && deltaPct >= 10) {
     TrendIcon = TrendingUp
-    trendColor = '#80b621'
+    trendColor = 'success.main'
     trendText = `up ${deltaPct}% on the previous month`
   } else if (deltaPct !== null && deltaPct <= -10) {
     TrendIcon = TrendingDown
-    trendColor = '#d32f2f'
+    trendColor = 'error.main'
     trendText = `down ${Math.abs(deltaPct)}% on the previous month`
   } else if (deltaPct !== null) {
     trendText = 'steady vs the previous month'

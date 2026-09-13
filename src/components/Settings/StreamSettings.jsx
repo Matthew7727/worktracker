@@ -38,7 +38,37 @@ import {
   getArchivedStreams,
   nextPaletteColor,
 } from '../../utils/streamConfig'
-import { RULE, OFFSET, hardShadow } from '../../styles/tokens'
+import { RULE, OFFSET, hardShadow, SIGNAL } from '../../styles/tokens'
+
+const menuPaperSx = {
+  border: `${RULE.base}px solid`,
+  borderColor: 'text.primary',
+  boxShadow: (theme) => hardShadow(OFFSET.base, theme.palette.text.primary),
+}
+
+const switchSx = {
+  '& .MuiSwitch-thumb': {
+    borderRadius: 0,
+    boxShadow: 'none',
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+  },
+  '& .MuiSwitch-track': {
+    borderRadius: 0,
+    border: `${RULE.hair}px solid`,
+    borderColor: 'text.primary',
+    bgcolor: 'background.paper',
+    opacity: 1,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb': {
+    bgcolor: SIGNAL.go,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    bgcolor: 'background.paper',
+    opacity: 1,
+  },
+}
 
 const ColorSwatch = ({ stream, onPick }) => {
   const [anchorEl, setAnchorEl] = useState(null)
@@ -72,6 +102,7 @@ const ColorSwatch = ({ stream, onPick }) => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
+        slotProps={{ paper: { sx: menuPaperSx } }}
       >
         <Box sx={{ display: 'flex', gap: 1, px: 2, py: 1 }}>
           {STREAM_PALETTE.map((c) => (
@@ -191,6 +222,7 @@ const StreamRow = ({ stream, canArchive, onUpdate }) => {
                 height: 20,
                 fontWeight: 800,
                 fontSize: '0.6rem',
+                borderRadius: 0,
                 bgcolor: stream.color,
                 color: '#000',
                 border: `${RULE.hair}px solid`,
@@ -263,7 +295,11 @@ const FeatureToggle = ({ title, description, checked, onChange }) => (
         {description}
       </Typography>
     </Box>
-    <Switch checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <Switch
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      sx={switchSx}
+    />
   </Box>
 )
 

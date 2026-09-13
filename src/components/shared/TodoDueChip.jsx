@@ -2,21 +2,23 @@ import { Box, Tooltip, Typography } from '@mui/material'
 import { getTaskDueLabel, getTaskDueSeverity } from '../../utils/taskUrgency'
 import { RULE, FONT } from '../../styles/tokens'
 
+// Urgency is stamped: the two states that need action are solid blocks, the
+// merely scheduled one is left as an outline.
 const TONE = {
   overdue: {
-    borderColor: '#dc4c3f',
-    color: '#dc4c3f',
-    bg: 'rgba(220, 76, 63, 0.08)',
+    borderColor: 'text.primary',
+    color: '#fff',
+    bg: '#c4241a',
   },
   soon: {
-    borderColor: '#d97706',
-    color: '#d97706',
-    bg: 'rgba(217, 119, 6, 0.08)',
+    borderColor: 'text.primary',
+    color: '#000',
+    bg: '#f2a900',
   },
   scheduled: {
     borderColor: 'divider',
     color: 'text.secondary',
-    bg: 'background.paper',
+    bg: 'transparent',
   },
 }
 

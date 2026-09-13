@@ -153,8 +153,8 @@ const StatusPill = ({ label, tone }) => (
       ...(tone === 'active'
         ? {
             bgcolor: 'primary.main',
-            borderColor: 'primary.dark',
-            color: '#fff',
+            borderColor: 'text.primary',
+            color: '#000',
           }
         : {
             bgcolor: 'transparent',

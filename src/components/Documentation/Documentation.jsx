@@ -138,7 +138,7 @@ const Documentation = () => {
               mt: 10,
               p: 4,
               bgcolor: 'primary.main',
-              color: 'background.paper',
+              color: '#000',
               border: `${RULE.base}px solid`,
               borderColor: 'text.primary',
               boxShadow: (theme) =>
@@ -149,10 +149,10 @@ const Documentation = () => {
               Need Help?
             </Typography>
             <Typography
-              sx={{ fontWeight: 700, fontSize: '1.2rem', opacity: 0.9 }}
+              component="div"
+              sx={{ fontWeight: 600, fontSize: '1.1rem', maxWidth: '60ch' }}
             >
-              If you have specific technical questions, check the source code on
-              GitHub or reach out to Matt.
+              Still stuck? Read the source on GitHub, or ask Matt.
             </Typography>
           </Box>
         </Box>
