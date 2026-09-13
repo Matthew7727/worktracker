@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { Box, Typography, Menu, MenuItem, InputBase } from '@mui/material'
 import { MoreHoriz } from '@mui/icons-material'
-import { getWeekDays } from '../utils/weekDays'
+import { getDateKey, getRecentWorkingDays } from '../utils/weekDays'
 import { DAY_STATUSES } from '../constants'
 import { MONO } from '../../shared/ui'
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 const RULE = '3px solid'
 
 const DayStatusMenu = ({ day, currentStatus, onSetStatus, inverted }) => {
@@ -180,7 +179,7 @@ const WeekDayPicker = ({
   staffitHours,
   onSaveStaffitHours,
 }) => {
-  const weekDays = getWeekDays(new Date())
+  const workingDays = getRecentWorkingDays(new Date())
   const todayKey = new Date().toDateString()
   const activeStreams = streams.filter((s) => !s.archived)
 
@@ -214,11 +213,7 @@ const WeekDayPicker = ({
           </Box>
         </Typography>
         <Typography sx={{ fontWeight: 700, color: 'text.secondary' }}>
-          Week of{' '}
-          {weekDays[0].toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-          })}
+          Last 5 working days
         </Typography>
       </Box>
 
@@ -234,10 +229,10 @@ const WeekDayPicker = ({
           boxShadow: (t) => `6px 6px 0 ${t.palette.text.primary}`,
         }}
       >
-        {weekDays.map((day, i) => {
+        {workingDays.map((day, i) => {
           const isSelected = day.toDateString() === currentDate.toDateString()
           const isToday = day.toDateString() === todayKey
-          const dateKey = day.toISOString().split('T')[0]
+          const dateKey = getDateKey(day)
           const status = weekStatus[dateKey] || {}
           const dayStatus = status.dayStatus || 'working'
           const isNonWorking = dayStatus !== 'working'
@@ -292,7 +287,7 @@ const WeekDayPicker = ({
                 <Typography
                   sx={{ fontWeight: 800, fontSize: '0.85rem', lineHeight: 1 }}
                 >
-                  {DAY_LABELS[i]}
+                  {day.toLocaleDateString('en-GB', { weekday: 'short' })}
                   {isToday && (
                     <Box
                       component="span"
