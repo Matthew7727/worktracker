@@ -45,7 +45,7 @@ const Tab = ({
         : (t) => `3px 3px 0 ${t.palette.text.primary}`,
       transition: 'width 0.14s ease, margin 0.14s ease',
       '& svg': { fontSize: '1.1rem' },
-      '@media (max-height: 860px)': {
+      '@media (max-height: 940px)': {
         py: compact ? 0.75 : 1,
         '& span': { fontSize: '0.8rem' },
       },
@@ -138,7 +138,7 @@ const BinderTabs = ({
             flexShrink: 0,
             lineHeight: 1,
             color: 'text.primary',
-            '@media (max-height: 860px)': { fontSize: '0.85rem', mb: 0.75 },
+            '@media (max-height: 940px)': { fontSize: '0.85rem', mb: 0.75 },
           }}
         >
           WORK

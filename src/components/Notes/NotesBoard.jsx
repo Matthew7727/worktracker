@@ -17,9 +17,10 @@ import { InkButton, PageHeader, Segmented, EmptyState } from '../shared/ui'
 
 const NotesBoard = () => {
   const navigate = useNavigate()
-  const { selectedDirectory, streamConfig } = useAppContext()
+  const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
   const [notes, setNotes] = useState([])
   const [activities, setActivities] = useState([])
+  const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   // null = no editor open; 'new' = creating a fresh note; a note object =
@@ -46,6 +47,7 @@ const NotesBoard = () => {
     ])
     setNotes(notesData)
     setActivities(projectsData.activities || [])
+    setProjects(projectsData.clientProjects || [])
     setLoading(false)
   }
 
@@ -55,6 +57,7 @@ const NotesBoard = () => {
   }, [selectedDirectory])
 
   const streamForNote = (note) => {
+    if (note.projectId) return mainFocusStream || null
     if (!note.activityId) return null
     const activity = activities.find((a) => a.id === note.activityId)
     return activity ? streamById[getActivityStreamId(activity)] : null
@@ -82,12 +85,12 @@ const NotesBoard = () => {
     refresh()
   }
 
-  const linkedCount = notes.filter((n) => n.activityId).length
+  const linkedCount = notes.filter((n) => n.activityId || n.projectId).length
   const visibleNotes = notes.filter((n) =>
     filter === 'linked'
-      ? n.activityId
+      ? n.activityId || n.projectId
       : filter === 'unfiled'
-        ? !n.activityId
+        ? !n.activityId && !n.projectId
         : true
   )
   const showEmpty = !loading && notes.length === 0 && editorTarget !== 'new'
@@ -136,8 +139,8 @@ const NotesBoard = () => {
           }
         >
           Notes hold the things that don&apos;t belong in a day entry: meeting
-          prep, contacts, reference links. Link one to an activity to keep it
-          with that work.
+          prep, contacts, reference links. Link one to a project or activity to
+          keep it with that work.
         </EmptyState>
       ) : (
         <Box sx={{ columnWidth: 300, columnGap: 3, pt: 1 }}>
@@ -145,6 +148,7 @@ const NotesBoard = () => {
             <NoteEditorInline
               note={null}
               activities={activities}
+              projects={projects}
               streamById={streamById}
               onSave={handleSave}
               onClose={closeEditor}
@@ -158,6 +162,7 @@ const NotesBoard = () => {
                 key={note.id}
                 note={note}
                 activities={activities}
+                projects={projects}
                 streamById={streamById}
                 onSave={handleSave}
                 onDelete={handleDelete}
@@ -169,8 +174,8 @@ const NotesBoard = () => {
                 note={note}
                 stream={streamForNote(note)}
                 onOpen={() => setEditorTarget(note)}
-                onOpenActivity={(activityId) =>
-                  navigate(`/todos/activity/${activityId}`)
+                onOpenLinkedItem={(type, id) =>
+                  navigate(`/todos/${type}/${id}`)
                 }
               />
             )

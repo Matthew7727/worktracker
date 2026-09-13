@@ -1,5 +1,8 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import { MONO } from '../../shared/ui'
 
 const formatDate = (isoStr) => {
@@ -11,7 +14,7 @@ const formatDate = (isoStr) => {
 
 // An index card pinned to the board. Linked notes carry their stream's colour
 // as the card's top band; free-standing notes stay plain.
-const NoteCard = ({ note, stream, onOpen, onOpenActivity }) => (
+const NoteCard = ({ note, stream, onOpen, onOpenLinkedItem }) => (
   <Box
     component="article"
     role="button"
@@ -51,7 +54,7 @@ const NoteCard = ({ note, stream, onOpen, onOpenActivity }) => (
       <Typography
         sx={{ fontSize: '0.78rem', fontWeight: 800, color: 'text.secondary' }}
       >
-        {stream?.name || (note.activityId ? '' : 'Unfiled')}
+        {stream?.name || (note.activityId || note.projectId ? '' : 'Unfiled')}
       </Typography>
       <Typography
         sx={{ fontFamily: MONO, fontSize: '0.75rem', color: 'text.secondary' }}
@@ -75,27 +78,33 @@ const NoteCard = ({ note, stream, onOpen, onOpenActivity }) => (
       </Typography>
     )}
 
-    <Typography
+    <Box
       sx={{
         fontSize: '0.95rem',
         lineHeight: 1.55,
-        whiteSpace: 'pre-wrap',
-        display: '-webkit-box',
-        WebkitLineClamp: 10,
-        WebkitBoxOrient: 'vertical',
+        maxHeight: '15.5em',
         overflow: 'hidden',
+        '& p': { m: 0, mb: 0.75, '&:last-child': { mb: 0 } },
+        '& ul, & ol': { my: 0.5, pl: 2.5 },
+        '& li': { mb: 0.2 },
+        '& code': { fontFamily: MONO, fontSize: '0.88em' },
       }}
     >
-      {note.content}
-    </Typography>
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+        {note.content}
+      </ReactMarkdown>
+    </Box>
 
-    {note.activityId && (
+    {(note.activityId || note.projectId) && (
       <Box
         component="button"
         type="button"
         onClick={(e) => {
           e.stopPropagation()
-          onOpenActivity?.(note.activityId)
+          onOpenLinkedItem?.(
+            note.projectId ? 'project' : 'activity',
+            note.projectId || note.activityId
+          )
         }}
         sx={{
           mt: 1.75,
@@ -114,7 +123,7 @@ const NoteCard = ({ note, stream, onOpen, onOpenActivity }) => (
           '&:hover': { textDecoration: 'underline' },
         }}
       >
-        {note.activityTitle || 'Linked activity'}
+        {note.projectTitle || note.activityTitle || 'Linked item'}
       </Box>
     )}
   </Box>
