@@ -166,6 +166,11 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # This workflow only reaches this job after a same-repository
+          # release/* PR has merged, with environment approval. electron-builder
+          # otherwise treats the closed pull_request event as untrusted and
+          # silently skips the certificate imported above.
+          CSC_FOR_PULL_REQUEST: 'true'
         run: |
           set -euo pipefail
           test -n "$APPLE_ID"
