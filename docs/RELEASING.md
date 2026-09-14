@@ -11,34 +11,18 @@ This document outlines the process for releasing a new version of Work-Tracker.
 
 1. **Create a release branch** from `main` named `release/vX.Y.Z`.
 
-2. **Version the branch**. Run the following command and commit the result:
+   The branch name is the source of truth for the release version. Do not edit or commit
+   version changes to `package.json` or `package-lock.json`.
 
-   ```bash
-   npm version patch  # 1.0.0 -> 1.0.1
-   # OR
-   npm version minor  # 1.0.0 -> 1.1.0
-   # OR
-   npm version major  # 1.0.0 -> 2.0.0
-   ```
-
-   Use `--no-git-tag-version`: the release workflow owns the immutable tag.
-
-   ```bash
-   npm version patch --no-git-tag-version
-   git add package.json package-lock.json
-   git commit -m "chore: bump version"
-   git push origin release/vX.Y.Z
-   ```
-
-3. **Open and merge a PR** from `release/vX.Y.Z` to `main`. The Release workflow then:
-   - validates that the branch version and `package.json` agree;
+2. **Open and merge a PR** from `release/vX.Y.Z` to `main`. The Release workflow then:
+   - derives the application version from the branch name and injects it into each build;
    - creates `vX.Y.Z` at the exact merge commit and never moves it;
    - builds Windows plus signed/notarized Apple Silicon macOS installers;
    - uploads assets to a draft release and publishes it only if both builds pass.
 
    A reviewer must approve the protected `production-release` environment before Apple credentials are used. The release then publishes automatically after both platform builds pass.
 
-4. **Retrying a failed release**: use **Actions → Release → Run workflow** and enter the existing tag. The workflow will only rebuild the tag if it still points at the exact requested commit.
+3. **Retrying a failed release**: use **Actions → Release → Run workflow** and enter the existing tag. The workflow will only rebuild the tag if it still points at the exact requested commit. The retry derives the application version from that tag.
 
 ## Apple signing setup
 
