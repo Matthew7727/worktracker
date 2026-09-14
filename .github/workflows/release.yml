@@ -33,6 +33,7 @@ jobs:
     timeout-minutes: 10
     outputs:
       tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
       sha: ${{ steps.release.outputs.sha }}
     steps:
       - name: Checkout merged release
@@ -43,7 +44,7 @@ jobs:
           ref: ${{ inputs.tag || github.event.pull_request.merge_commit_sha || github.sha }}
           fetch-depth: 1
 
-      - name: Validate version and create immutable draft release
+      - name: Resolve version and create immutable draft release
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -51,19 +52,17 @@ jobs:
           RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          VERSION=$(node -p "require('./package.json').version")
-          EXPECTED_TAG="v${VERSION}"
-
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG="$REQUESTED_TAG"
           else
             TAG="v${RELEASE_BRANCH#release/v}"
           fi
 
-          if [ "$TAG" != "$EXPECTED_TAG" ]; then
-            echo "Tag $TAG does not match package.json version $VERSION"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use the format vX.Y.Z; received: $TAG"
             exit 1
           fi
+          VERSION="${TAG#v}"
 
           SHA=$(git rev-parse HEAD)
           if EXISTING_SHA=$(gh api "repos/${{ github.repository }}/git/ref/tags/$TAG" --jq '.object.sha' 2>/dev/null); then
@@ -81,6 +80,7 @@ jobs:
           fi
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
   build-windows:
@@ -96,6 +96,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Set package version from release tag
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
 
       - run: npm ci
       - run: npm run build
@@ -132,6 +138,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Set package version from release tag
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
 
       - run: npm ci
       - run: npm run build
