@@ -18,6 +18,7 @@ import remarkBreaks from 'remark-breaks'
 import { getActivityStreamId } from '../../../utils/projectsManager'
 import { injectMarkdown } from '../../../utils/markdownHelpers'
 import { InkButton, Segmented, MONO } from '../../shared/ui'
+import { useIsFilofax, useFilofaxTokens } from '../../../styles/useUiStyle'
 
 const serializeRichNode = (node) => {
   if (node.nodeType === Node.TEXT_NODE) return node.textContent || ''
@@ -136,6 +137,8 @@ const NoteEditorInline = ({
   onDelete,
   onClose,
 }) => {
+  const isFx = useIsFilofax()
+  const ff = useFilofaxTokens()
   const [title, setTitle] = useState(note?.title || '')
   const [content, setContent] = useState(note?.content || '')
   const [viewMode, setViewMode] = useState(note?.content ? 'rich' : 'markdown')
@@ -221,11 +224,21 @@ const NoteEditorInline = ({
         mb: 3,
         breakInside: 'avoid',
         bgcolor: 'background.paper',
-        border: '3px solid',
-        borderColor: 'text.primary',
-        borderTop: '10px solid',
-        borderTopColor: bandColor || 'text.primary',
-        boxShadow: (t) => `8px 8px 0 ${t.palette.text.primary}`,
+        ...(isFx
+          ? {
+              border: `1px solid ${ff.ruleStrong}`,
+              borderRadius: '6px',
+              borderTop: `5px solid ${bandColor || ff.print}`,
+              boxShadow: '0 10px 24px rgba(42,10,13,0.14)',
+              overflow: 'hidden',
+            }
+          : {
+              border: '3px solid',
+              borderColor: 'text.primary',
+              borderTop: '10px solid',
+              borderTopColor: bandColor || 'text.primary',
+              boxShadow: (t) => `8px 8px 0 ${t.palette.text.primary}`,
+            }),
       }}
     >
       <Box sx={{ px: 2.25, pt: 1.75, pb: 1 }}>
@@ -235,7 +248,11 @@ const NoteEditorInline = ({
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          sx={{ fontWeight: 900, fontSize: '1.2rem', letterSpacing: '-0.02em' }}
+          sx={{
+            fontWeight: isFx ? 400 : 900,
+            fontSize: '1.2rem',
+            letterSpacing: isFx ? 0 : '-0.02em',
+          }}
         />
       </Box>
 
@@ -246,10 +263,10 @@ const NoteEditorInline = ({
           gap: 0.25,
           px: 1,
           py: 0.75,
-          borderTop: '2px solid',
-          borderBottom: '2px solid',
+          borderTop: isFx ? '1px solid' : '2px solid',
+          borderBottom: isFx ? '1px solid' : '2px solid',
           borderColor: 'divider',
-          bgcolor: 'background.subtle',
+          bgcolor: isFx ? 'transparent' : 'background.subtle',
         }}
       >
         {FORMAT_ACTIONS.map((action) => (
@@ -302,8 +319,8 @@ const NoteEditorInline = ({
           sx={{
             ...writingSurface,
             alignItems: 'flex-start',
-            fontFamily: MONO,
-            fontSize: '0.85rem',
+            fontFamily: isFx ? 'inherit' : MONO,
+            fontSize: isFx ? '0.92rem' : '0.85rem',
           }}
         />
       ) : (
@@ -357,8 +374,8 @@ const NoteEditorInline = ({
           gap: 1,
           px: 1.5,
           py: 1.25,
-          borderTop: '3px solid',
-          borderColor: 'text.primary',
+          borderTop: isFx ? '1px solid' : '3px solid',
+          borderColor: isFx ? 'divider' : 'text.primary',
           bgcolor: 'background.subtle',
         }}
       >

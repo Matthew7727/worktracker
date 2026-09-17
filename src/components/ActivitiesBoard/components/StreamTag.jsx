@@ -1,7 +1,9 @@
 import { Box } from '@mui/material'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 /** Square colour swatch + stream label. The single stream signal in dense rows. */
 const StreamTag = ({ stream, label, muted = false, size = 'small' }) => {
+  const isFx = useIsFilofax()
   const color = stream?.color || '#9e9e9e'
   const text = label || stream?.abbrev || '—'
 
@@ -13,7 +15,8 @@ const StreamTag = ({ stream, label, muted = false, size = 'small' }) => {
         alignItems: 'center',
         gap: 0.75,
         fontSize: size === 'small' ? '0.75rem' : '0.85rem',
-        fontWeight: 800,
+        fontWeight: isFx ? 400 : 800,
+        fontStyle: isFx ? 'italic' : 'normal',
         color: muted ? 'text.disabled' : 'text.primary',
         flexShrink: 0,
       }}
@@ -24,7 +27,8 @@ const StreamTag = ({ stream, label, muted = false, size = 'small' }) => {
           width: size === 'small' ? 10 : 12,
           height: size === 'small' ? 10 : 12,
           bgcolor: color,
-          border: '1.5px solid',
+          border: isFx ? 'none' : '1.5px solid',
+          borderRadius: isFx ? '50%' : 0,
           borderColor: 'text.primary',
           opacity: muted ? 0.45 : 1,
         }}

@@ -1,8 +1,10 @@
 import { Box, Typography } from '@mui/material'
 import { MONO } from '../../shared/ui'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 /** Bordered progress bar + "done/total" fraction. */
 const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
+  const isFx = useIsFilofax()
   if (!total) return null
   const pct = Math.round((done / total) * 100)
 
@@ -15,10 +17,11 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
         aria-valuemax={100}
         sx={{
           flex: 1,
-          height: 10,
-          border: '2px solid',
+          height: isFx ? 4 : 10,
+          borderRadius: isFx ? '2px' : 0,
+          border: isFx ? 'none' : '2px solid',
           borderColor: 'text.primary',
-          bgcolor: 'background.paper',
+          bgcolor: isFx ? 'divider' : 'background.paper',
           overflow: 'hidden',
         }}
       >
@@ -27,7 +30,7 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
             width: `${pct}%`,
             height: '100%',
             bgcolor: color,
-            borderRight: pct > 0 && pct < 100 ? '2px solid' : 'none',
+            borderRight: !isFx && pct > 0 && pct < 100 ? '2px solid' : 'none',
             borderColor: 'text.primary',
             transition: 'width 0.3s ease',
           }}
@@ -36,9 +39,10 @@ const ProgressStrip = ({ done, total, color = 'primary.main' }) => {
       <Typography
         component="span"
         sx={{
-          fontFamily: MONO,
+          fontFamily: isFx ? 'inherit' : MONO,
+          fontStyle: isFx ? 'italic' : 'normal',
           fontSize: '0.75rem',
-          fontWeight: 700,
+          fontWeight: isFx ? 400 : 700,
           flexShrink: 0,
         }}
       >

@@ -140,6 +140,7 @@ export const getTheme = (mode) => {
   const ink = mode === 'light' ? INK_LIGHT : INK_DARK
   return createTheme({
     ...baseOptions,
+    custom: { style: 'ledger' },
     palette: {
       mode,
       ...(mode === 'light'

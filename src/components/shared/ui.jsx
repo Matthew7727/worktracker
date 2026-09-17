@@ -1,5 +1,14 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import { useIsFilofax } from '../../styles/useUiStyle'
+import {
+  FxInkButton,
+  FxSegmented,
+  FxPageHeader,
+  FxSectionHeader,
+  FxStatStrip,
+  FxEmptyState,
+} from './uiFilofax'
 
 export const MONO = '"JetBrains Mono", monospace'
 
@@ -8,7 +17,13 @@ const ink = (theme) => theme.palette.text.primary
 // Stream colours are light-to-mid tones, so ink text always reads on them.
 const onColor = '#000'
 
-export const InkButton = ({
+export const InkButton = (allProps) => {
+  const isFx = useIsFilofax()
+  if (isFx) return <FxInkButton {...allProps} />
+  return <LedgerInkButton {...allProps} />
+}
+
+const LedgerInkButton = ({
   tone = 'solid',
   color,
   size = 'md',
@@ -89,7 +104,12 @@ export const InkButton = ({
 }
 
 // Joined options that share one ink rule — a single control, not a row of pills.
-export const Segmented = ({
+export const Segmented = (props) => {
+  const isFx = useIsFilofax()
+  return isFx ? <FxSegmented {...props} /> : <LedgerSegmented {...props} />
+}
+
+const LedgerSegmented = ({
   options,
   value,
   onChange,
@@ -175,7 +195,12 @@ export const Segmented = ({
   </Box>
 )
 
-export const PageHeader = ({ title, meta, children, sx = {} }) => (
+export const PageHeader = (props) => {
+  const isFx = useIsFilofax()
+  return isFx ? <FxPageHeader {...props} /> : <LedgerPageHeader {...props} />
+}
+
+const LedgerPageHeader = ({ title, meta, children, sx = {} }) => (
   <Box
     sx={{
       display: 'flex',
@@ -218,7 +243,16 @@ export const PageHeader = ({ title, meta, children, sx = {} }) => (
   </Box>
 )
 
-export const SectionHeader = ({ title, meta, subtitle, action, sx = {} }) => (
+export const SectionHeader = (props) => {
+  const isFx = useIsFilofax()
+  return isFx ? (
+    <FxSectionHeader {...props} />
+  ) : (
+    <LedgerSectionHeader {...props} />
+  )
+}
+
+const LedgerSectionHeader = ({ title, meta, subtitle, action, sx = {} }) => (
   <Box
     sx={{
       display: 'flex',
@@ -267,7 +301,12 @@ export const SectionHeader = ({ title, meta, subtitle, action, sx = {} }) => (
 )
 
 // Joined scoreboard cells: a set of readings that belong to one instrument.
-export const StatStrip = ({ items, sx = {} }) => {
+export const StatStrip = (props) => {
+  const isFx = useIsFilofax()
+  return isFx ? <FxStatStrip {...props} /> : <LedgerStatStrip {...props} />
+}
+
+const LedgerStatStrip = ({ items, sx = {} }) => {
   const visible = items.filter(Boolean)
   if (visible.length === 0) return null
   return (
@@ -330,7 +369,12 @@ export const StatStrip = ({ items, sx = {} }) => {
   )
 }
 
-export const EmptyState = ({ title, children, action }) => (
+export const EmptyState = (props) => {
+  const isFx = useIsFilofax()
+  return isFx ? <FxEmptyState {...props} /> : <LedgerEmptyState {...props} />
+}
+
+const LedgerEmptyState = ({ title, children, action }) => (
   <Box
     sx={{
       border: '2.5px dashed',

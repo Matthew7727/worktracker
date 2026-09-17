@@ -1,8 +1,10 @@
 import React from 'react'
 import { Snackbar, Alert } from '@mui/material'
 import { alertStyles } from '../MainLayout.styles'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 const FeedbackSystem = ({ notification, onHide }) => {
+  const isFx = useIsFilofax()
   return (
     <Snackbar
       open={notification.open}
@@ -14,7 +16,7 @@ const FeedbackSystem = ({ notification, onHide }) => {
         onClose={onHide}
         severity={notification.severity}
         variant="filled"
-        sx={alertStyles}
+        sx={isFx ? { width: '100%' } : alertStyles}
       >
         {notification.message}
       </Alert>

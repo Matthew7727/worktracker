@@ -16,6 +16,7 @@ import {
 import { Download } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import { loadAllEntries } from '../../utils/DataManager'
+import { filterEntriesByRange, buildExport } from '../../utils/exportEntries'
 
 const Reports = () => {
   const { selectedDirectory, showNotification } = useAppContext()
@@ -30,41 +31,17 @@ const Reports = () => {
 
     try {
       const entries = await loadAllEntries(selectedDirectory)
-      let filteredEntries = await entries
-
       const now = new Date()
-      if (range === 'last30') {
-        const cutoff = new Date()
-        cutoff.setDate(now.getDate() - 30)
-        filteredEntries = filteredEntries.filter((e) => e.dateObj >= cutoff)
-      } else if (range === 'thisYear') {
-        const startOfYear = new Date(now.getFullYear(), 0, 1)
-        filteredEntries = filteredEntries.filter(
-          (e) => e.dateObj >= startOfYear
-        )
-      }
+      const filteredEntries = filterEntriesByRange(entries, range, now)
 
       setExportStatus(`Processing ${filteredEntries.length} entries...`)
 
-      let content = ''
-      let extension = ''
-
-      if (format === 'json') {
-        content = JSON.stringify(filteredEntries, null, 2)
-        extension = 'json'
-      } else {
-        content = `# Work Tracker Export\n\nGenerated: ${now.toLocaleDateString()}\nRange: ${range}\n\n`
-        filteredEntries.forEach((e) => {
-          const timeHeader = e.time ? ` [${e.time}]` : ''
-          content += `### ${e.date}${timeHeader}\n\n`
-          if (e.tags && e.tags.length > 0) {
-            content += `**Tags:** ${e.tags.join(', ')}\n\n`
-          }
-          content += `${e.content}\n\n`
-        })
-        content += `---\n\n`
-        extension = 'md'
-      }
+      const { content, extension } = buildExport(
+        filteredEntries,
+        format,
+        range,
+        now
+      )
 
       if (window.electronAPI) {
         const { canceled, filePath } = await window.electronAPI.saveFile({

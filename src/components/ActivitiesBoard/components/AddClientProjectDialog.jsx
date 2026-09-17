@@ -9,8 +9,10 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
+  const isFx = useIsFilofax()
   const [title, setTitle] = useState('')
   const [ongoing, setOngoing] = useState(false)
 
@@ -35,14 +37,16 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
       maxWidth="xs"
       fullWidth
       PaperProps={{
-        sx: {
-          borderRadius: 0,
-          border: '4px solid',
-          borderColor: 'text.primary',
-          boxShadow: (theme) =>
-            `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
-          p: 2,
-        },
+        sx: isFx
+          ? { p: 2 }
+          : {
+              borderRadius: 0,
+              border: '4px solid',
+              borderColor: 'text.primary',
+              boxShadow: (theme) =>
+                `10px 10px 0px ${theme.palette.text.primary || '#000'}`,
+              p: 2,
+            },
       }}
     >
       <DialogTitle sx={{ fontWeight: 900 }}>New Client Project</DialogTitle>
@@ -82,29 +86,35 @@ const AddClientProjectDialog = ({ open, onClose, onAdd }) => {
           onClick={handleSubmit}
           variant="contained"
           disabled={!title.trim()}
-          sx={{
-            fontWeight: 900,
-            px: 3,
-            py: 1,
-            borderRadius: 0,
-            backgroundImage: 'none',
-            bgcolor: 'background.paper',
-            color: 'text.primary',
-            border: '3px solid',
-            borderColor: 'text.primary',
-            boxShadow: (theme) => `4px 4px 0px ${theme.palette.text.primary}`,
-            '&:hover': {
-              bgcolor: 'action.hover',
-              boxShadow: (theme) => `2px 2px 0px ${theme.palette.text.primary}`,
-              transform: 'translate(2px, 2px)',
-            },
-            '&.Mui-disabled': {
-              opacity: 0.5,
-              boxShadow: 'none',
-              transform: 'none',
-              border: '3px solid #ccc',
-            },
-          }}
+          sx={
+            isFx
+              ? { px: 3 }
+              : {
+                  fontWeight: 900,
+                  px: 3,
+                  py: 1,
+                  borderRadius: 0,
+                  backgroundImage: 'none',
+                  bgcolor: 'background.paper',
+                  color: 'text.primary',
+                  border: '3px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: (theme) =>
+                    `4px 4px 0px ${theme.palette.text.primary}`,
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                    boxShadow: (theme) =>
+                      `2px 2px 0px ${theme.palette.text.primary}`,
+                    transform: 'translate(2px, 2px)',
+                  },
+                  '&.Mui-disabled': {
+                    opacity: 0.5,
+                    boxShadow: 'none',
+                    transform: 'none',
+                    border: '3px solid #ccc',
+                  },
+                }
+          }
         >
           Add Project
         </Button>

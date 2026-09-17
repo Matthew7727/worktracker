@@ -4,6 +4,7 @@ import { Delete } from '@mui/icons-material'
 import ConfirmDialog from './ConfirmDialog'
 import ProgressStrip from './ProgressStrip'
 import { EmptyState, MONO } from '../../shared/ui'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 const DETAIL_NAVIGATION_DELAY_MS = 180
 const COLUMNS = {
@@ -37,28 +38,56 @@ const headCell = {
   color: 'text.secondary',
 }
 
-const StatusToggle = ({ isDone, accentColor, onClick }) => (
-  <Box
-    component="button"
-    type="button"
-    onClick={onClick}
-    title={isDone ? 'Reopen project' : 'Mark project done'}
-    sx={{
-      fontFamily: 'inherit',
-      fontSize: '0.78rem',
-      fontWeight: 800,
-      py: 0.4,
-      cursor: 'pointer',
-      border: '2px solid',
-      borderColor: isDone ? 'divider' : 'text.primary',
-      bgcolor: isDone ? 'transparent' : accentColor,
-      color: isDone ? 'text.secondary' : '#000',
-      '&:hover': { borderColor: 'text.primary' },
-    }}
-  >
-    {isDone ? 'Done' : 'Active'}
-  </Box>
-)
+const StatusToggle = ({ isDone, accentColor, onClick }) => {
+  const isFx = useIsFilofax()
+  if (isFx) {
+    return (
+      <Box
+        component="button"
+        type="button"
+        onClick={onClick}
+        title={isDone ? 'Reopen project' : 'Mark project done'}
+        sx={{
+          fontFamily: 'inherit',
+          fontStyle: 'italic',
+          fontSize: '0.78rem',
+          py: 0.2,
+          cursor: 'pointer',
+          borderRadius: '3px',
+          border: '1.25px solid',
+          borderColor: isDone ? 'divider' : 'primary.main',
+          bgcolor: 'transparent',
+          color: isDone ? 'text.secondary' : 'primary.main',
+          '&:hover': { borderColor: 'primary.main' },
+        }}
+      >
+        {isDone ? 'Done' : 'Active'}
+      </Box>
+    )
+  }
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={onClick}
+      title={isDone ? 'Reopen project' : 'Mark project done'}
+      sx={{
+        fontFamily: 'inherit',
+        fontSize: '0.78rem',
+        fontWeight: 800,
+        py: 0.4,
+        cursor: 'pointer',
+        border: '2px solid',
+        borderColor: isDone ? 'divider' : 'text.primary',
+        bgcolor: isDone ? 'transparent' : accentColor,
+        color: isDone ? 'text.secondary' : '#000',
+        '&:hover': { borderColor: 'text.primary' },
+      }}
+    >
+      {isDone ? 'Done' : 'Active'}
+    </Box>
+  )
+}
 
 const ProjectRow = ({
   project,
@@ -72,6 +101,7 @@ const ProjectRow = ({
   const [editText, setEditText] = useState(project.title)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const clickTimerRef = useRef(null)
+  const isFx = useIsFilofax()
   const isDone = project.status === 'done'
   const tasks = project.tasks || []
   const completedCount = tasks.filter((t) => t.completed).length
@@ -141,7 +171,7 @@ const ProjectRow = ({
           title="Open project. Double-click to rename."
           sx={{
             fontSize: '1rem',
-            fontWeight: 800,
+            fontWeight: isFx ? 400 : 800,
             color: isDone ? 'text.secondary' : 'text.primary',
             cursor: 'pointer',
             userSelect: 'none',
@@ -175,7 +205,8 @@ const ProjectRow = ({
       <Typography
         sx={{
           display: { xs: 'none', md: 'block' },
-          fontFamily: MONO,
+          fontFamily: isFx ? 'inherit' : MONO,
+          fontStyle: isFx ? 'italic' : 'normal',
           fontSize: '0.78rem',
           color: 'text.secondary',
           whiteSpace: 'nowrap',
@@ -224,6 +255,7 @@ const ClientProjectsList = ({
   onRename,
   onOpenDetails,
 }) => {
+  const isFx = useIsFilofax()
   const sorted = [
     ...projects.filter((p) => p.status === 'active'),
     ...projects.filter((p) => p.status === 'done'),
@@ -241,13 +273,17 @@ const ClientProjectsList = ({
     <Box
       role="table"
       aria-label="Projects"
-      sx={{
-        border: '3px solid',
-        borderColor: 'text.primary',
-        borderLeft: '10px solid',
-        borderLeftColor: accentColor,
-        bgcolor: 'background.paper',
-      }}
+      sx={
+        isFx
+          ? { borderTop: '1px solid', borderColor: 'divider' }
+          : {
+              border: '3px solid',
+              borderColor: 'text.primary',
+              borderLeft: '10px solid',
+              borderLeftColor: accentColor,
+              bgcolor: 'background.paper',
+            }
+      }
     >
       <Box
         role="row"
@@ -257,7 +293,7 @@ const ClientProjectsList = ({
           gap: 2,
           px: 2,
           py: 1,
-          bgcolor: 'background.subtle',
+          bgcolor: isFx ? 'transparent' : 'background.subtle',
         }}
       >
         <Typography sx={headCell}>Status</Typography>

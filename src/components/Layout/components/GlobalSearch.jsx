@@ -12,8 +12,10 @@ import {
 } from '@mui/material'
 import { Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material'
 import { searchDialogStyles, toolbarIconStyles } from '../MainLayout.styles'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
+  const isFx = useIsFilofax()
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -88,20 +90,20 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
         fullWidth
         maxWidth="md"
         PaperProps={{
-          sx: searchDialogStyles,
+          sx: isFx ? { p: 2 } : searchDialogStyles,
           'data-testid': 'search-dialog',
         }}
       >
         <DialogTitle
           sx={{
-            fontWeight: 900,
+            fontWeight: isFx ? 400 : 900,
             fontSize: '1.75rem',
-            letterSpacing: '-0.035em',
+            letterSpacing: isFx ? 0 : '-0.035em',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '2px solid',
-            borderColor: 'text.primary',
+            borderBottom: isFx ? '1px solid' : '2px solid',
+            borderColor: isFx ? 'secondary.main' : 'text.primary',
             mb: 2,
           }}
         >
@@ -127,10 +129,12 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                 fontSize: '1.5rem',
                 height: '4rem',
                 borderRadius: 0,
-                '& fieldset': {
-                  borderWidth: '3px',
-                  borderColor: 'text.primary !important',
-                },
+                '& fieldset': isFx
+                  ? {}
+                  : {
+                      borderWidth: '3px',
+                      borderColor: 'text.primary !important',
+                    },
               },
             }}
           />
@@ -146,21 +150,32 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                     key={i}
                     onClick={() => handleSelect(res.date)}
                     data-testid={`search-result-${res.date}`}
-                    sx={{
-                      p: 3,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      border: '3px solid',
-                      borderColor: 'text.primary',
-                      borderRadius: 0,
-                      '&:hover': {
-                        transform: 'translate(-2px, -2px)',
-                        boxShadow: (theme) =>
-                          `6px 6px 0 ${theme.palette.text.primary}`,
-                      },
-                      boxShadow: (theme) =>
-                        `3px 3px 0 ${theme.palette.text.primary}`,
-                    }}
+                    sx={
+                      isFx
+                        ? {
+                            p: 2.5,
+                            cursor: 'pointer',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: '6px',
+                            '&:hover': { borderColor: 'primary.main' },
+                          }
+                        : {
+                            p: 3,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            border: '3px solid',
+                            borderColor: 'text.primary',
+                            borderRadius: 0,
+                            '&:hover': {
+                              transform: 'translate(-2px, -2px)',
+                              boxShadow: (theme) =>
+                                `6px 6px 0 ${theme.palette.text.primary}`,
+                            },
+                            boxShadow: (theme) =>
+                              `3px 3px 0 ${theme.palette.text.primary}`,
+                          }
+                    }
                   >
                     <Box
                       sx={{
@@ -171,8 +186,11 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                     >
                       <Typography
                         sx={{
-                          fontWeight: 900,
-                          fontFamily: '"JetBrains Mono", monospace',
+                          fontWeight: isFx ? 400 : 900,
+                          color: isFx ? 'primary.main' : 'inherit',
+                          fontFamily: isFx
+                            ? 'inherit'
+                            : '"JetBrains Mono", monospace',
                           fontSize: '1.1rem',
                         }}
                       >
@@ -190,8 +208,8 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                     </Box>
                     <Typography
                       sx={{
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
+                        fontSize: isFx ? '0.98rem' : '1.1rem',
+                        fontWeight: isFx ? 400 : 600,
                         lineHeight: '1.5',
                       }}
                     >

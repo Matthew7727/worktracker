@@ -1,5 +1,6 @@
 import { Box, Tooltip, Typography } from '@mui/material'
 import { getItemAge, getAgeSeverity } from '../../utils/ageUtils'
+import { useIsFilofax } from '../../styles/useUiStyle'
 
 const DOT_COLORS = {
   urgent: '#dc4c3f',
@@ -12,6 +13,7 @@ const DOT_COLORS = {
  * (amber 3–6d, red 7d+).
  */
 const TodoAgeChip = ({ item }) => {
+  const isFx = useIsFilofax()
   const age = getItemAge(item)
   if (age === null || age === 0) return null
   const severity = getAgeSeverity(age)
@@ -34,6 +36,7 @@ const TodoAgeChip = ({ item }) => {
             sx={{
               width: 8,
               height: 8,
+              borderRadius: isFx ? '50%' : 0,
               bgcolor: dotColor,
             }}
           />
@@ -41,9 +44,10 @@ const TodoAgeChip = ({ item }) => {
         <Typography
           component="span"
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: isFx ? 'inherit' : '"JetBrains Mono", monospace',
+            fontStyle: isFx ? 'italic' : 'normal',
             fontSize: '0.72rem',
-            fontWeight: 700,
+            fontWeight: isFx ? 400 : 700,
             color: 'text.secondary',
             fontVariantNumeric: 'tabular-nums',
           }}

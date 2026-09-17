@@ -18,6 +18,7 @@ import StreamTag from './StreamTag'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
 import { EmptyState, MONO } from '../../shared/ui'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 const SORT_FIELDS = {
   name: (todo) => todo.text || '',
@@ -46,6 +47,7 @@ const AllTodosView = ({
   onOpenItem,
   onToggleTask,
 }) => {
+  const isFx = useIsFilofax()
   const [sortField, setSortField] = useState('dueDate')
   const [sortDirection, setSortDirection] = useState('asc')
   const [showCompleted, setShowCompleted] = useState(false)
@@ -117,15 +119,16 @@ const AllTodosView = ({
       component={Paper}
       elevation={0}
       sx={{
-        border: '3px solid',
+        border: isFx ? 'none' : '3px solid',
+        bgcolor: isFx ? 'transparent' : undefined,
         borderColor: 'text.primary',
         '& .MuiTableCell-root': {
           borderColor: 'divider',
           borderBottomWidth: 2,
         },
         '& .MuiTableHead-root .MuiTableCell-root': {
-          bgcolor: 'background.subtle',
-          borderBottom: '3px solid',
+          bgcolor: isFx ? 'transparent' : 'background.subtle',
+          borderBottom: isFx ? '1px solid' : '3px solid',
           borderColor: 'text.primary',
         },
       }}
@@ -174,7 +177,7 @@ const AllTodosView = ({
                   <Typography
                     variant="body2"
                     sx={{
-                      fontWeight: completed ? 500 : 650,
+                      fontWeight: isFx ? 400 : completed ? 500 : 650,
                       color: completed ? 'text.secondary' : 'text.primary',
                       textDecoration: completed ? 'line-through' : 'none',
                     }}
@@ -206,7 +209,7 @@ const AllTodosView = ({
                   <Box>
                     <Typography
                       className="todo-owner"
-                      sx={{ fontWeight: 800, fontSize: '0.9rem' }}
+                      sx={{ fontWeight: isFx ? 400 : 800, fontSize: '0.9rem' }}
                     >
                       {todo.ownerTitle}
                     </Typography>

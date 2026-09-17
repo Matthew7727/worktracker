@@ -25,6 +25,8 @@ import {
   getDateKey,
   getRecentWorkingDays,
   getDefaultDate,
+  getWeekDays,
+  getWeekendDays,
 } from '../utils/weekDays'
 
 // Legacy stream ids that older app versions understand via dedicated
@@ -37,7 +39,13 @@ const LEGACY_FRONTMATTER_STREAMS = {
   businessDevelopment: 'bdActivities',
 }
 
-export const useDailyEditor = () => {
+/**
+ * @param {Object} [options]
+ * @param {'recent'|'calendar'} [options.weekRange] which days `weekStatus`
+ *   covers: the five most recent working days (default), or Monday–Sunday of
+ *   the week being journaled.
+ */
+export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
   const { selectedDirectory, showNotification, streamConfig, streams } =
     useAppContext()
   const location = useLocation()
@@ -151,7 +159,10 @@ export const useDailyEditor = () => {
   // Load completion status for the five most recent working days
   const loadWeekStatus = async () => {
     if (!selectedDirectory) return
-    const days = getRecentWorkingDays(new Date())
+    const days =
+      weekRange === 'calendar'
+        ? [...getWeekDays(currentDate), ...getWeekendDays(currentDate)]
+        : getRecentWorkingDays(new Date())
     const status = {}
     await Promise.all(
       days.map(async (day) => {
@@ -180,9 +191,13 @@ export const useDailyEditor = () => {
     setWeekStatus(status)
   }
 
+  // In calendar mode the covered week follows the day being journaled.
+  const statusWeekKey =
+    weekRange === 'calendar' ? getDateKey(getWeekDays(currentDate)[0]) : null
+
   useEffect(() => {
     loadWeekStatus()
-  }, [selectedDirectory, streamConfig]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDirectory, streamConfig, statusWeekKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load entry data for the selected date
   useEffect(() => {
