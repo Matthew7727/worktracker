@@ -185,6 +185,7 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
       .map((edge) => (edge.from === selected.id ? edge.to : edge.from))
     return graph.nodes.filter((node) => ids.includes(node.id))
   }, [graph, selected])
+  const SelectedIcon = selected ? TYPE_META[selected.type].icon : null
 
   if (loading)
     return (
@@ -197,7 +198,7 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 320px' },
+        gridTemplateColumns: { xs: '1fr', lg: '320px minmax(0, 1fr)' },
         minHeight: 620,
         border: '3px solid',
         borderColor: 'text.primary',
@@ -210,6 +211,7 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
           height: 620,
           position: 'relative',
           bgcolor: '#1c1c1c',
+          gridColumn: { lg: 2 },
         }}
       >
         {graph.nodes.length ? (
@@ -265,35 +267,62 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
       <Box
         component="aside"
         sx={{
-          borderLeft: { lg: '3px solid' },
+          borderRight: { lg: '3px solid' },
           borderColor: 'text.primary',
           p: 2.25,
           overflowY: 'auto',
           bgcolor: 'background.paper',
+          gridColumn: { lg: 1 },
+          gridRow: { lg: 1 },
         }}
       >
         {selected ? (
           <>
-            <Typography
+            <Box
               sx={{
-                fontFamily: MONO,
-                fontSize: '0.7rem',
-                fontWeight: 800,
-                color: TYPE_META[selected.type].color,
+                p: 2,
+                border: '2px solid',
+                borderColor: 'text.primary',
+                bgcolor: 'background.subtle',
               }}
             >
-              {TYPE_META[selected.type].label.toUpperCase()}
-            </Typography>
-            <Typography
-              sx={{
-                mt: 0.5,
-                fontWeight: 900,
-                fontSize: '1.45rem',
-                lineHeight: 1.05,
-              }}
-            >
-              {selected.title}
-            </Typography>
+              <Box
+                sx={{
+                  width: 76,
+                  height: 76,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '50%',
+                  bgcolor: TYPE_META[selected.type].color,
+                  border: '3px solid',
+                  borderColor: 'text.primary',
+                  boxShadow: '4px 4px 0 #1b1b1b',
+                  mb: 1.75,
+                }}
+              >
+                <SelectedIcon sx={{ fontSize: '2.1rem' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  color: 'text.secondary',
+                }}
+              >
+                {TYPE_META[selected.type].label.toUpperCase()}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.5,
+                  fontWeight: 900,
+                  fontSize: '1.45rem',
+                  lineHeight: 1.05,
+                }}
+              >
+                {selected.title}
+              </Typography>
+            </Box>
             {selected.detail && (
               <Typography
                 sx={{ mt: 1, color: 'text.secondary', fontSize: '0.88rem' }}
@@ -301,6 +330,19 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
                 {selected.detail}
               </Typography>
             )}
+            <Typography
+              sx={{
+                mt: 1.25,
+                fontFamily: MONO,
+                fontSize: '0.72rem',
+                color: 'text.secondary',
+              }}
+            >
+              {connected.length}{' '}
+              {connected.length === 1
+                ? 'direct connection'
+                : 'direct connections'}
+            </Typography>
             <InkButton
               size="sm"
               tone="outline"
