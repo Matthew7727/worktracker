@@ -14,6 +14,8 @@ import {
   MoreVert,
   Delete,
   Edit,
+  Check,
+  Close,
   CheckCircleOutline,
   Star,
   DragIndicator,
@@ -78,6 +80,11 @@ const ActivityCard = ({
     } else {
       setRenameText(activity.title)
     }
+    setIsRenaming(false)
+  }
+
+  const cancelRename = () => {
+    setRenameText(activity.title)
     setIsRenaming(false)
   }
 
@@ -204,21 +211,37 @@ const ActivityCard = ({
 
       {/* Title */}
       {isRenaming ? (
-        <TextField
-          size="small"
-          fullWidth
-          value={renameText}
-          onChange={(e) => setRenameText(e.target.value)}
-          onBlur={saveRename}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') saveRename()
-            if (e.key === 'Escape') {
-              setRenameText(activity.title)
-              setIsRenaming(false)
-            }
-          }}
-          autoFocus
-        />
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            value={renameText}
+            onChange={(e) => setRenameText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveRename()
+              if (e.key === 'Escape') cancelRename()
+            }}
+            slotProps={{ htmlInput: { 'aria-label': 'Rename activity' } }}
+            autoFocus
+          />
+          <IconButton
+            size="small"
+            aria-label="Save activity name"
+            onClick={saveRename}
+          >
+            <Check fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            aria-label="Cancel activity rename"
+            onClick={cancelRename}
+          >
+            <Close fontSize="small" />
+          </IconButton>
+        </Box>
       ) : (
         <Typography
           onDoubleClick={() => {
