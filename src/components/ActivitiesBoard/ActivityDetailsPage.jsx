@@ -12,7 +12,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material'
-import { ArrowBack, Add, Check } from '@mui/icons-material'
+import { ArrowBack, Add, Check, Close, Edit } from '@mui/icons-material'
 import { InkButton, StatStrip, MONO } from '../shared/ui'
 import TaskList from './components/TaskList'
 import ConfirmDialog from './components/ConfirmDialog'
@@ -105,6 +105,8 @@ const AddLink = ({ children, onClick }) => (
 const ActivityDetailsPage = () => {
   const [goalLinkOpen, setGoalLinkOpen] = useState(false)
   const [focusedNote, setFocusedNote] = useState(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const {
     itemId,
     navigate,
@@ -166,6 +168,15 @@ const ActivityDetailsPage = () => {
   const entityLabel = isProject ? 'project' : 'activity'
   // Nesting is capped at one level — only top-level activities can take children.
   const canHaveChildren = !isProject && !item.parentId
+  const startTitleEdit = () => {
+    setTitleDraft(item.title || '')
+    setEditingTitle(true)
+  }
+  const saveTitle = () => {
+    const title = titleDraft.trim()
+    if (title && title !== item.title) updateItem({ title })
+    setEditingTitle(false)
+  }
 
   return (
     <Box sx={{ pb: 8, maxWidth: 1280, mx: 'auto', width: '100%' }}>
@@ -262,18 +273,71 @@ const ActivityDetailsPage = () => {
               </Typography>
             )}
           </Box>
-          <Typography
-            component="h1"
-            sx={{
-              fontSize: { xs: '2.25rem', md: '3.25rem' },
-              fontWeight: 900,
-              letterSpacing: '-0.045em',
-              lineHeight: 0.98,
-              maxWidth: '22ch',
-            }}
-          >
-            {item.title}
-          </Typography>
+          {editingTitle ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                maxWidth: 720,
+              }}
+            >
+              <TextField
+                autoFocus
+                fullWidth
+                value={titleDraft}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') saveTitle()
+                  if (event.key === 'Escape') setEditingTitle(false)
+                }}
+                slotProps={{
+                  htmlInput: { 'aria-label': `Rename ${entityLabel}` },
+                }}
+                sx={{
+                  '& input': {
+                    fontSize: { xs: '1.45rem', md: '2rem' },
+                    fontWeight: 900,
+                    py: 0.75,
+                  },
+                }}
+              />
+              <IconButton aria-label="Save title" onClick={saveTitle}>
+                <Check />
+              </IconButton>
+              <IconButton
+                aria-label="Cancel title edit"
+                onClick={() => setEditingTitle(false)}
+              >
+                <Close />
+              </IconButton>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+              <Typography
+                component="h1"
+                sx={{
+                  fontSize: { xs: '2.25rem', md: '3.25rem' },
+                  fontWeight: 900,
+                  letterSpacing: '-0.045em',
+                  lineHeight: 0.98,
+                  maxWidth: '22ch',
+                }}
+              >
+                {item.title}
+              </Typography>
+              <Tooltip title={`Rename ${entityLabel}`}>
+                <IconButton
+                  aria-label={`Rename ${entityLabel}`}
+                  onClick={startTitleEdit}
+                  size="small"
+                  sx={{ mt: 0.25 }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
         </Box>
         <StatStrip
           sx={{

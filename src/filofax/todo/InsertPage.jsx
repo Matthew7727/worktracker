@@ -7,7 +7,7 @@ import {
   FormControlLabel,
   IconButton,
 } from '@mui/material'
-import { ChevronLeft, Close, Add } from '@mui/icons-material'
+import { ChevronLeft, Close, Add, Check, Edit } from '@mui/icons-material'
 import useActivityDetails from '../../components/ActivitiesBoard/hooks/useActivityDetails'
 import TaskList from '../../components/ActivitiesBoard/components/TaskList'
 import ConfirmDialog from '../../components/ActivitiesBoard/components/ConfirmDialog'
@@ -46,6 +46,8 @@ const InsertPage = () => {
   const ff = useFilofaxTokens()
   const d = useActivityDetails()
   const [focusedNote, setFocusedNote] = useState(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const {
     itemId,
     navigate,
@@ -87,6 +89,15 @@ const InsertPage = () => {
       : 'Completed'
   const entity = isProject ? 'project' : 'activity'
   const canHaveChildren = !isProject && !item.parentId
+  const startTitleEdit = () => {
+    setTitleDraft(item.title || '')
+    setEditingTitle(true)
+  }
+  const saveTitle = () => {
+    const title = titleDraft.trim()
+    if (title && title !== item.title) updateItem({ title })
+    setEditingTitle(false)
+  }
   const ro = (fn) => (itemReadOnly ? undefined : fn)
 
   return (
@@ -124,22 +135,76 @@ const InsertPage = () => {
             </PenLink>
           )}
         </Box>
-        <Typography
-          component="h1"
-          sx={{
-            fontSize: { xs: '1.9rem', md: '2.4rem' },
-            lineHeight: 1.1,
-            color: ff.print,
-            maxWidth: '28ch',
-            // The stream colour runs as a thin underline of the title
-            textDecoration: 'underline',
-            textDecorationColor: accent,
-            textDecorationThickness: '3px',
-            textUnderlineOffset: '8px',
-          }}
-        >
-          {item.title}
-        </Typography>
+        {editingTitle ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.25,
+              maxWidth: 640,
+            }}
+          >
+            <InputBase
+              autoFocus
+              fullWidth
+              value={titleDraft}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') saveTitle()
+                if (event.key === 'Escape') setEditingTitle(false)
+              }}
+              inputProps={{
+                'aria-label': `Rename ${isProject ? 'project' : 'activity'}`,
+              }}
+              sx={{
+                fontSize: { xs: '1.65rem', md: '2.1rem' },
+                lineHeight: 1.1,
+                color: ff.print,
+                borderBottom: `2px solid ${accent}`,
+              }}
+            />
+            <IconButton
+              aria-label="Save title"
+              onClick={saveTitle}
+              size="small"
+            >
+              <Check />
+            </IconButton>
+            <IconButton
+              aria-label="Cancel title edit"
+              onClick={() => setEditingTitle(false)}
+              size="small"
+            >
+              <Close />
+            </IconButton>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.25 }}>
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: { xs: '1.9rem', md: '2.4rem' },
+                lineHeight: 1.1,
+                color: ff.print,
+                maxWidth: '28ch',
+                textDecoration: 'underline',
+                textDecorationColor: accent,
+                textDecorationThickness: '3px',
+                textUnderlineOffset: '8px',
+              }}
+            >
+              {item.title}
+            </Typography>
+            <IconButton
+              aria-label={`Rename ${isProject ? 'project' : 'activity'}`}
+              onClick={startTitleEdit}
+              size="small"
+              sx={{ color: ff.inkSoft }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
       </Box>
 
       <StatStrip
