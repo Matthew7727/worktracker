@@ -14,6 +14,12 @@ This document outlines the development roadmap for WorkTracker. It is a living d
 
 ---
 
+## 🧭 Next: Annual goals
+
+- [ ] Annual goals with manual review, progress assessment, and linked work evidence.
+
+---
+
 ## 🚀 Version 1.1.0: Developer Experience & Code Quality
 
 **Focus:** improve the "internal" quality of the project to make future feature development faster and safer.

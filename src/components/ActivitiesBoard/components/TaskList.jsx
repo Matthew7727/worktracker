@@ -22,6 +22,7 @@ import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
 import GhostAddRow from './GhostAddRow'
 import { sortTasksByUrgency } from '../../../utils/taskUrgency'
+import GoalLinkPicker from '../../Goals/GoalLinkPicker'
 
 const formatDateInput = (date) => {
   const year = date.getFullYear()
@@ -113,6 +114,7 @@ const TaskRow = ({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
+  onSetTaskGoalIds,
 }) => {
   const [expanded, setExpanded] = useState(false)
   const [editingDueDate, setEditingDueDate] = useState(false)
@@ -301,6 +303,14 @@ const TaskRow = ({
 
       {expanded && (
         <Box sx={{ pl: 4.5, pr: 0.5, pb: 1 }}>
+          {onSetTaskGoalIds && (
+            <Box sx={{ mb: 1 }}>
+              <GoalLinkPicker
+                value={task.goalIds || []}
+                onChange={onSetTaskGoalIds}
+              />
+            </Box>
+          )}
           {visibleSubtasks.length > 0 && (
             <Stack spacing={0.5} sx={{ mb: 0.5 }}>
               {visibleSubtasks.map((subtask) => (
@@ -387,6 +397,7 @@ const TaskList = ({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
+  onSetTaskGoalIds,
 }) => {
   const [showCompleted, setShowCompleted] = useState(false)
 
@@ -419,6 +430,7 @@ const TaskList = ({
       onAddSubtask={(text) => onAddSubtask?.(task.id, text)}
       onToggleSubtask={(subtaskId) => onToggleSubtask?.(task.id, subtaskId)}
       onDeleteSubtask={(subtaskId) => onDeleteSubtask?.(task.id, subtaskId)}
+      onSetTaskGoalIds={(goalIds) => onSetTaskGoalIds?.(task.id, goalIds)}
     />
   )
 

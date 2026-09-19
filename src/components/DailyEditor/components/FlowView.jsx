@@ -3,6 +3,7 @@ import { Box, Typography, Fade } from '@mui/material'
 import { ArrowForward, ArrowBack, Check, TaskAlt } from '@mui/icons-material'
 import EntryCard from './EntryCard'
 import { InkButton, EmptyState, MONO } from '../../shared/ui'
+import GoalLinkPicker from '../../Goals/GoalLinkPicker'
 
 const StepRail = ({ projects, drafts, currentStep, onJump }) => (
   <Box
@@ -95,6 +96,8 @@ const FlowView = ({
   completedTodosByTitle,
   projectDrafts,
   updateProjectDraft,
+  goalIds,
+  onGoalIdsChange,
   currentStep,
   setCurrentStep,
   onBackToSelect,
@@ -254,6 +257,20 @@ const FlowView = ({
             onChange={(content) => updateProjectDraft(project.title, content)}
             accentColor={color}
           />
+          <Box
+            sx={{
+              mt: 3,
+              pt: 2.25,
+              borderTop: '2px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <GoalLinkPicker
+              value={goalIds || []}
+              onChange={onGoalIdsChange}
+              label="This written entry supports goals"
+            />
+          </Box>
 
           <Box
             sx={{

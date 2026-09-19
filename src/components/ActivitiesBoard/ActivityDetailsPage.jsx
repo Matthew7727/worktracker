@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
 import useActivityDetails from './hooks/useActivityDetails'
+import GoalLinkPicker from '../Goals/GoalLinkPicker'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -101,6 +102,7 @@ const AddLink = ({ children, onClick }) => (
 )
 
 const ActivityDetailsPage = () => {
+  const [goalLinkOpen, setGoalLinkOpen] = useState(false)
   const {
     itemId,
     navigate,
@@ -215,6 +217,23 @@ const ActivityDetailsPage = () => {
               }}
             >
               {statusLabel}
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 28 }}>
+              {goalLinkOpen || (item.goalIds || []).length > 0 ? (
+                <GoalLinkPicker
+                  value={item.goalIds || []}
+                  onChange={(goalIds) => updateItem({ goalIds })}
+                />
+              ) : (
+                <InkButton
+                  tone="ghost"
+                  size="sm"
+                  onClick={() => setGoalLinkOpen(true)}
+                  sx={{ ml: -1 }}
+                >
+                  Link to goal
+                </InkButton>
+              )}
             </Box>
             {parentActivity && (
               <Typography
@@ -349,6 +368,7 @@ const ActivityDetailsPage = () => {
               onDeleteSubtask={
                 itemReadOnly ? undefined : taskHandlers.onDeleteSubtask
               }
+              onSetTaskGoalIds={taskHandlers.onSetTaskGoalIds}
             />
             {tasks.length === 0 && itemReadOnly && (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>

@@ -2,6 +2,7 @@ export const SECTIONS = [
   { id: 'diary', label: 'Diary', path: '/', match: ['/', '/editor'] },
   { id: 'todo', label: 'To do', path: '/todos', match: ['/todos'] },
   { id: 'notes', label: 'Notes', path: '/notes', match: ['/notes'] },
+  { id: 'goals', label: 'Goals', path: '/goals', match: ['/goals'] },
   { id: 'planner', label: 'Planner', path: '/planner', match: ['/planner'] },
   {
     id: 'contacts',

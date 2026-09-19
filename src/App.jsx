@@ -16,6 +16,7 @@ import DailyEditor from './components/DailyEditor/DailyEditor'
 import ActivitiesBoard from './components/ActivitiesBoard/ActivitiesBoard'
 import ActivityDetailsPage from './components/ActivitiesBoard/ActivityDetailsPage'
 import NotesBoard from './components/Notes/NotesBoard'
+import GoalsPage from './components/Goals/GoalsPage'
 import Dashboard from './components/Dashboard/Dashboard'
 import Reports from './components/Reports/Reports'
 import Settings from './components/Settings/Settings'
@@ -82,6 +83,8 @@ function App() {
             element={<ActivityDetailsPage />}
           />
           <Route path="/notes" element={<NotesBoard />} />
+          <Route path="/goals" element={<GoalsPage />} />
+          <Route path="/goals/:goalId" element={<GoalsPage />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
