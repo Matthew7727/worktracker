@@ -9,6 +9,7 @@ import {
   Chip,
   Avatar,
   InputBase,
+  IconButton,
   FormControlLabel,
   Switch,
   Tooltip,
