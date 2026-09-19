@@ -11,6 +11,7 @@ import {
   InputBase,
   FormControlLabel,
   Switch,
+  Tooltip,
 } from '@mui/material'
 import { ArrowBack, Add, Check, Close, Edit } from '@mui/icons-material'
 import { InkButton, StatStrip, MONO } from '../shared/ui'
