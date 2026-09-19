@@ -41,6 +41,7 @@ import { getStreamAbbrev } from '../../utils/streamConfig'
 import ActivityCard from './components/ActivityCard'
 import ClientProjectsList from './components/ClientProjectsList'
 import AddActivityDialog from './components/AddActivityDialog'
+import AddTodoDialog from './components/AddTodoDialog'
 import AddClientProjectDialog from './components/AddClientProjectDialog'
 import ConfirmDialog from './components/ConfirmDialog'
 import TodoAgeChip from '../shared/TodoAgeChip'
@@ -349,6 +350,7 @@ const ActivitiesBoard = () => {
   const [viewMode, setViewMode] = useState('board')
   const [activityFilter, setActivityFilter] = useState('ALL')
   const [addActivityOpen, setAddActivityOpen] = useState(false)
+  const [addTodoOpen, setAddTodoOpen] = useState(false)
   const [addProjectOpen, setAddProjectOpen] = useState(false)
   const [showCompleted, setShowCompleted] = useState(true)
   const {
@@ -490,6 +492,11 @@ const ActivitiesBoard = () => {
             onAddProject={() => setAddProjectOpen(true)}
             onAddActivity={() => setAddActivityOpen(true)}
           />
+        )}
+        {viewMode === 'todos' && (
+          <InkButton startIcon={<Add />} onClick={() => setAddTodoOpen(true)}>
+            Add to-do
+          </InkButton>
         )}
       </PageHeader>
 
@@ -717,6 +724,12 @@ const ActivitiesBoard = () => {
         onClose={() => setAddActivityOpen(false)}
         onAdd={handleAddActivity}
         streams={activityStreams}
+        activities={data.activities}
+      />
+      <AddTodoDialog
+        open={addTodoOpen}
+        onClose={() => setAddTodoOpen(false)}
+        onAdd={handleAddTask}
         activities={data.activities}
       />
       <AddClientProjectDialog

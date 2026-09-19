@@ -90,8 +90,11 @@ const useActivitiesData = () => {
     })
   }
 
-  const handleAddTask = (activityId, text) =>
-    updateActivityTasks(activityId, (tasks) => [...tasks, createTask(text)])
+  const handleAddTask = (activityId, text, options = {}) =>
+    updateActivityTasks(activityId, (tasks) => [
+      ...tasks,
+      createTask(text, options),
+    ])
 
   const handleToggleTask = (activityId, taskId) => {
     let justCompleted = false
