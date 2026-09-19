@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import {
   AccountTree,
@@ -13,6 +13,7 @@ import { loadProjects } from '../../../utils/projectsManager'
 import { loadNotes } from '../../../utils/notesManager'
 import { loadGoals } from '../../../utils/goalsManager'
 import { InkButton, MONO } from '../../shared/ui'
+import { ForceGraph2D } from 'react-force-graph'
 
 const TYPE_META = {
   goal: { label: 'Goal', color: '#9b87f5', icon: Flag },
@@ -133,28 +134,25 @@ const buildGraph = ({ entries, data, notes, goals }) => {
         .map((edge) => [edge.id, edge])
     ).values(),
   ]
-  const columns = {
-    goal: 70,
-    activity: 365,
-    project: 365,
-    todo: 660,
-    note: 955,
-    entry: 1250,
+  return {
+    nodes: uniqueNodes.map((node) => ({
+      ...node,
+      color: TYPE_META[node.type].color,
+      val: node.type === 'goal' ? 7 : node.type === 'activity' ? 5 : 3.5,
+    })),
+    links: uniqueEdges.map((edge) => ({
+      ...edge,
+      source: edge.from,
+      target: edge.to,
+    })),
   }
-  const offsets = {}
-  const positioned = uniqueNodes.map((node) => {
-    const key = node.type === 'project' ? 'activity' : node.type
-    const index = offsets[key] || 0
-    offsets[key] = index + 1
-    return { ...node, x: columns[node.type], y: 80 + index * 108 }
-  })
-  return { nodes: positioned, edges: uniqueEdges }
 }
 
 const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
   const [loading, setLoading] = useState(true)
-  const [graph, setGraph] = useState({ nodes: [], edges: [] })
+  const [graph, setGraph] = useState({ nodes: [], links: [] })
   const [selectedId, setSelectedId] = useState(null)
+  const graphRef = useRef()
 
   useEffect(() => {
     let active = true
@@ -182,16 +180,11 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
   const selected = graph.nodes.find((node) => node.id === selectedId) || null
   const connected = useMemo(() => {
     if (!selected) return []
-    const ids = graph.edges
+    const ids = graph.links
       .filter((edge) => edge.from === selected.id || edge.to === selected.id)
       .map((edge) => (edge.from === selected.id ? edge.to : edge.from))
     return graph.nodes.filter((node) => ids.includes(node.id))
   }, [graph, selected])
-  const byId = useMemo(
-    () => Object.fromEntries(graph.nodes.map((node) => [node.id, node])),
-    [graph.nodes]
-  )
-  const maxY = Math.max(640, ...graph.nodes.map((node) => node.y + 120))
 
   if (loading)
     return (
@@ -211,116 +204,63 @@ const WorkspaceMap = ({ rootDir, streams, onOpen }) => {
         bgcolor: 'background.paper',
       }}
     >
-      <Box sx={{ minWidth: 0, overflow: 'auto', bgcolor: 'background.subtle' }}>
-        <Box
-          sx={{
-            position: 'relative',
-            minWidth: 1540,
-            height: maxY,
-            backgroundImage: 'radial-gradient(#b7b2a8 1px, transparent 1px)',
-            backgroundSize: '18px 18px',
-          }}
-        >
-          <svg
-            width="1540"
-            height={maxY}
-            style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-          >
-            {graph.edges.map((edge) => {
-              const from = byId[edge.from]
-              const to = byId[edge.to]
-              if (!from || !to) return null
-              const highlighted =
-                selected &&
-                (edge.from === selected.id || edge.to === selected.id)
-              return (
-                <line
-                  key={edge.id}
-                  x1={from.x + 190}
-                  y1={from.y + 34}
-                  x2={to.x + 190}
-                  y2={to.y + 34}
-                  stroke={highlighted ? '#1b1b1b' : '#a39e93'}
-                  strokeWidth={highlighted ? 3 : 1.5}
-                />
-              )
-            })}
-          </svg>
-          {graph.nodes.map((node) => {
-            const meta = TYPE_META[node.type]
-            const Icon = meta.icon
-            const isSelected = node.id === selectedId
-            return (
-              <Box
-                key={node.id}
-                component="button"
-                type="button"
-                onClick={() => setSelectedId(node.id)}
-                sx={{
-                  position: 'absolute',
-                  left: node.x,
-                  top: node.y,
-                  width: 190,
-                  textAlign: 'left',
-                  border: isSelected ? '3px solid' : '1.5px solid',
-                  borderColor: 'text.primary',
-                  borderLeft: `8px solid ${meta.color}`,
-                  bgcolor: isSelected ? 'background.paper' : '#fffdf7',
-                  p: 1,
-                  cursor: 'pointer',
-                  boxShadow: isSelected ? '4px 4px 0 #1b1b1b' : 'none',
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    mb: 0.35,
-                  }}
-                >
-                  <Icon sx={{ fontSize: '0.9rem', color: meta.color }} />
-                  <Typography
-                    sx={{
-                      fontFamily: MONO,
-                      fontSize: '0.65rem',
-                      fontWeight: 800,
-                    }}
-                  >
-                    {meta.label}
-                  </Typography>
-                </Box>
-                <Typography
-                  sx={{
-                    fontSize: '0.82rem',
-                    fontWeight: 900,
-                    lineHeight: 1.15,
-                  }}
-                >
-                  {truncate(node.title, 32)}
-                </Typography>
-                {node.detail && (
-                  <Typography
-                    sx={{
-                      mt: 0.35,
-                      fontSize: '0.66rem',
-                      color: 'text.secondary',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {truncate(node.detail, 38)}
-                  </Typography>
-                )}
-              </Box>
-            )
-          })}
-          {graph.nodes.length === 0 && (
-            <Typography sx={{ p: 5, fontWeight: 800 }}>
-              No connected work yet. Link a goal to an activity, to-do, note, or
-              entry and it will appear here.
-            </Typography>
-          )}
-        </Box>
+      <Box
+        sx={{
+          minWidth: 0,
+          height: 620,
+          position: 'relative',
+          bgcolor: '#1c1c1c',
+        }}
+      >
+        {graph.nodes.length ? (
+          <ForceGraph2D
+            ref={graphRef}
+            graphData={graph}
+            backgroundColor="#1c1c1c"
+            nodeLabel={(node) => `${TYPE_META[node.type].label}: ${node.title}`}
+            nodeColor={(node) => node.color}
+            nodeVal={(node) => node.val}
+            linkColor={(link) =>
+              link.from === selectedId || link.to === selectedId
+                ? '#f4f0e6'
+                : 'rgba(255,255,255,0.18)'
+            }
+            linkWidth={(link) =>
+              link.from === selectedId || link.to === selectedId ? 1.8 : 0.65
+            }
+            onNodeClick={(node) => setSelectedId(node.id)}
+            onNodeHover={(node) => {
+              document.body.style.cursor = node ? 'pointer' : 'default'
+            }}
+            nodeCanvasObject={(node, context, scale) => {
+              const radius = node.val + (node.id === selectedId ? 3 : 0)
+              context.beginPath()
+              context.arc(node.x, node.y, radius, 0, 2 * Math.PI)
+              context.fillStyle = node.color
+              context.fill()
+              if (node.id === selectedId) {
+                context.lineWidth = 2 / scale
+                context.strokeStyle = '#fff'
+                context.stroke()
+              }
+              if (scale > 1.6 || node.id === selectedId) {
+                context.font = `${12 / scale}px ${MONO}`
+                context.fillStyle = '#f4f0e6'
+                context.fillText(
+                  truncate(node.title, 28),
+                  node.x + radius + 4 / scale,
+                  node.y + 3 / scale
+                )
+              }
+            }}
+            onEngineStop={() => graphRef.current?.zoomToFit(500, 65)}
+          />
+        ) : (
+          <Typography sx={{ p: 5, color: '#f4f0e6', fontWeight: 800 }}>
+            No connected work yet. Link a goal to an activity, to-do, note, or
+            entry and it will appear here.
+          </Typography>
+        )}
       </Box>
       <Box
         component="aside"
