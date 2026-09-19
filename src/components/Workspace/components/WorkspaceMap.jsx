@@ -13,7 +13,7 @@ import { loadProjects } from '../../../utils/projectsManager'
 import { loadNotes } from '../../../utils/notesManager'
 import { loadGoals } from '../../../utils/goalsManager'
 import { InkButton, MONO } from '../../shared/ui'
-import { ForceGraph2D } from 'react-force-graph'
+import ForceGraph2D from 'react-force-graph-2d'
 
 const TYPE_META = {
   goal: { label: 'Goal', color: '#9b87f5', icon: Flag },
