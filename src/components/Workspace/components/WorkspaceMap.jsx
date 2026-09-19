@@ -85,11 +85,36 @@ const buildGraph = ({ entries, data, notes, goals }) => {
         'notes'
       )
   })
+  const sourceByTitle = new Map(
+    sources.map((item) => [item.title?.trim().toLowerCase(), item])
+  )
   entries.forEach((entry) => {
+    let hasLinks = false
+    const addEntryNode = () => {
+      if (hasLinks) return
+      addNode('entry', entry, entry.date, truncate(entry.content, 60))
+      hasLinks = true
+    }
+    const historicTitles = [
+      ...Object.values(entry.metadata?.projects || {}).flat(),
+      ...(entry.metadata?.clientProjects || []),
+      ...(entry.metadata?.pdActivities || []),
+      ...(entry.metadata?.bdActivities || []),
+    ]
+    historicTitles.forEach((title) => {
+      const source = sourceByTitle.get(title?.trim().toLowerCase())
+      if (!source) return
+      addEntryNode()
+      addEdge(
+        nodeId('entry', entry.id),
+        nodeId(source.type, source.id),
+        'recorded work'
+      )
+    })
     Object.entries(entry.metadata?.streamGoalIds || {}).forEach(
       ([stream, goalIds]) => {
         if (!goalIds?.length) return
-        addNode('entry', entry, entry.date, truncate(entry.content, 60))
+        addEntryNode()
         goalIds.forEach((goalId) =>
           addEdge(nodeId('entry', entry.id), nodeId('goal', goalId), stream)
         )
