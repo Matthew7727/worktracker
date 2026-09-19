@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import NoteCard from './components/NoteCard'
 import NoteEditorInline from './components/NoteEditorInline'
+import NoteViewerDialog from './components/NoteViewerDialog'
 import { InkButton, PageHeader, Segmented, EmptyState } from '../shared/ui'
 import useNotesBoard, {
   CARD_WIDTH,
@@ -13,6 +14,7 @@ import useNotesBoard, {
 
 const NotesBoard = () => {
   const navigate = useNavigate()
+  const [focusedNote, setFocusedNote] = useState(null)
   const {
     notes,
     activities,
@@ -179,9 +181,10 @@ const NotesBoard = () => {
                     draggable
                     onOpen={() => {
                       if (draggedNoteIdRef.current !== note.id) {
-                        setEditorTarget(note)
+                        setFocusedNote(note)
                       }
                     }}
+                    onEdit={() => setEditorTarget(note)}
                     onOpenLinkedItem={(type, id) =>
                       navigate(`/todos/${type}/${id}`)
                     }
@@ -192,6 +195,19 @@ const NotesBoard = () => {
           })}
         </Box>
       )}
+      <NoteViewerDialog
+        note={focusedNote}
+        stream={focusedNote ? streamForNote(focusedNote) : null}
+        onClose={() => setFocusedNote(null)}
+        onEdit={() => {
+          setEditorTarget(focusedNote)
+          setFocusedNote(null)
+        }}
+        onOpenLinkedItem={(type, id) => {
+          setFocusedNote(null)
+          navigate(`/todos/${type}/${id}`)
+        }}
+      />
     </Box>
   )
 }

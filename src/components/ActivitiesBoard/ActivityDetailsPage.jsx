@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -20,6 +20,7 @@ import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
+import NoteViewerDialog from '../Notes/components/NoteViewerDialog'
 import useActivityDetails from './hooks/useActivityDetails'
 
 const formatDate = (dateStr) => {
@@ -101,6 +102,7 @@ const AddLink = ({ children, onClick }) => (
 )
 
 const ActivityDetailsPage = () => {
+  const [focusedNote, setFocusedNote] = useState(null)
   const {
     itemId,
     navigate,
@@ -334,6 +336,9 @@ const ActivityDetailsPage = () => {
               onDeleteTask={
                 itemReadOnly ? undefined : taskHandlers.onDeleteTask
               }
+              onRenameTask={
+                itemReadOnly ? undefined : taskHandlers.onRenameTask
+              }
               onToggleTaskImportant={
                 itemReadOnly ? undefined : taskHandlers.onToggleTaskImportant
               }
@@ -438,7 +443,8 @@ const ActivityDetailsPage = () => {
                     <NoteCard
                       key={note.id}
                       note={note}
-                      onOpen={() => openExistingNote(note)}
+                      onOpen={() => setFocusedNote(note)}
+                      onEdit={() => openExistingNote(note)}
                     />
                   )
                 )}
@@ -471,6 +477,15 @@ const ActivityDetailsPage = () => {
               <AddLink onClick={openNewNote}>Add note</AddLink>
             )}
           </Panel>
+
+          <NoteViewerDialog
+            note={focusedNote}
+            onClose={() => setFocusedNote(null)}
+            onEdit={() => {
+              openExistingNote(focusedNote)
+              setFocusedNote(null)
+            }}
+          />
 
           <Panel label="Actions">
             <Stack spacing={1}>

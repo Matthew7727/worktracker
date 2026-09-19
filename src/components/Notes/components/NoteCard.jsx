@@ -1,5 +1,6 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, IconButton, Tooltip, Typography } from '@mui/material'
+import { Edit } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -20,6 +21,7 @@ const NoteCard = ({
   note,
   stream,
   onOpen,
+  onEdit,
   onOpenLinkedItem,
   draggable = false,
 }) => {
@@ -32,7 +34,10 @@ const NoteCard = ({
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') onOpen?.()
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen?.()
+        }
       }}
       sx={{
         p: 2.25,
@@ -92,6 +97,22 @@ const NoteCard = ({
         >
           {formatDate(note.updatedAt)}
         </Typography>
+        {onEdit && (
+          <Tooltip title="Edit note">
+            <IconButton
+              size="small"
+              aria-label={`Edit ${note.title || 'note'}`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit()
+              }}
+              sx={{ ml: -0.5, p: 0.5 }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       {note.title && (

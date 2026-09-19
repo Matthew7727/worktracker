@@ -13,6 +13,7 @@ import {
   Add,
   CalendarToday,
   Delete,
+  Edit,
   ChevronRight,
   ExpandMore,
   Star,
@@ -108,6 +109,7 @@ const TaskRow = ({
   divided,
   onToggle,
   onDelete,
+  onRename,
   onToggleImportant,
   onSetDueDate,
   onAddSubtask,
@@ -116,6 +118,8 @@ const TaskRow = ({
 }) => {
   const [expanded, setExpanded] = useState(false)
   const [editingDueDate, setEditingDueDate] = useState(false)
+  const [editingText, setEditingText] = useState(false)
+  const [draftText, setDraftText] = useState(task.text)
   const subtasks = task.subtasks || []
   const visibleSubtasks = hideCompleted
     ? subtasks.filter((s) => !s.completed || recentlyCompletedIds?.has?.(s.id))
@@ -123,6 +127,22 @@ const TaskRow = ({
   const subDoneCount = subtasks.filter((s) => s.completed).length
   const hasSubtasks = visibleSubtasks.length > 0
   const dueDatePresets = getDueDatePresets()
+
+  const setDueDate = (dueDate) => {
+    onSetDueDate?.(dueDate)
+    setEditingDueDate(false)
+  }
+
+  const startEditingText = () => {
+    setDraftText(task.text)
+    setEditingText(true)
+  }
+
+  const saveText = () => {
+    const text = draftText.trim()
+    if (text && text !== task.text) onRename?.(text)
+    setEditingText(false)
+  }
 
   return (
     <Box
@@ -157,19 +177,41 @@ const TaskRow = ({
         {task.important && !task.completed && (
           <Star sx={{ fontSize: '0.85rem', color: '#f59e0b', flexShrink: 0 }} />
         )}
-        <Typography
-          variant="body2"
-          onClick={() => !readOnly && setExpanded((e) => !e)}
-          sx={{
-            flex: 1,
-            textDecoration: task.completed ? 'line-through' : 'none',
-            color: task.completed ? 'text.secondary' : 'text.primary',
-            fontWeight: task.completed ? 400 : task.important ? 800 : 600,
-            cursor: readOnly ? 'default' : 'pointer',
-          }}
-        >
-          {task.text}
-        </Typography>
+        {editingText ? (
+          <TextField
+            autoFocus
+            size="small"
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            onBlur={saveText}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                e.currentTarget.blur()
+              }
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                setEditingText(false)
+              }
+            }}
+            slotProps={{ htmlInput: { 'aria-label': 'Rename todo' } }}
+            sx={{ flex: 1, '& input': { py: 0.35, fontWeight: 600 } }}
+          />
+        ) : (
+          <Typography
+            variant="body2"
+            onClick={() => !readOnly && setExpanded((e) => !e)}
+            sx={{
+              flex: 1,
+              textDecoration: task.completed ? 'line-through' : 'none',
+              color: task.completed ? 'text.secondary' : 'text.primary',
+              fontWeight: task.completed ? 400 : task.important ? 800 : 600,
+              cursor: readOnly ? 'default' : 'pointer',
+            }}
+          >
+            {task.text}
+          </Typography>
+        )}
         {!task.completed && <TodoDueChip item={task} />}
         {subtasks.length > 0 && (
           <Typography
@@ -200,6 +242,17 @@ const TaskRow = ({
               }}
             >
               <CalendarToday sx={{ fontSize: '0.85rem' }} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {!readOnly && (
+          <Tooltip title="Rename todo" placement="top">
+            <IconButton
+              size="small"
+              onClick={startEditingText}
+              sx={{ p: 0.25 }}
+            >
+              <Edit sx={{ fontSize: '0.85rem' }} />
             </IconButton>
           </Tooltip>
         )}
@@ -274,7 +327,7 @@ const TaskRow = ({
             type="date"
             label="Due date"
             value={task.dueDate || ''}
-            onChange={(e) => onSetDueDate?.(e.target.value || null)}
+            onChange={(e) => setDueDate(e.target.value || null)}
             slotProps={{ inputLabel: { shrink: true } }}
             sx={{ minWidth: 190 }}
           />
@@ -283,7 +336,7 @@ const TaskRow = ({
               key={preset.label}
               size="small"
               variant={task.dueDate === preset.value ? 'contained' : 'outlined'}
-              onClick={() => onSetDueDate?.(preset.value)}
+              onClick={() => setDueDate(preset.value)}
               sx={{
                 minWidth: 0,
                 borderRadius: 0,
@@ -382,6 +435,7 @@ const TaskList = ({
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onRenameTask,
   onToggleTaskImportant,
   onSetTaskDueDate,
   onAddSubtask,
@@ -414,6 +468,7 @@ const TaskList = ({
       divided={divided}
       onToggle={() => onToggleTask?.(task.id)}
       onDelete={() => onDeleteTask?.(task.id)}
+      onRename={(text) => onRenameTask?.(task.id, text)}
       onToggleImportant={() => onToggleTaskImportant?.(task.id)}
       onSetDueDate={(date) => onSetTaskDueDate?.(task.id, date)}
       onAddSubtask={(text) => onAddSubtask?.(task.id, text)}

@@ -142,6 +142,10 @@ const useActivityDetails = () => {
       ),
     onDeleteTask: (taskId) =>
       updateTasks((tasks) => tasks.filter((t) => t.id !== taskId)),
+    onRenameTask: (taskId, text) =>
+      updateTasks((tasks) =>
+        tasks.map((t) => (t.id === taskId ? { ...t, text } : t))
+      ),
     onToggleTaskImportant: (taskId) =>
       updateTasks((tasks) =>
         tasks.map((t) =>

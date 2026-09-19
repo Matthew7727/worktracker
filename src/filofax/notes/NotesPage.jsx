@@ -9,6 +9,7 @@ import useNotesBoard, {
 } from '../../components/Notes/hooks/useNotesBoard'
 import NoteCard from '../../components/Notes/components/NoteCard'
 import NoteEditorInline from '../../components/Notes/components/NoteEditorInline'
+import NoteViewerDialog from '../../components/Notes/components/NoteViewerDialog'
 import { InkButton, Segmented } from '../../components/shared/ui'
 import { useFilofaxTokens } from '../../styles/useUiStyle'
 import { PageHead, BlankLine, PrintLabel } from '../paper'
@@ -46,6 +47,7 @@ const NotesPage = () => {
     boardHeight,
   } = board
   const [view, setView] = useState('memos')
+  const [focusedNote, setFocusedNote] = useState(null)
 
   const editorFor = (note) => (
     <NoteEditorInline
@@ -66,8 +68,9 @@ const NotesPage = () => {
       stream={streamForNote(note)}
       draggable={draggable}
       onOpen={() => {
-        if (draggedNoteIdRef.current !== note.id) setEditorTarget(note)
+        if (draggedNoteIdRef.current !== note.id) setFocusedNote(note)
       }}
+      onEdit={() => setEditorTarget(note)}
       onOpenLinkedItem={(type, id) => navigate(`/todos/${type}/${id}`)}
     />
   )
@@ -205,6 +208,19 @@ const NotesPage = () => {
           </Box>
         </>
       )}
+      <NoteViewerDialog
+        note={focusedNote}
+        stream={focusedNote ? streamForNote(focusedNote) : null}
+        onClose={() => setFocusedNote(null)}
+        onEdit={() => {
+          setEditorTarget(focusedNote)
+          setFocusedNote(null)
+        }}
+        onOpenLinkedItem={(type, id) => {
+          setFocusedNote(null)
+          navigate(`/todos/${type}/${id}`)
+        }}
+      />
     </Box>
   )
 }
