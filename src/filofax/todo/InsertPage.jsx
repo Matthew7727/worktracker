@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -15,6 +15,7 @@ import AddActivityDialog from '../../components/ActivitiesBoard/components/AddAc
 import NoteCard from '../../components/Notes/components/NoteCard'
 import NoteEditorInline from '../../components/Notes/components/NoteEditorInline'
 import GoalLinkPicker from '../../components/Goals/GoalLinkPicker'
+import NoteViewerDialog from '../../components/Notes/components/NoteViewerDialog'
 import { InkButton, StatStrip } from '../../components/shared/ui'
 import { useFilofaxTokens } from '../../styles/useUiStyle'
 import { PrintHeading, StreamMark, Stamp, PenLink, BlankLine } from '../paper'
@@ -44,6 +45,7 @@ const formatDate = (dateStr) => {
 const InsertPage = () => {
   const ff = useFilofaxTokens()
   const d = useActivityDetails()
+  const [focusedNote, setFocusedNote] = useState(null)
   const {
     itemId,
     navigate,
@@ -218,6 +220,7 @@ const InsertPage = () => {
               onAddTask={ro(taskHandlers.onAddTask)}
               onToggleTask={ro(taskHandlers.onToggleTask)}
               onDeleteTask={ro(taskHandlers.onDeleteTask)}
+              onRenameTask={ro(taskHandlers.onRenameTask)}
               onToggleTaskImportant={ro(taskHandlers.onToggleTaskImportant)}
               onSetTaskDueDate={ro(taskHandlers.onSetTaskDueDate)}
               onAddSubtask={ro(taskHandlers.onAddSubtask)}
@@ -351,7 +354,8 @@ const InsertPage = () => {
                     key={note.id}
                     note={note}
                     stream={stream}
-                    onOpen={() => d.openExistingNote(note)}
+                    onOpen={() => setFocusedNote(note)}
+                    onEdit={() => d.openExistingNote(note)}
                   />
                 )
               )}
@@ -367,6 +371,16 @@ const InsertPage = () => {
             )}
           </Box>
         </Box>
+
+        <NoteViewerDialog
+          note={focusedNote}
+          stream={stream}
+          onClose={() => setFocusedNote(null)}
+          onEdit={() => {
+            d.openExistingNote(focusedNote)
+            setFocusedNote(null)
+          }}
+        />
 
         <Box
           component="aside"
