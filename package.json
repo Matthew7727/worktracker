@@ -42,7 +42,8 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "${productName}.Setup.${version}.${ext}"
     },
     "mac": {
       "target": [
