@@ -29,6 +29,8 @@ export const createNote = (options = {}) => ({
   activityTitle: options.activityTitle || null,
   projectId: options.projectId || null,
   projectTitle: options.projectTitle || null,
+  taskId: options.taskId || null,
+  taskText: options.taskText || null,
   boardX: Number.isFinite(options.boardX) ? options.boardX : null,
   boardY: Number.isFinite(options.boardY) ? options.boardY : null,
   content: options.content || '',
@@ -45,6 +47,8 @@ const noteFromFile = (filePath, raw) => {
     activityTitle: frontmatter.activityTitle || null,
     projectId: frontmatter.projectId || null,
     projectTitle: frontmatter.projectTitle || null,
+    taskId: frontmatter.taskId || null,
+    taskText: frontmatter.taskText || null,
     boardX: Number.isFinite(frontmatter.boardX) ? frontmatter.boardX : null,
     boardY: Number.isFinite(frontmatter.boardY) ? frontmatter.boardY : null,
     createdAt: frontmatter.createdAt || null,
@@ -62,6 +66,8 @@ const noteToFileContent = (note) =>
     activityTitle: note.activityTitle || null,
     projectId: note.projectId || null,
     projectTitle: note.projectTitle || null,
+    taskId: note.taskId || null,
+    taskText: note.taskText || null,
     boardX: Number.isFinite(note.boardX) ? note.boardX : null,
     boardY: Number.isFinite(note.boardY) ? note.boardY : null,
     createdAt: note.createdAt,
@@ -120,3 +126,7 @@ export const getNotesForActivity = (notes, activityId) =>
 /** Notes linked to a project, newest first. */
 export const getNotesForProject = (notes, projectId) =>
   (notes || []).filter((n) => n.projectId === projectId)
+
+/** Notes linked to one exact todo, newest first. */
+export const getNotesForTask = (notes, taskId) =>
+  (notes || []).filter((n) => n.taskId === taskId)

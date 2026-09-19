@@ -123,15 +123,18 @@ export const reorderActivities = (activities, orderedIds) => {
   )
 }
 
-export const createTask = (text) => ({
+export const createTask = (text, options = {}) => ({
   id: generateId(),
   text,
   completed: false,
-  important: false,
+  important: !!options.important,
   createdAt: new Date().toISOString().split('T')[0],
-  dueDate: null,
+  dueDate: options.dueDate || null,
   completedAt: null,
-  subtasks: [],
+  subtasks: (options.subtasks || []).map((subtask) =>
+    typeof subtask === 'string' ? createTask(subtask) : subtask
+  ),
+  goalIds: options.goalIds || [],
 })
 
 /** Tasks completed on a specific date (YYYY-MM-DD). */

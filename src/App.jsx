@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import { useAppContext } from './context/AppContext'
+import { useThemeContext } from './context/ThemeContext'
 import WelcomeScreen from './components/Onboarding/WelcomeScreen'
 import StreamSetup from './components/Onboarding/StreamSetup'
 import MainLayout from './components/Layout/MainLayout'
@@ -15,6 +16,7 @@ import DailyEditor from './components/DailyEditor/DailyEditor'
 import ActivitiesBoard from './components/ActivitiesBoard/ActivitiesBoard'
 import ActivityDetailsPage from './components/ActivitiesBoard/ActivityDetailsPage'
 import NotesBoard from './components/Notes/NotesBoard'
+import GoalsPage from './components/Goals/GoalsPage'
 import Dashboard from './components/Dashboard/Dashboard'
 import Reports from './components/Reports/Reports'
 import Settings from './components/Settings/Settings'
@@ -22,11 +24,13 @@ import Documentation from './components/Documentation/Documentation'
 import TrayWidget from './components/Widget/TrayWidget'
 import WorkspaceExplorer from './components/Workspace/WorkspaceExplorer'
 import UpdateSnackbar from './components/Updates/UpdateSnackbar'
+import FilofaxApp from './filofax/FilofaxApp'
 import './App.css'
 
 function App() {
   const { selectedDirectory, streamConfigLoading, needsStreamSetup } =
     useAppContext()
+  const { uiStyle } = useThemeContext()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -65,6 +69,8 @@ function App() {
     )
   } else if (needsStreamSetup) {
     content = <StreamSetup />
+  } else if (uiStyle === 'filofax') {
+    content = <FilofaxApp />
   } else {
     content = (
       <MainLayout>
@@ -77,6 +83,8 @@ function App() {
             element={<ActivityDetailsPage />}
           />
           <Route path="/notes" element={<NotesBoard />} />
+          <Route path="/goals" element={<GoalsPage />} />
+          <Route path="/goals/:goalId" element={<GoalsPage />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />

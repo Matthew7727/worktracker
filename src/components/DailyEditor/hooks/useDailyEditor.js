@@ -25,6 +25,8 @@ import {
   getDateKey,
   getRecentWorkingDays,
   getDefaultDate,
+  getWeekDays,
+  getWeekendDays,
 } from '../utils/weekDays'
 
 // Legacy stream ids that older app versions understand via dedicated
@@ -37,7 +39,13 @@ const LEGACY_FRONTMATTER_STREAMS = {
   businessDevelopment: 'bdActivities',
 }
 
-export const useDailyEditor = () => {
+/**
+ * @param {Object} [options]
+ * @param {'recent'|'calendar'} [options.weekRange] which days `weekStatus`
+ *   covers: the five most recent working days (default), or Monday–Sunday of
+ *   the week being journaled.
+ */
+export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
   const { selectedDirectory, showNotification, streamConfig, streams } =
     useAppContext()
   const location = useLocation()
@@ -67,6 +75,7 @@ export const useDailyEditor = () => {
   const [streamContents, setStreamContents] = useState(emptyStreams)
   const [dayStatus, setDayStatus] = useState('working')
   const [dayNote, setDayNote] = useState('')
+  const [goalIds, setGoalIds] = useState([])
 
   // Project-centric flow state
   const [projectDrafts, setProjectDrafts] = useState({})
@@ -151,7 +160,10 @@ export const useDailyEditor = () => {
   // Load completion status for the five most recent working days
   const loadWeekStatus = async () => {
     if (!selectedDirectory) return
-    const days = getRecentWorkingDays(new Date())
+    const days =
+      weekRange === 'calendar'
+        ? [...getWeekDays(currentDate), ...getWeekendDays(currentDate)]
+        : getRecentWorkingDays(new Date())
     const status = {}
     await Promise.all(
       days.map(async (day) => {
@@ -180,9 +192,13 @@ export const useDailyEditor = () => {
     setWeekStatus(status)
   }
 
+  // In calendar mode the covered week follows the day being journaled.
+  const statusWeekKey =
+    weekRange === 'calendar' ? getDateKey(getWeekDays(currentDate)[0]) : null
+
   useEffect(() => {
     loadWeekStatus()
-  }, [selectedDirectory, streamConfig]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDirectory, streamConfig, statusWeekKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load entry data for the selected date
   useEffect(() => {
@@ -199,6 +215,7 @@ export const useDailyEditor = () => {
           setStreamContents(parsedStreams)
           setDayStatus(frontmatter.dayStatus || 'working')
           setDayNote(frontmatter.dayNote || '')
+          setGoalIds(frontmatter.goalIds || [])
 
           // Populate selectedFlowProjects from frontmatter (generic map
           // with legacy-key fallback)
@@ -243,6 +260,7 @@ export const useDailyEditor = () => {
           setProjectDrafts({})
           setDayStatus('working')
           setDayNote('')
+          setGoalIds([])
           if (!location.state?.autoStartFlow) {
             setViewMode('start')
           }
@@ -296,6 +314,7 @@ export const useDailyEditor = () => {
         lastModified: new Date().toISOString(),
         ...buildProjectsFrontmatter(selectedFlowProjects),
         dayStatus: 'working',
+        goalIds,
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
@@ -331,6 +350,7 @@ export const useDailyEditor = () => {
         ...buildProjectsFrontmatter([]),
         dayStatus: status,
         dayNote: note,
+        goalIds,
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
@@ -414,6 +434,8 @@ export const useDailyEditor = () => {
     setDayStatus,
     dayNote,
     setDayNote,
+    goalIds,
+    setGoalIds,
     projectDrafts,
     updateProjectDraft,
     selectedFlowProjects,

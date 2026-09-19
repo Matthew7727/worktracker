@@ -2,7 +2,7 @@
   "name": "work-tracker",
   "productName": "Work Tracker",
   "private": true,
-  "version": "1.9.2",
+  "version": "1.10.0",
   "description": "A minimalist daily work tracking application.",
   "author": "Matt H",
   "repository": {
@@ -42,7 +42,8 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "${productName}.Setup.${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -66,6 +67,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/libre-baskerville": "^5.3.0",
     "@fontsource/outfit": "^5.2.8",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
@@ -78,6 +80,7 @@
     "gray-matter": "^4.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-force-graph-2d": "^1.29.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.0",
     "rehype-raw": "^7.0.0",

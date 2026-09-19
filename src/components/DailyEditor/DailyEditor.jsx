@@ -18,6 +18,8 @@ const DailyEditor = () => {
     setDayStatus,
     dayNote,
     setDayNote,
+    goalIds,
+    setGoalIds,
     projectDrafts,
     updateProjectDraft,
     selectedFlowProjects,
@@ -97,6 +99,8 @@ const DailyEditor = () => {
           completedTodosByTitle={completedTodosByTitle}
           projectDrafts={projectDrafts}
           updateProjectDraft={updateProjectDraft}
+          goalIds={goalIds}
+          onGoalIdsChange={setGoalIds}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
           onBackToSelect={() => setViewMode('start')}

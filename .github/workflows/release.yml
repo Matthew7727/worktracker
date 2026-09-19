@@ -108,6 +108,15 @@ jobs:
       - name: Package Windows installer
         run: npx electron-builder --win nsis --x64 --publish never
 
+      - name: Verify Windows updater manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          UPDATER_FILE=$(sed -n 's/^path: //p' release/latest.yml | head -n 1)
+          test -n "$UPDATER_FILE"
+          test -f "release/$UPDATER_FILE"
+          test -f "release/$UPDATER_FILE.blockmap"
+
       - uses: actions/upload-artifact@v4
         with:
           name: release-windows

@@ -3,6 +3,8 @@ import {
   Box,
   Checkbox,
   Collapse,
+  IconButton,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -11,13 +13,21 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  TextField,
   Typography,
 } from '@mui/material'
-import { ChevronRight, ExpandMore, Star } from '@mui/icons-material'
+import {
+  Add,
+  ChevronRight,
+  ExpandMore,
+  Star,
+  StarBorder,
+} from '@mui/icons-material'
 import StreamTag from './StreamTag'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
 import { EmptyState, MONO } from '../../shared/ui'
+import { useIsFilofax } from '../../../styles/useUiStyle'
 
 const SORT_FIELDS = {
   name: (todo) => todo.text || '',
@@ -45,10 +55,38 @@ const AllTodosView = ({
   getActivityStreamId,
   onOpenItem,
   onToggleTask,
+  onAddTask,
 }) => {
+  const isFx = useIsFilofax()
   const [sortField, setSortField] = useState('dueDate')
   const [sortDirection, setSortDirection] = useState('asc')
   const [showCompleted, setShowCompleted] = useState(false)
+  const [newText, setNewText] = useState('')
+  const [newActivityId, setNewActivityId] = useState('')
+  const [newDueDate, setNewDueDate] = useState('')
+  const [newImportant, setNewImportant] = useState(false)
+
+  const activeActivities = useMemo(
+    () => (activities || []).filter((activity) => activity.status === 'active'),
+    [activities]
+  )
+  const selectedActivity = activeActivities.find(
+    (activity) => activity.id === newActivityId
+  )
+  const resetNewTodo = () => {
+    setNewText('')
+    setNewActivityId('')
+    setNewDueDate('')
+    setNewImportant(false)
+  }
+  const addNewTodo = () => {
+    if (!newText.trim() || !newActivityId) return
+    onAddTask(newActivityId, newText.trim(), {
+      dueDate: newDueDate,
+      important: newImportant,
+    })
+    resetNewTodo()
+  }
 
   const { openTodos, completedTodos } = useMemo(() => {
     const activityTodos = (activities || []).flatMap((activity) =>
@@ -117,15 +155,16 @@ const AllTodosView = ({
       component={Paper}
       elevation={0}
       sx={{
-        border: '3px solid',
+        border: isFx ? 'none' : '3px solid',
+        bgcolor: isFx ? 'transparent' : undefined,
         borderColor: 'text.primary',
         '& .MuiTableCell-root': {
           borderColor: 'divider',
           borderBottomWidth: 2,
         },
         '& .MuiTableHead-root .MuiTableCell-root': {
-          bgcolor: 'background.subtle',
-          borderBottom: '3px solid',
+          bgcolor: isFx ? 'transparent' : 'background.subtle',
+          borderBottom: isFx ? '1px solid' : '3px solid',
           borderColor: 'text.primary',
         },
       }}
@@ -150,6 +189,89 @@ const AllTodosView = ({
           </TableRow>
         </TableHead>
         <TableBody>
+          {!completed && (
+            <TableRow sx={{ bgcolor: isFx ? 'transparent' : 'action.hover' }}>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={newImportant}
+                  icon={<StarBorder fontSize="small" />}
+                  checkedIcon={<Star fontSize="small" />}
+                  onChange={(event) => setNewImportant(event.target.checked)}
+                  inputProps={{ 'aria-label': 'Mark new todo as important' }}
+                  sx={{ '&.Mui-checked': { color: '#f59e0b' } }}
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Add a to-do…"
+                  value={newText}
+                  onChange={(event) => setNewText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') addNewTodo()
+                  }}
+                  inputProps={{ 'aria-label': 'New todo' }}
+                />
+              </TableCell>
+              <TableCell>
+                {selectedActivity ? (
+                  <StreamTag
+                    stream={streamById[getActivityStreamId(selectedActivity)]}
+                    label={
+                      streamById[getActivityStreamId(selectedActivity)]?.name
+                    }
+                  />
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+                    —
+                  </Typography>
+                )}
+              </TableCell>
+              <TableCell>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  value={newActivityId}
+                  onChange={(event) => setNewActivityId(event.target.value)}
+                  SelectProps={{ displayEmpty: true }}
+                  inputProps={{ 'aria-label': 'Activity for new todo' }}
+                >
+                  <MenuItem value="" disabled>
+                    Choose an activity
+                  </MenuItem>
+                  {activeActivities.map((activity) => (
+                    <MenuItem key={activity.id} value={activity.id}>
+                      {activity.title}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <TextField
+                    size="small"
+                    type="date"
+                    value={newDueDate}
+                    onChange={(event) => setNewDueDate(event.target.value)}
+                    inputProps={{ 'aria-label': 'Due date for new todo' }}
+                    sx={{ flex: 1 }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={addNewTodo}
+                    disabled={!newText.trim() || !newActivityId}
+                    aria-label="Add todo"
+                    sx={{ p: 0.5 }}
+                  >
+                    <Add fontSize="small" />
+                  </IconButton>
+                </Box>
+              </TableCell>
+            </TableRow>
+          )}
           {todos.map((todo) => (
             <TableRow
               hover
@@ -174,7 +296,7 @@ const AllTodosView = ({
                   <Typography
                     variant="body2"
                     sx={{
-                      fontWeight: completed ? 500 : 650,
+                      fontWeight: isFx ? 400 : completed ? 500 : 650,
                       color: completed ? 'text.secondary' : 'text.primary',
                       textDecoration: completed ? 'line-through' : 'none',
                     }}
@@ -206,7 +328,7 @@ const AllTodosView = ({
                   <Box>
                     <Typography
                       className="todo-owner"
-                      sx={{ fontWeight: 800, fontSize: '0.9rem' }}
+                      sx={{ fontWeight: isFx ? 400 : 800, fontSize: '0.9rem' }}
                     >
                       {todo.ownerTitle}
                     </Typography>
@@ -239,7 +361,7 @@ const AllTodosView = ({
 
   return (
     <Box>
-      {openTodos.length > 0 ? (
+      {openTodos.length > 0 || activeActivities.length > 0 ? (
         renderTable(openTodos)
       ) : (
         <EmptyState title="No open todos.">

@@ -8,6 +8,7 @@ import {
 } from '@mui/material'
 import { SystemUpdateAlt } from '@mui/icons-material'
 import { useUpdate } from '../../context/UpdateContext'
+import { useIsFilofax } from '../../styles/useUiStyle'
 
 const actionButtonSx = {
   fontWeight: 900,
@@ -22,6 +23,7 @@ const actionButtonSx = {
 }
 
 const UpdateSnackbar = () => {
+  const isFx = useIsFilofax()
   const {
     status,
     info,
@@ -53,10 +55,20 @@ const UpdateSnackbar = () => {
           p: 3,
           minWidth: 320,
           maxWidth: 420,
-          borderRadius: 0,
-          border: '3px solid',
-          borderColor: 'text.primary',
-          boxShadow: (theme) => `6px 6px 0px ${theme.palette.text.primary}`,
+          ...(isFx
+            ? {
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: '0 12px 30px rgba(42,10,13,0.25)',
+              }
+            : {
+                borderRadius: 0,
+                border: '3px solid',
+                borderColor: 'text.primary',
+                boxShadow: (theme) =>
+                  `6px 6px 0px ${theme.palette.text.primary}`,
+              }),
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
@@ -94,15 +106,19 @@ const UpdateSnackbar = () => {
               <Button
                 variant="contained"
                 onClick={downloadUpdate}
-                sx={{
-                  ...actionButtonSx,
-                  bgcolor: 'background.paper',
-                  color: 'text.primary',
-                  '&:hover': {
-                    ...actionButtonSx['&:hover'],
-                    bgcolor: 'action.hover',
-                  },
-                }}
+                sx={
+                  isFx
+                    ? {}
+                    : {
+                        ...actionButtonSx,
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        '&:hover': {
+                          ...actionButtonSx['&:hover'],
+                          bgcolor: 'action.hover',
+                        },
+                      }
+                }
               >
                 DOWNLOAD
               </Button>
@@ -111,15 +127,19 @@ const UpdateSnackbar = () => {
               <Button
                 variant="contained"
                 onClick={installUpdate}
-                sx={{
-                  ...actionButtonSx,
-                  bgcolor: '#4caf50',
-                  color: '#fff',
-                  '&:hover': {
-                    ...actionButtonSx['&:hover'],
-                    bgcolor: '#388e3c',
-                  },
-                }}
+                sx={
+                  isFx
+                    ? {}
+                    : {
+                        ...actionButtonSx,
+                        bgcolor: '#4caf50',
+                        color: '#fff',
+                        '&:hover': {
+                          ...actionButtonSx['&:hover'],
+                          bgcolor: '#388e3c',
+                        },
+                      }
+                }
               >
                 RESTART & INSTALL
               </Button>

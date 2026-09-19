@@ -1,5 +1,27 @@
 export const docsContent = [
   {
+    id: 'filofax-style',
+    title: 'The Filofax Style',
+    content: `
+# The Filofax Style
+
+Work Tracker has two looks: the bold **Ledger** and the **Filofax**, an oxblood leather organiser. Switch between them under **Settings → Appearance** (or **Info → Appearance** inside the Filofax). Both read and write exactly the same files, so you can change style whenever you like.
+
+### The sections
+The Filofax files the app behind card dividers on the right-hand edge:
+
+- **Diary** opens on today. A week-to-view strip runs across the top with each day's stream marks, day type and the week's STAFFIT hours. Below it is the day's page: tick what you worked on and write about all of it on one ruled sheet. The margin lists the todos that need attention and what you ticked off that day.
+- **To do** holds your projects register and one "things to do" sheet per activity. Tick todos off, add new ones on the blank line, drag sheets to reorder, or switch to the **master list** of every todo. Open a sheet for its full insert: context, subtasks, due dates, team, sub-activities and notes.
+- **Notes** shows memo pages in date order, with the drag-to-arrange **pinboard** as a second view.
+- **Planner** is the dashboard: a year planner where every logged day is inked in its main stream's colour (click any day to open it), plus the week, momentum, utilisation, todos, tags, time off and priorities.
+- **Contacts** is an A–Z address book of everyone named on a project or activity, with the work you share.
+- **Index** lists every day on file by year and month, searches your entries, and exports your history.
+- **Info** holds your workspace details, settings and these instructions.
+
+The gilt studs under the dividers search your entries (Ctrl+F) and switch between light and dark.
+`,
+  },
+  {
     id: 'getting-started',
     title: 'Getting Started',
     content: `

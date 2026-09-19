@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -10,35 +9,22 @@ import {
   Chip,
   Avatar,
   InputBase,
+  IconButton,
   FormControlLabel,
   Switch,
+  Tooltip,
 } from '@mui/material'
-import { ArrowBack, Add, Check } from '@mui/icons-material'
+import { ArrowBack, Add, Check, Close, Edit } from '@mui/icons-material'
 import { InkButton, StatStrip, MONO } from '../shared/ui'
-import { useAppContext } from '../../context/AppContext'
-import {
-  loadProjects,
-  saveProjects,
-  createTask,
-  createActivity,
-  getActivityStreamId,
-  getChildActivities,
-} from '../../utils/projectsManager'
-import { getStreamAbbrev } from '../../utils/streamConfig'
-import {
-  loadNotes,
-  saveNote,
-  deleteNote,
-  createNote,
-  getNotesForActivity,
-  getNotesForProject,
-} from '../../utils/notesManager'
 import TaskList from './components/TaskList'
 import ConfirmDialog from './components/ConfirmDialog'
 import ProgressStrip from './components/ProgressStrip'
 import AddActivityDialog from './components/AddActivityDialog'
 import NoteCard from '../Notes/components/NoteCard'
 import NoteEditorInline from '../Notes/components/NoteEditorInline'
+import NoteViewerDialog from '../Notes/components/NoteViewerDialog'
+import useActivityDetails from './hooks/useActivityDetails'
+import GoalLinkPicker from '../Goals/GoalLinkPicker'
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null
@@ -118,252 +104,50 @@ const AddLink = ({ children, onClick }) => (
   </InkButton>
 )
 
-const EMPTY_CONFIRM = {
-  open: false,
-  title: '',
-  message: '',
-  confirmLabel: 'Confirm',
-  danger: false,
-  onConfirm: null,
-}
-
 const ActivityDetailsPage = () => {
-  const { itemType, itemId } = useParams()
-  const navigate = useNavigate()
-  const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
-  const [data, setData] = useState({ activities: [], clientProjects: [] })
-  const [teamInput, setTeamInput] = useState('')
-  const [addingTeam, setAddingTeam] = useState(false)
-  const [addSubOpen, setAddSubOpen] = useState(false)
-  const [confirm, setConfirm] = useState(EMPTY_CONFIRM)
-  const [notes, setNotes] = useState([])
-  // null = no editor open; 'new' = creating a fresh note; a note object =
-  // editing that note in place, right where its card would be.
-  const [noteEditorTarget, setNoteEditorTarget] = useState(null)
-  const openConfirm = (options) =>
-    setConfirm({ ...EMPTY_CONFIRM, ...options, open: true })
-  const closeConfirm = () => setConfirm(EMPTY_CONFIRM)
-
-  const streamById = useMemo(
-    () =>
-      Object.fromEntries(
-        (streamConfig?.streams || []).map((s) => [
-          s.id,
-          { ...s, abbrev: getStreamAbbrev(s) },
-        ])
-      ),
-    [streamConfig]
-  )
-
-  useEffect(() => {
-    if (!selectedDirectory) return
-    loadProjects(selectedDirectory).then(setData)
-  }, [selectedDirectory])
-
-  const refreshNotes = () => {
-    if (!selectedDirectory) return
-    loadNotes(selectedDirectory).then(setNotes)
-  }
-
-  useEffect(() => {
-    refreshNotes()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDirectory])
-
-  const isProject = itemType === 'project'
-  const listKey = isProject ? 'clientProjects' : 'activities'
-  const item = data[listKey].find((entry) => entry.id === itemId) || null
-  const itemReadOnly =
-    (isProject && item?.status === 'done') ||
-    (!isProject && item?.status === 'archived')
-
-  const stream = isProject
-    ? mainFocusStream
-    : streamById[getActivityStreamId(item || {})]
-
-  const parentActivity =
-    !isProject && item?.parentId
-      ? data.activities.find((a) => a.id === item.parentId) || null
-      : null
-  const childActivities =
-    !isProject && item ? getChildActivities(data.activities, item.id) : []
-
-  const save = (nextData) => {
-    setData(nextData)
-    saveProjects(selectedDirectory, nextData)
-  }
-
-  const addSubActivity = (title, streamIdArg, options) => {
-    save({
-      ...data,
-      activities: [
-        ...data.activities,
-        createActivity(title, streamIdArg, options),
-      ],
-    })
-  }
-
-  const updateItem = (patchOrUpdater) => {
-    save({
-      ...data,
-      [listKey]: data[listKey].map((entry) => {
-        if (entry.id !== itemId) return entry
-        if (typeof patchOrUpdater === 'function') return patchOrUpdater(entry)
-        return { ...entry, ...patchOrUpdater }
-      }),
-    })
-  }
-
-  const updateTasks = (updateFn) => {
-    updateItem((entry) => ({ ...entry, tasks: updateFn(entry.tasks || []) }))
-  }
-
-  const taskHandlers = {
-    onAddTask: (text) => updateTasks((tasks) => [...tasks, createTask(text)]),
-    onToggleTask: (taskId) =>
-      updateTasks((tasks) =>
-        tasks.map((t) => {
-          if (t.id !== taskId) return t
-          const nextCompleted = !t.completed
-          return {
-            ...t,
-            completed: nextCompleted,
-            completedAt: nextCompleted
-              ? new Date().toISOString().split('T')[0]
-              : null,
-          }
-        })
-      ),
-    onDeleteTask: (taskId) =>
-      updateTasks((tasks) => tasks.filter((t) => t.id !== taskId)),
-    onToggleTaskImportant: (taskId) =>
-      updateTasks((tasks) =>
-        tasks.map((t) =>
-          t.id === taskId ? { ...t, important: !t.important } : t
-        )
-      ),
-    onSetTaskDueDate: (taskId, dueDate) =>
-      updateTasks((tasks) =>
-        tasks.map((t) => (t.id === taskId ? { ...t, dueDate } : t))
-      ),
-    onAddSubtask: (taskId, text) =>
-      updateTasks((tasks) =>
-        tasks.map((t) =>
-          t.id === taskId
-            ? { ...t, subtasks: [...(t.subtasks || []), createTask(text)] }
-            : t
-        )
-      ),
-    onToggleSubtask: (taskId, subtaskId) =>
-      updateTasks((tasks) =>
-        tasks.map((t) =>
-          t.id === taskId
-            ? {
-                ...t,
-                subtasks: (t.subtasks || []).map((s) =>
-                  s.id === subtaskId ? { ...s, completed: !s.completed } : s
-                ),
-              }
-            : t
-        )
-      ),
-    onDeleteSubtask: (taskId, subtaskId) =>
-      updateTasks((tasks) =>
-        tasks.map((t) =>
-          t.id === taskId
-            ? {
-                ...t,
-                subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
-              }
-            : t
-        )
-      ),
-  }
-
-  const teamMembers = item?.teamMembers || []
-  const addTeamMember = () => {
-    const name = teamInput.trim()
-    if (!name || teamMembers.includes(name)) {
-      setTeamInput('')
-      setAddingTeam(false)
-      return
-    }
-    updateItem({ teamMembers: [...teamMembers, name] })
-    setTeamInput('')
-  }
-
-  const removeTeamMember = (name) => {
-    updateItem({ teamMembers: teamMembers.filter((member) => member !== name) })
-  }
-
-  // ── Lifecycle actions ────────────────────────────────────────────────
-
-  const today = () => new Date().toISOString().split('T')[0]
-
-  const markComplete = () => {
-    if (isProject) {
-      updateItem({ status: 'done', completedAt: today() })
-    } else {
-      updateItem({ status: 'archived', completedAt: today() })
-    }
-  }
-
-  const reopen = () => {
-    if (isProject) {
-      updateItem({ status: 'active', completedAt: null })
-    } else {
-      updateItem({ status: 'active', completedAt: null })
-    }
-  }
-
-  const deleteItem = () => {
-    save({
-      ...data,
-      [listKey]: data[listKey].filter((entry) => entry.id !== itemId),
-    })
-    navigate('/todos')
-  }
-
-  // ── Linked notes ─────────────────────────────────────────────────────
-
-  const linkedNotes = isProject
-    ? getNotesForProject(notes, itemId)
-    : getNotesForActivity(notes, itemId)
-
-  const openNewNote = () => {
-    setNoteEditorTarget('new')
-  }
-
-  const openExistingNote = (note) => {
-    setNoteEditorTarget(note)
-  }
-
-  const closeNoteEditor = () => setNoteEditorTarget(null)
-
-  const editingNote = noteEditorTarget === 'new' ? null : noteEditorTarget
-
-  const handleSaveNote = async (fields) => {
-    const base = editingNote || createNote()
-    const updated = {
-      ...base,
-      ...fields,
-      activityId: isProject ? null : itemId,
-      activityTitle: isProject ? null : item?.title || null,
-      projectId: isProject ? itemId : null,
-      projectTitle: isProject ? item?.title || null : null,
-      updatedAt: new Date().toISOString(),
-    }
-    await saveNote(selectedDirectory, updated, editingNote?.filePath)
-    closeNoteEditor()
-    refreshNotes()
-  }
-
-  const handleDeleteNote = async () => {
-    if (!editingNote) return
-    await deleteNote(selectedDirectory, editingNote)
-    closeNoteEditor()
-    refreshNotes()
-  }
+  const [goalLinkOpen, setGoalLinkOpen] = useState(false)
+  const [focusedNote, setFocusedNote] = useState(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const {
+    itemId,
+    navigate,
+    streamConfig,
+    data,
+    item,
+    isProject,
+    itemReadOnly,
+    stream,
+    streamById,
+    parentActivity,
+    childActivities,
+    updateItem,
+    taskHandlers,
+    teamMembers,
+    teamInput,
+    setTeamInput,
+    addingTeam,
+    setAddingTeam,
+    addTeamMember,
+    removeTeamMember,
+    addSubOpen,
+    setAddSubOpen,
+    addSubActivity,
+    confirm,
+    openConfirm,
+    closeConfirm,
+    markComplete,
+    reopen,
+    deleteItem,
+    linkedNotes,
+    noteEditorTarget,
+    noteTask,
+    openNewNote,
+    openExistingNote,
+    closeNoteEditor,
+    handleSaveNote,
+    handleDeleteNote,
+  } = useActivityDetails()
 
   if (!item) {
     return (
@@ -386,6 +170,15 @@ const ActivityDetailsPage = () => {
   const entityLabel = isProject ? 'project' : 'activity'
   // Nesting is capped at one level — only top-level activities can take children.
   const canHaveChildren = !isProject && !item.parentId
+  const startTitleEdit = () => {
+    setTitleDraft(item.title || '')
+    setEditingTitle(true)
+  }
+  const saveTitle = () => {
+    const title = titleDraft.trim()
+    if (title && title !== item.title) updateItem({ title })
+    setEditingTitle(false)
+  }
 
   return (
     <Box sx={{ pb: 8, maxWidth: 1280, mx: 'auto', width: '100%' }}>
@@ -441,6 +234,23 @@ const ActivityDetailsPage = () => {
             >
               {statusLabel}
             </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 28 }}>
+              {goalLinkOpen || (item.goalIds || []).length > 0 ? (
+                <GoalLinkPicker
+                  value={item.goalIds || []}
+                  onChange={(goalIds) => updateItem({ goalIds })}
+                />
+              ) : (
+                <InkButton
+                  tone="ghost"
+                  size="sm"
+                  onClick={() => setGoalLinkOpen(true)}
+                  sx={{ ml: -1 }}
+                >
+                  Link to goal
+                </InkButton>
+              )}
+            </Box>
             {parentActivity && (
               <Typography
                 component="button"
@@ -465,18 +275,71 @@ const ActivityDetailsPage = () => {
               </Typography>
             )}
           </Box>
-          <Typography
-            component="h1"
-            sx={{
-              fontSize: { xs: '2.25rem', md: '3.25rem' },
-              fontWeight: 900,
-              letterSpacing: '-0.045em',
-              lineHeight: 0.98,
-              maxWidth: '22ch',
-            }}
-          >
-            {item.title}
-          </Typography>
+          {editingTitle ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                maxWidth: 720,
+              }}
+            >
+              <TextField
+                autoFocus
+                fullWidth
+                value={titleDraft}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') saveTitle()
+                  if (event.key === 'Escape') setEditingTitle(false)
+                }}
+                slotProps={{
+                  htmlInput: { 'aria-label': `Rename ${entityLabel}` },
+                }}
+                sx={{
+                  '& input': {
+                    fontSize: { xs: '1.45rem', md: '2rem' },
+                    fontWeight: 900,
+                    py: 0.75,
+                  },
+                }}
+              />
+              <IconButton aria-label="Save title" onClick={saveTitle}>
+                <Check />
+              </IconButton>
+              <IconButton
+                aria-label="Cancel title edit"
+                onClick={() => setEditingTitle(false)}
+              >
+                <Close />
+              </IconButton>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+              <Typography
+                component="h1"
+                sx={{
+                  fontSize: { xs: '2.25rem', md: '3.25rem' },
+                  fontWeight: 900,
+                  letterSpacing: '-0.045em',
+                  lineHeight: 0.98,
+                  maxWidth: '22ch',
+                }}
+              >
+                {item.title}
+              </Typography>
+              <Tooltip title={`Rename ${entityLabel}`}>
+                <IconButton
+                  aria-label={`Rename ${entityLabel}`}
+                  onClick={startTitleEdit}
+                  size="small"
+                  sx={{ mt: 0.25 }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
         </Box>
         <StatStrip
           sx={{
@@ -559,6 +422,9 @@ const ActivityDetailsPage = () => {
               onDeleteTask={
                 itemReadOnly ? undefined : taskHandlers.onDeleteTask
               }
+              onRenameTask={
+                itemReadOnly ? undefined : taskHandlers.onRenameTask
+              }
               onToggleTaskImportant={
                 itemReadOnly ? undefined : taskHandlers.onToggleTaskImportant
               }
@@ -574,6 +440,8 @@ const ActivityDetailsPage = () => {
               onDeleteSubtask={
                 itemReadOnly ? undefined : taskHandlers.onDeleteSubtask
               }
+              onAddNote={openNewNote}
+              onSetTaskGoalIds={taskHandlers.onSetTaskGoalIds}
             />
             {tasks.length === 0 && itemReadOnly && (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -655,6 +523,7 @@ const ActivityDetailsPage = () => {
                       projects={data.clientProjects}
                       lockActivityId={isProject ? null : itemId}
                       lockProjectId={isProject ? itemId : null}
+                      lockTask={noteTask}
                       onSave={handleSaveNote}
                       onDelete={handleDeleteNote}
                       onClose={closeNoteEditor}
@@ -663,7 +532,8 @@ const ActivityDetailsPage = () => {
                     <NoteCard
                       key={note.id}
                       note={note}
-                      onOpen={() => openExistingNote(note)}
+                      onOpen={() => setFocusedNote(note)}
+                      onEdit={() => openExistingNote(note)}
                     />
                   )
                 )}
@@ -687,6 +557,7 @@ const ActivityDetailsPage = () => {
                   projects={data.clientProjects}
                   lockActivityId={isProject ? null : itemId}
                   lockProjectId={isProject ? itemId : null}
+                  lockTask={noteTask}
                   onSave={handleSaveNote}
                   onClose={closeNoteEditor}
                 />
@@ -696,6 +567,15 @@ const ActivityDetailsPage = () => {
               <AddLink onClick={openNewNote}>Add note</AddLink>
             )}
           </Panel>
+
+          <NoteViewerDialog
+            note={focusedNote}
+            onClose={() => setFocusedNote(null)}
+            onEdit={() => {
+              openExistingNote(focusedNote)
+              setFocusedNote(null)
+            }}
+          />
 
           <Panel label="Actions">
             <Stack spacing={1}>
