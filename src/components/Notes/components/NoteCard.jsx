@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box, IconButton, Tooltip, Typography } from '@mui/material'
 import { Edit } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
@@ -27,6 +27,23 @@ const NoteCard = ({
 }) => {
   const isFx = useIsFilofax()
   const ff = useFilofaxTokens()
+  const contentRef = useRef(null)
+  const [hasMore, setHasMore] = useState(false)
+
+  useEffect(() => {
+    const element = contentRef.current
+    if (!element) return undefined
+
+    const checkOverflow = () => {
+      setHasMore(element.scrollHeight > element.clientHeight + 1)
+    }
+    checkOverflow()
+
+    const observer = new ResizeObserver(checkOverflow)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [note.content, isFx])
+
   return (
     <Box
       component="article"
@@ -131,6 +148,7 @@ const NoteCard = ({
       )}
 
       <Box
+        ref={contentRef}
         sx={
           isFx
             ? {
@@ -156,6 +174,39 @@ const NoteCard = ({
           {note.content}
         </ReactMarkdown>
       </Box>
+
+      {hasMore && (
+        <Box
+          component="button"
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpen?.()
+          }}
+          sx={{
+            display: 'block',
+            mt: 0.75,
+            p: 0,
+            border: 'none',
+            bgcolor: 'transparent',
+            color: 'text.secondary',
+            fontFamily: 'inherit',
+            fontSize: '0.78rem',
+            fontStyle: isFx ? 'italic' : 'normal',
+            fontWeight: isFx ? 400 : 700,
+            cursor: 'pointer',
+            '&:hover': { color: 'text.primary', textDecoration: 'underline' },
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: 3,
+            },
+          }}
+        >
+          Continue reading
+        </Box>
+      )}
 
       {(note.activityId || note.projectId) && (
         <Box
