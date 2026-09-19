@@ -75,6 +75,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
   const [streamContents, setStreamContents] = useState(emptyStreams)
   const [dayStatus, setDayStatus] = useState('working')
   const [dayNote, setDayNote] = useState('')
+  const [goalIds, setGoalIds] = useState([])
 
   // Project-centric flow state
   const [projectDrafts, setProjectDrafts] = useState({})
@@ -214,6 +215,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
           setStreamContents(parsedStreams)
           setDayStatus(frontmatter.dayStatus || 'working')
           setDayNote(frontmatter.dayNote || '')
+          setGoalIds(frontmatter.goalIds || [])
 
           // Populate selectedFlowProjects from frontmatter (generic map
           // with legacy-key fallback)
@@ -258,6 +260,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
           setProjectDrafts({})
           setDayStatus('working')
           setDayNote('')
+          setGoalIds([])
           if (!location.state?.autoStartFlow) {
             setViewMode('start')
           }
@@ -311,6 +314,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
         lastModified: new Date().toISOString(),
         ...buildProjectsFrontmatter(selectedFlowProjects),
         dayStatus: 'working',
+        goalIds,
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
@@ -346,6 +350,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
         ...buildProjectsFrontmatter([]),
         dayStatus: status,
         dayNote: note,
+        goalIds,
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
@@ -429,6 +434,8 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
     setDayStatus,
     dayNote,
     setDayNote,
+    goalIds,
+    setGoalIds,
     projectDrafts,
     updateProjectDraft,
     selectedFlowProjects,

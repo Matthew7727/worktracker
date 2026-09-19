@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import { useAppContext } from '../../context/AppContext'
 import DirectoryTree from './components/DirectoryTree'
@@ -7,7 +8,10 @@ import { InkButton, PageHeader } from '../shared/ui'
 
 const WorkspaceExplorer = () => {
   const { selectedDirectory, setProjectDirectory } = useAppContext()
-  const [selectedEntry, setSelectedEntry] = useState(null)
+  const location = useLocation()
+  const [selectedEntry, setSelectedEntry] = useState(
+    () => location.state?.entry || null
+  )
 
   return (
     <Box

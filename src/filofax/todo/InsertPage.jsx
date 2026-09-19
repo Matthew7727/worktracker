@@ -14,6 +14,7 @@ import ConfirmDialog from '../../components/ActivitiesBoard/components/ConfirmDi
 import AddActivityDialog from '../../components/ActivitiesBoard/components/AddActivityDialog'
 import NoteCard from '../../components/Notes/components/NoteCard'
 import NoteEditorInline from '../../components/Notes/components/NoteEditorInline'
+import GoalLinkPicker from '../../components/Goals/GoalLinkPicker'
 import { InkButton, StatStrip } from '../../components/shared/ui'
 import { useFilofaxTokens } from '../../styles/useUiStyle'
 import { PrintHeading, StreamMark, Stamp, PenLink, BlankLine } from '../paper'
@@ -223,10 +224,19 @@ const InsertPage = () => {
               onToggleSubtask={ro(taskHandlers.onToggleSubtask)}
               onDeleteSubtask={ro(taskHandlers.onDeleteSubtask)}
               onAddNote={d.openNewNote}
+              onSetTaskGoalIds={taskHandlers.onSetTaskGoalIds}
             />
             {tasks.length === 0 && itemReadOnly && (
               <BlankLine>No todos were added.</BlankLine>
             )}
+          </Box>
+
+          <Box component="section">
+            <PrintHeading>Goals</PrintHeading>
+            <GoalLinkPicker
+              value={item.goalIds || []}
+              onChange={(goalIds) => updateItem({ goalIds })}
+            />
           </Box>
 
           {canHaveChildren && (childActivities.length > 0 || !itemReadOnly) && (

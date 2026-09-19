@@ -214,8 +214,17 @@ export const setupElectronMock = () => {
     const bd = BD_ENTRIES[i % BD_ENTRIES.length]
     const tag = tags[i % tags.length]
 
+    // A handful of dated entries deliberately support the demo goal, giving
+    // the Goals evidence board a real story to render in browser dev mode.
+    const goalFrontmatter = i % 7 === 0 ? 'goalIds: [goal-leadership]\n' : ''
+    const workFrontmatter =
+      i % 2 === 0
+        ? 'projects:\n  clientWork: [Acme Corp Audit]\n  practiceDevelopment: [Get AWS Solutions Architect Certified]\n'
+        : 'projects:\n  businessDevelopment: [Build standard pitch deck]\n'
     const content = `---
 tags: [${tag.join(', ')}]
+${goalFrontmatter}
+${workFrontmatter}
 ---
 # Client Work
 
@@ -267,11 +276,13 @@ dayStatus: ${status}
           id: 'mock-activity-1',
           type: 'PD',
           title: 'Get AWS Solutions Architect Certified',
+          goalIds: ['goal-leadership'],
           teamMembers: ['Jordan Smith', 'Amira Lopez'],
           tasks: [
             {
               id: 'task-1',
               text: 'Complete Cloud Practitioner course',
+              goalIds: ['goal-leadership'],
               completed: true,
               completedAt: daysAgo(3),
               dueDate: daysAgo(5),
@@ -314,11 +325,13 @@ dayStatus: ${status}
           id: 'mock-activity-2',
           type: 'BD',
           title: 'Build standard pitch deck',
+          goalIds: ['goal-leadership'],
           teamMembers: ['Jordan Smith', 'Tom Chen'],
           tasks: [
             {
               id: 'task-4',
               text: 'Gather case studies',
+              goalIds: ['goal-leadership'],
               completed: true,
               completedAt: daysAgo(10),
             },
@@ -436,6 +449,37 @@ dayStatus: ${status}
           createdAt: todayParts.dateStr,
           completedAt: todayParts.dateStr,
           ongoing: false,
+        },
+      ],
+    },
+    null,
+    2
+  )
+
+  mockFiles[`${MOCK_ROOT}/goals.json`] = JSON.stringify(
+    {
+      goals: [
+        {
+          id: 'goal-leadership',
+          year: today.getFullYear(),
+          title: 'Build confident client leadership',
+          targetDate: `${today.getFullYear()}-12-15`,
+          activityIds: [],
+          taskIds: [],
+          entryIds: [],
+          createdAt: `${today.getFullYear()}-01-08T09:00:00.000Z`,
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'goal-craft',
+          year: today.getFullYear(),
+          title: 'Strengthen technical craft',
+          targetDate: `${today.getFullYear()}-12-20`,
+          activityIds: [],
+          taskIds: [],
+          entryIds: [],
+          createdAt: `${today.getFullYear()}-01-10T09:00:00.000Z`,
+          updatedAt: new Date().toISOString(),
         },
       ],
     },

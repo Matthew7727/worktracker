@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Box, Typography, IconButton } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
@@ -6,6 +6,9 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { useAppContext } from '../../../context/AppContext'
 import { MONO } from '../../shared/ui'
+import GoalLinkPicker from '../../Goals/GoalLinkPicker'
+import { writeFile } from '../../../services/fileSystem'
+import { stringifyMarkdown } from '../../../utils/markdownParser'
 
 // Older entries keep the three original stream names as H1 sections.
 const LEGACY_STREAM_COLORS = {
@@ -16,6 +19,23 @@ const LEGACY_STREAM_COLORS = {
 
 const EntryViewer = ({ entry, onClose }) => {
   const { streams = [] } = useAppContext()
+  const [streamGoalIds, setStreamGoalIds] = useState(
+    entry.metadata?.streamGoalIds || {}
+  )
+  const [linkingStream, setLinkingStream] = useState(null)
+
+  const setStreamGoals = async (streamKey, nextGoalIds) => {
+    const next = { ...streamGoalIds, [streamKey]: nextGoalIds }
+    setStreamGoalIds(next)
+    await writeFile(
+      entry.path,
+      stringifyMarkdown(entry.content || '', {
+        ...(entry.metadata || {}),
+        streamGoalIds: next,
+        lastModified: new Date().toISOString(),
+      })
+    )
+  }
 
   const colorForHeading = (children) => {
     const text = String(children).toLowerCase().trim()
@@ -27,24 +47,66 @@ const EntryViewer = ({ entry, onClose }) => {
   }
 
   const markdownComponents = {
-    h1: ({ children }) => (
-      <Box
-        component="h2"
-        sx={{
-          fontSize: '1.2rem',
-          fontWeight: 900,
-          letterSpacing: '-0.02em',
-          borderLeft: '8px solid',
-          borderColor: colorForHeading(children),
-          pl: 1.5,
-          mt: 4,
-          mb: 1.5,
-          '&:first-of-type': { mt: 0 },
-        }}
-      >
-        {children}
-      </Box>
-    ),
+    h1: ({ children }) => {
+      const heading = String(children)
+      const streamKey = heading.toLowerCase().trim()
+      return (
+        <Box
+          component="h2"
+          sx={{
+            fontSize: '1.2rem',
+            fontWeight: 900,
+            letterSpacing: '-0.02em',
+            borderLeft: '8px solid',
+            borderColor: colorForHeading(children),
+            pl: 1.5,
+            mt: 4,
+            mb: 1.5,
+            '&:first-of-type': { mt: 0 },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box component="span" sx={{ flex: 1 }}>
+              {children}
+            </Box>
+            <Box
+              component="button"
+              type="button"
+              onClick={() =>
+                setLinkingStream(linkingStream === streamKey ? null : streamKey)
+              }
+              sx={{
+                border: '1.5px solid',
+                borderColor: 'text.primary',
+                bgcolor:
+                  linkingStream === streamKey ? 'text.primary' : 'transparent',
+                color:
+                  linkingStream === streamKey
+                    ? 'background.paper'
+                    : 'text.primary',
+                fontFamily: 'inherit',
+                fontSize: '.68rem',
+                fontWeight: 800,
+                px: 0.8,
+                py: 0.35,
+                cursor: 'pointer',
+              }}
+            >
+              Link
+            </Box>
+          </Box>
+          {linkingStream === streamKey && (
+            <Box sx={{ mt: 1.25, maxWidth: 420 }}>
+              <GoalLinkPicker
+                value={streamGoalIds[streamKey] || []}
+                onChange={(goalIds) => setStreamGoals(streamKey, goalIds)}
+                label={`Goals supported by ${heading}`}
+              />
+            </Box>
+          )}
+        </Box>
+      )
+    },
   }
 
   const d = entry.date ? new Date(entry.date + 'T12:00:00') : null
@@ -142,7 +204,6 @@ const EntryViewer = ({ entry, onClose }) => {
           </Box>
         )}
       </Box>
-
       <Box
         sx={{
           flex: 1,

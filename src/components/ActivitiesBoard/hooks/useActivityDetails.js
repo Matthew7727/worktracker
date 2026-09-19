@@ -153,6 +153,10 @@ const useActivityDetails = () => {
       updateTasks((tasks) =>
         tasks.map((t) => (t.id === taskId ? { ...t, dueDate } : t))
       ),
+    onSetTaskGoalIds: (taskId, goalIds) =>
+      updateTasks((tasks) =>
+        tasks.map((t) => (t.id === taskId ? { ...t, goalIds } : t))
+      ),
     onAddSubtask: (taskId, text) =>
       updateTasks((tasks) =>
         tasks.map((t) =>

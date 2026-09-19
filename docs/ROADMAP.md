@@ -18,6 +18,10 @@ This document outlines the development roadmap for WorkTracker. It is a living d
 
 - [x] Link a note to one exact todo, from either the todo itself or the Notes board.
 
+## 🧭 Next: Annual goals
+
+- [ ] Annual goals with manual review, progress assessment, and linked work evidence.
+
 ---
 
 ## 🚀 Version 1.1.0: Developer Experience & Code Quality
