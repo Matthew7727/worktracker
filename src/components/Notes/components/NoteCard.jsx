@@ -165,7 +165,9 @@ const NoteCard = ({
             '&:hover': { textDecoration: 'underline' },
           }}
         >
-          {note.projectTitle || note.activityTitle || 'Linked item'}
+          {note.taskText
+            ? `Todo: ${note.taskText}`
+            : note.projectTitle || note.activityTitle || 'Linked item'}
         </Box>
       )}
     </Box>

@@ -59,6 +59,7 @@ const InsertPage = () => {
     taskHandlers,
     teamMembers,
     noteEditorTarget,
+    noteTask,
     linkedNotes,
   } = d
 
@@ -221,6 +222,7 @@ const InsertPage = () => {
               onAddSubtask={ro(taskHandlers.onAddSubtask)}
               onToggleSubtask={ro(taskHandlers.onToggleSubtask)}
               onDeleteSubtask={ro(taskHandlers.onDeleteSubtask)}
+              onAddNote={d.openNewNote}
             />
             {tasks.length === 0 && itemReadOnly && (
               <BlankLine>No todos were added.</BlankLine>
@@ -312,6 +314,7 @@ const InsertPage = () => {
                   projects={data.clientProjects}
                   lockActivityId={isProject ? null : itemId}
                   lockProjectId={isProject ? itemId : null}
+                  lockTask={noteTask}
                   onSave={d.handleSaveNote}
                   onClose={d.closeNoteEditor}
                 />
@@ -328,6 +331,7 @@ const InsertPage = () => {
                     projects={data.clientProjects}
                     lockActivityId={isProject ? null : itemId}
                     lockProjectId={isProject ? itemId : null}
+                    lockTask={noteTask}
                     onSave={d.handleSaveNote}
                     onDelete={d.handleDeleteNote}
                     onClose={d.closeNoteEditor}

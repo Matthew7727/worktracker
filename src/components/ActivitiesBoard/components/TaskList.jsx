@@ -17,6 +17,7 @@ import {
   ExpandMore,
   Star,
   StarBorder,
+  StickyNote2,
 } from '@mui/icons-material'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
@@ -113,6 +114,7 @@ const TaskRow = ({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
+  onAddNote,
 }) => {
   const [expanded, setExpanded] = useState(false)
   const [editingDueDate, setEditingDueDate] = useState(false)
@@ -200,6 +202,18 @@ const TaskRow = ({
               }}
             >
               <CalendarToday sx={{ fontSize: '0.85rem' }} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {onAddNote && (
+          <Tooltip title="Add a note linked to this todo" placement="top">
+            <IconButton
+              size="small"
+              aria-label="Add a note linked to this todo"
+              onClick={() => onAddNote(task)}
+              sx={{ p: 0.25, color: 'text.secondary' }}
+            >
+              <StickyNote2 sx={{ fontSize: '0.9rem' }} />
             </IconButton>
           </Tooltip>
         )}
@@ -387,6 +401,7 @@ const TaskList = ({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
+  onAddNote,
 }) => {
   const [showCompleted, setShowCompleted] = useState(false)
 
@@ -419,6 +434,7 @@ const TaskList = ({
       onAddSubtask={(text) => onAddSubtask?.(task.id, text)}
       onToggleSubtask={(subtaskId) => onToggleSubtask?.(task.id, subtaskId)}
       onDeleteSubtask={(subtaskId) => onDeleteSubtask?.(task.id, subtaskId)}
+      onAddNote={onAddNote}
     />
   )
 

@@ -14,6 +14,12 @@ This document outlines the development roadmap for WorkTracker. It is a living d
 
 ---
 
+## ✨ Version 1.10.0: Todo-linked notes
+
+- [x] Link a note to one exact todo, from either the todo itself or the Notes board.
+
+---
+
 ## 🚀 Version 1.1.0: Developer Experience & Code Quality
 
 **Focus:** improve the "internal" quality of the project to make future feature development faster and safer.

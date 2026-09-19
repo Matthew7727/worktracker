@@ -133,6 +133,7 @@ const NoteEditorInline = ({
   streamById = {},
   lockActivityId = null,
   lockProjectId = null,
+  lockTask = null,
   onSave,
   onDelete,
   onClose,
@@ -144,18 +145,30 @@ const NoteEditorInline = ({
   const [viewMode, setViewMode] = useState(note?.content ? 'rich' : 'markdown')
   const contentRef = useRef(null)
   const richEditorRef = useRef(null)
-  const [linkedItem, setLinkedItem] = useState(() => {
-    const projectId = lockProjectId || note?.projectId || null
-    if (projectId) {
-      const project = projects.find((p) => p.id === projectId)
-      return project ? { ...project, linkType: 'project' } : null
-    }
-    const activityId = lockActivityId || note?.activityId || null
-    const activity = activities.find((a) => a.id === activityId)
-    return activity ? { ...activity, linkType: 'activity' } : null
-  })
-
   // Autocomplete's `groupBy` requires same-group options to be contiguous.
+  const todoOptions = useMemo(
+    () => [
+      ...projects.flatMap((project) =>
+        (project.tasks || []).map((task) => ({
+          ...task,
+          linkType: 'task',
+          ownerType: 'project',
+          ownerId: project.id,
+          ownerTitle: project.title,
+        }))
+      ),
+      ...activities.flatMap((activity) =>
+        (activity.tasks || []).map((task) => ({
+          ...task,
+          linkType: 'task',
+          ownerType: 'activity',
+          ownerId: activity.id,
+          ownerTitle: activity.title,
+        }))
+      ),
+    ],
+    [activities, projects]
+  )
   const linkOptions = useMemo(
     () => [
       ...projects.map((project) => ({ ...project, linkType: 'project' })),
@@ -166,15 +179,36 @@ const NoteEditorInline = ({
           const streamB = streamById[getActivityStreamId(b)]?.name || ''
           return streamA.localeCompare(streamB)
         }),
+      ...todoOptions,
     ],
-    [activities, projects, streamById]
+    [activities, projects, streamById, todoOptions]
   )
 
-  const bandColor = linkedItem
-    ? linkedItem.linkType === 'activity'
+  const [linkedItem, setLinkedItem] = useState(() => {
+    const taskId = lockTask?.id || note?.taskId || null
+    if (taskId) return todoOptions.find((task) => task.id === taskId) || null
+    const projectId = lockProjectId || note?.projectId || null
+    if (projectId) {
+      const project = projects.find((p) => p.id === projectId)
+      return project ? { ...project, linkType: 'project' } : null
+    }
+    const activityId = lockActivityId || note?.activityId || null
+    const activity = activities.find((a) => a.id === activityId)
+    return activity ? { ...activity, linkType: 'activity' } : null
+  })
+
+  const bandColor =
+    linkedItem?.linkType === 'activity'
       ? streamById[getActivityStreamId(linkedItem)]?.color
-      : null
-    : null
+      : linkedItem?.linkType === 'task' && linkedItem.ownerType === 'activity'
+        ? streamById[
+            getActivityStreamId(
+              activities.find(
+                (activity) => activity.id === linkedItem.ownerId
+              ) || {}
+            )
+          ]?.color
+        : null
   const isEmpty = !title.trim() && !content.trim()
 
   const applyFormat = (type) => {
@@ -200,12 +234,36 @@ const NoteEditorInline = ({
     onSave({
       title: title.trim(),
       content,
-      activityId: linkedItem?.linkType === 'activity' ? linkedItem.id : null,
+      activityId:
+        linkedItem?.linkType === 'activity'
+          ? linkedItem.id
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'activity'
+            ? linkedItem.ownerId
+            : null,
       activityTitle:
-        linkedItem?.linkType === 'activity' ? linkedItem.title : null,
-      projectId: linkedItem?.linkType === 'project' ? linkedItem.id : null,
+        linkedItem?.linkType === 'activity'
+          ? linkedItem.title
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'activity'
+            ? linkedItem.ownerTitle
+            : null,
+      projectId:
+        linkedItem?.linkType === 'project'
+          ? linkedItem.id
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'project'
+            ? linkedItem.ownerId
+            : null,
       projectTitle:
-        linkedItem?.linkType === 'project' ? linkedItem.title : null,
+        linkedItem?.linkType === 'project'
+          ? linkedItem.title
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'project'
+            ? linkedItem.ownerTitle
+            : null,
+      taskId: linkedItem?.linkType === 'task' ? linkedItem.id : null,
+      taskText: linkedItem?.linkType === 'task' ? linkedItem.text : null,
     })
   }
 
@@ -331,7 +389,7 @@ const NoteEditorInline = ({
         />
       )}
 
-      {!lockActivityId && !lockProjectId && (
+      {!lockActivityId && !lockProjectId && !lockTask && (
         <Box
           sx={{
             px: 2.25,
@@ -344,11 +402,13 @@ const NoteEditorInline = ({
             options={linkOptions}
             value={linkedItem}
             onChange={(_, val) => setLinkedItem(val)}
-            getOptionLabel={(a) => a.title || ''}
+            getOptionLabel={(a) => a.text || a.title || ''}
             groupBy={(item) =>
-              item.linkType === 'project'
-                ? 'Projects'
-                : streamById[getActivityStreamId(item)]?.name || 'Activities'
+              item.linkType === 'task'
+                ? `Todos — ${item.ownerTitle || 'Work'}`
+                : item.linkType === 'project'
+                  ? 'Projects'
+                  : streamById[getActivityStreamId(item)]?.name || 'Activities'
             }
             isOptionEqualToValue={(a, b) =>
               a.id === b.id && a.linkType === b.linkType
@@ -357,7 +417,7 @@ const NoteEditorInline = ({
               <TextField
                 {...params}
                 variant="standard"
-                placeholder="Link to a project or activity (optional)"
+                placeholder="Link to a todo, project or activity (optional)"
                 size="small"
                 InputProps={{ ...params.InputProps, disableUnderline: true }}
                 sx={{ '& input': { fontWeight: 700, fontSize: '0.88rem' } }}

@@ -133,6 +133,7 @@ const ActivityDetailsPage = () => {
     deleteItem,
     linkedNotes,
     noteEditorTarget,
+    noteTask,
     openNewNote,
     openExistingNote,
     closeNoteEditor,
@@ -349,6 +350,7 @@ const ActivityDetailsPage = () => {
               onDeleteSubtask={
                 itemReadOnly ? undefined : taskHandlers.onDeleteSubtask
               }
+              onAddNote={openNewNote}
             />
             {tasks.length === 0 && itemReadOnly && (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -430,6 +432,7 @@ const ActivityDetailsPage = () => {
                       projects={data.clientProjects}
                       lockActivityId={isProject ? null : itemId}
                       lockProjectId={isProject ? itemId : null}
+                      lockTask={noteTask}
                       onSave={handleSaveNote}
                       onDelete={handleDeleteNote}
                       onClose={closeNoteEditor}
@@ -462,6 +465,7 @@ const ActivityDetailsPage = () => {
                   projects={data.clientProjects}
                   lockActivityId={isProject ? null : itemId}
                   lockProjectId={isProject ? itemId : null}
+                  lockTask={noteTask}
                   onSave={handleSaveNote}
                   onClose={closeNoteEditor}
                 />

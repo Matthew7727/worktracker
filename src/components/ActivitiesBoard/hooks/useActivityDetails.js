@@ -46,6 +46,7 @@ const useActivityDetails = () => {
   // null = no editor open; 'new' = creating a fresh note; a note object =
   // editing that note in place, right where its card would be.
   const [noteEditorTarget, setNoteEditorTarget] = useState(null)
+  const [noteTask, setNoteTask] = useState(null)
   const openConfirm = (options) =>
     setConfirm({ ...EMPTY_CONFIRM, ...options, open: true })
   const closeConfirm = () => setConfirm(EMPTY_CONFIRM)
@@ -236,15 +237,20 @@ const useActivityDetails = () => {
     ? getNotesForProject(notes, itemId)
     : getNotesForActivity(notes, itemId)
 
-  const openNewNote = () => {
+  const openNewNote = (task = null) => {
+    setNoteTask(task)
     setNoteEditorTarget('new')
   }
 
   const openExistingNote = (note) => {
+    setNoteTask(null)
     setNoteEditorTarget(note)
   }
 
-  const closeNoteEditor = () => setNoteEditorTarget(null)
+  const closeNoteEditor = () => {
+    setNoteEditorTarget(null)
+    setNoteTask(null)
+  }
 
   const editingNote = noteEditorTarget === 'new' ? null : noteEditorTarget
 
@@ -304,6 +310,7 @@ const useActivityDetails = () => {
     deleteItem,
     linkedNotes,
     noteEditorTarget,
+    noteTask,
     openNewNote,
     openExistingNote,
     closeNoteEditor,
