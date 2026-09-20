@@ -438,9 +438,15 @@ function createTray() {
   const icon = nativeImage.createFromDataURL(
     `data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`
   )
-  icon.setTemplateImage(true)
+  // Keep a visible status item even if Electron cannot decode the SVG on a
+  // particular platform/build.
+  const useTemplateIcon = !icon.isEmpty()
+  const trayIcon = useTemplateIcon
+    ? icon
+    : nativeImage.createFromPath(path.join(__dirname, '../build/icon.png'))
+  trayIcon.setTemplateImage(process.platform === 'darwin' && useTemplateIcon)
 
-  tray = new Tray(icon)
+  tray = new Tray(trayIcon)
   tray.setToolTip('Work Tracker — quick capture')
 
   tray.on('click', (event, bounds) => {
