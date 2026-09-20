@@ -28,8 +28,12 @@ import FilofaxApp from './filofax/FilofaxApp'
 import './App.css'
 
 function App() {
-  const { selectedDirectory, streamConfigLoading, needsStreamSetup } =
-    useAppContext()
+  const {
+    selectedDirectory,
+    workspaceReady,
+    streamConfigLoading,
+    needsStreamSetup,
+  } = useAppContext()
   const { uiStyle } = useThemeContext()
   const location = useLocation()
   const navigate = useNavigate()
@@ -61,7 +65,7 @@ function App() {
   let content
   if (!selectedDirectory) {
     content = <WelcomeScreen />
-  } else if (streamConfigLoading) {
+  } else if (!workspaceReady || streamConfigLoading) {
     content = (
       <Box
         sx={{

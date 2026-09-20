@@ -36,7 +36,8 @@ const EMPTY_CONFIRM = {
 const useActivityDetails = () => {
   const { itemType, itemId } = useParams()
   const navigate = useNavigate()
-  const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
+  const { selectedDirectory, refreshTrigger, streamConfig, mainFocusStream } =
+    useAppContext()
   const [data, setData] = useState({ activities: [], clientProjects: [] })
   const [teamInput, setTeamInput] = useState('')
   const [addingTeam, setAddingTeam] = useState(false)
@@ -65,7 +66,7 @@ const useActivityDetails = () => {
   useEffect(() => {
     if (!selectedDirectory) return
     loadProjects(selectedDirectory).then(setData)
-  }, [selectedDirectory])
+  }, [selectedDirectory, refreshTrigger])
 
   const refreshNotes = () => {
     if (!selectedDirectory) return
@@ -75,7 +76,7 @@ const useActivityDetails = () => {
   useEffect(() => {
     refreshNotes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDirectory])
+  }, [selectedDirectory, refreshTrigger])
 
   const isProject = itemType === 'project'
   const listKey = isProject ? 'clientProjects' : 'activities'

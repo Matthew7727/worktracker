@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Box } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import NoteCard from './components/NoteCard'
@@ -14,6 +14,7 @@ import useNotesBoard, {
 
 const NotesBoard = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [focusedNote, setFocusedNote] = useState(null)
   const {
     notes,
@@ -39,6 +40,13 @@ const NotesBoard = () => {
     moveDrag,
     finishDrag,
   } = useNotesBoard()
+
+  const activeFocusedNote =
+    focusedNote ||
+    notes.find((item) => item.id === location.state?.focusNoteId) ||
+    null
+  const clearSearchFocus = () =>
+    navigate(location.pathname, { replace: true, state: undefined })
 
   return (
     <Box sx={{ maxWidth: 1280, mx: 'auto', width: '100%', pb: 8 }}>
@@ -196,15 +204,20 @@ const NotesBoard = () => {
         </Box>
       )}
       <NoteViewerDialog
-        note={focusedNote}
-        stream={focusedNote ? streamForNote(focusedNote) : null}
-        onClose={() => setFocusedNote(null)}
-        onEdit={() => {
-          setEditorTarget(focusedNote)
+        note={activeFocusedNote}
+        stream={activeFocusedNote ? streamForNote(activeFocusedNote) : null}
+        onClose={() => {
           setFocusedNote(null)
+          clearSearchFocus()
+        }}
+        onEdit={() => {
+          setEditorTarget(activeFocusedNote)
+          setFocusedNote(null)
+          clearSearchFocus()
         }}
         onOpenLinkedItem={(type, id) => {
           setFocusedNote(null)
+          clearSearchFocus()
           navigate(`/todos/${type}/${id}`)
         }}
       />

@@ -94,9 +94,9 @@ const MainLayout = ({ children }) => {
     if (result.kind === 'entry' && result.date) {
       navigate('/editor', { state: { initialDate: `${result.date}T12:00:00` } })
     } else if (result.kind === 'note') {
-      navigate('/notes')
+      navigate('/notes', { state: { focusNoteId: result.fileName } })
     } else {
-      navigate('/workspace')
+      navigate('/workspace', { state: { searchFile: result.file } })
     }
   }
 

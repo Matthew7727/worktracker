@@ -27,8 +27,8 @@ export const filterEntries = (entries, filters = {}, now = new Date()) => {
   if (filters.workId) {
     result = result.filter(
       (entry) =>
-        Object.values(entry.projectIdsByStream || {}).some((ids) =>
-          ids.includes(filters.workId)
+        Object.values(entry.projectLinksByStream || {}).some((links) =>
+          links.some((link) => link.id === filters.workId)
         ) ||
         (filters.workTitle &&
           Object.values(entry.projectsByStream || {}).some((titles) =>
@@ -38,11 +38,7 @@ export const filterEntries = (entries, filters = {}, now = new Date()) => {
   }
   if (filters.goalId) {
     result = result.filter((entry) => {
-      const streamGoals = Object.values(entry.metadata?.streamGoalIds || {})
-      return (
-        entry.metadata?.goalIds?.includes(filters.goalId) ||
-        streamGoals.some((ids) => ids?.includes(filters.goalId))
-      )
+      return getGoalIds(entry.metadata).includes(filters.goalId)
     })
   }
   return result
@@ -52,11 +48,27 @@ export const filterEntries = (entries, filters = {}, now = new Date()) => {
  * Serialises entries for export.
  * @returns {{ content: string, extension: 'json' | 'md' }}
  */
-export const buildExport = (entries, format, range, now = new Date()) => {
+export const buildExport = (
+  entries,
+  format,
+  filters = {},
+  now = new Date()
+) => {
   if (format === 'json') {
-    return { content: JSON.stringify(entries, null, 2), extension: 'json' }
+    return {
+      content: JSON.stringify(
+        { generatedAt: now.toISOString(), filters, entries },
+        null,
+        2
+      ),
+      extension: 'json',
+    }
   }
-  let content = `# Work Tracker Export\n\nGenerated: ${now.toLocaleDateString()}\nRange: ${range}\n\n`
+  const applied = Object.entries(filters)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ')
+  let content = `# Work Tracker Export\n\nGenerated: ${now.toLocaleDateString()}\nFilters: ${applied || 'All entries'}\n\n`
   entries.forEach((e) => {
     const timeHeader = e.time ? ` [${e.time}]` : ''
     content += `### ${e.date}${timeHeader}\n\n`
@@ -68,3 +80,4 @@ export const buildExport = (entries, format, range, now = new Date()) => {
   content += `---\n\n`
   return { content, extension: 'md' }
 }
+import { getGoalIds } from './DataManager'

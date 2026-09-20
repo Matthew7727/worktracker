@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   watchWorkspace: (path) => ipcRenderer.invoke('fs:watchWorkspace', path),
   onWorkspaceChanged: (callback) =>
     ipcRenderer.on('workspace:changed', (event, data) => callback(data)),
+  removeWorkspaceChangedListeners: () =>
+    ipcRenderer.removeAllListeners('workspace:changed'),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
 
   // Settings & Notifications

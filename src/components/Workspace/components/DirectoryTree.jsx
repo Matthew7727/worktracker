@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Typography, Collapse, CircularProgress } from '@mui/material'
 import { ChevronRight, ExpandMore } from '@mui/icons-material'
 import { loadAllEntries } from '../../../utils/DataManager'
+import { useAppContext } from '../../../context/AppContext'
 import { MONO } from '../../shared/ui'
 
 const MONTHS = [
@@ -123,6 +124,7 @@ const DayRow = ({ entry, isSelected, onClick }) => {
 }
 
 const DirectoryTree = ({ rootDir, selectedEntry, onSelectEntry }) => {
+  const { refreshTrigger } = useAppContext()
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(false)
   const currentYear = new Date().getFullYear().toString()
@@ -137,7 +139,7 @@ const DirectoryTree = ({ rootDir, selectedEntry, onSelectEntry }) => {
       setLoading(false)
     }
     load()
-  }, [rootDir])
+  }, [rootDir, refreshTrigger])
 
   const toggle = (setter, key) =>
     setter((prev) => {

@@ -194,7 +194,9 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                           fontSize: '1.1rem',
                         }}
                       >
-                        {res.kind === 'entry' ? res.date : 'Note / file'}
+                        {res.kind === 'entry' || res.kind === 'timed-entry'
+                          ? res.date
+                          : 'Note / file'}
                       </Typography>
                       <Typography
                         sx={{

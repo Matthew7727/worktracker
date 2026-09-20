@@ -20,7 +20,7 @@ import {
   setHoursForWeek,
   getWeekKey,
 } from '../../../utils/staffitManager'
-import { getProjectsByStream } from '../../../utils/DataManager'
+import { getProjectLinksByStream } from '../../../utils/DataManager'
 import {
   getDateKey,
   getRecentWorkingDays,
@@ -224,20 +224,23 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
           setStreamContents(parsedStreams)
           setDayStatus(frontmatter.dayStatus || 'working')
           setDayNote(frontmatter.dayNote || '')
-          setGoalIds(frontmatter.goalIds || [])
+          setGoalIds([
+            ...new Set([
+              ...(frontmatter.goalIds || []),
+              ...Object.values(frontmatter.streamGoalIds || {}).flat(),
+            ]),
+          ])
 
           // Populate selectedFlowProjects from frontmatter (generic map
           // with legacy-key fallback)
-          const byStream = getProjectsByStream(frontmatter)
+          const byStream = getProjectLinksByStream(frontmatter)
           const flowProjects = Object.entries(byStream).flatMap(
-            ([streamId, titles]) => {
+            ([streamId, links]) => {
               const stream = streamById[streamId]
               if (!stream) return []
-              return titles.map((title, index) => ({
-                id:
-                  frontmatter.projectIds?.[streamId]?.[index] ||
-                  `legacy:${streamId}:${title}`,
-                title,
+              return links.map((link) => ({
+                id: link.id || `legacy:${streamId}:${link.title}`,
+                title: link.title,
                 streamId,
                 streamName: stream.name,
                 color: stream.color,
@@ -301,7 +304,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
 
   const buildProjectsFrontmatter = (flowProjects) => {
     const projects = {}
-    const projectIds = {}
+    const projectLinks = {}
     flowProjects.forEach((p) => {
       if (!projects[p.streamId]) projects[p.streamId] = []
       projects[p.streamId].push(p.title)
@@ -311,12 +314,10 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
               candidate.streamId === p.streamId && candidate.title === p.title
           )?.id
         : p.id
-      if (resolvedId) {
-        if (!projectIds[p.streamId]) projectIds[p.streamId] = []
-        projectIds[p.streamId].push(resolvedId)
-      }
+      if (!projectLinks[p.streamId]) projectLinks[p.streamId] = []
+      projectLinks[p.streamId].push({ id: resolvedId || null, title: p.title })
     })
-    const frontmatter = { projects, projectIds }
+    const frontmatter = { projects, projectLinks }
     Object.entries(LEGACY_FRONTMATTER_STREAMS).forEach(([streamId, key]) => {
       if (streamById[streamId]) {
         frontmatter[key] = projects[streamId] || []
@@ -346,11 +347,6 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
         ...buildProjectsFrontmatter(selectedFlowProjects),
         dayStatus: 'working',
         goalIds,
-        streamGoalIds: Object.fromEntries(
-          [...new Set(selectedFlowProjects.map((p) => p.streamId))].map(
-            (id) => [id, goalIds]
-          )
-        ),
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)

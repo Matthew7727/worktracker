@@ -20,7 +20,8 @@ import { loadGoals } from '../../utils/goalsManager'
 import { buildExport, filterEntries } from '../../utils/exportEntries'
 
 const Reports = () => {
-  const { selectedDirectory, showNotification, streamConfig } = useAppContext()
+  const { selectedDirectory, showNotification, streamConfig, refreshTrigger } =
+    useAppContext()
   const [filters, setFilters] = useState({
     range: 'all',
     startDate: '',
@@ -57,7 +58,7 @@ const Reports = () => {
     return () => {
       cancelled = true
     }
-  }, [selectedDirectory, streamConfig])
+  }, [selectedDirectory, streamConfig, refreshTrigger])
 
   const tags = useMemo(
     () => [...new Set(entries.flatMap((entry) => entry.tags || []))].sort(),
@@ -77,10 +78,16 @@ const Reports = () => {
     setIsExporting(true)
     try {
       const now = new Date()
+      const selectedWork = work.find((item) => item.id === filters.workId)
+      const selectedGoal = goals.find((item) => item.id === filters.goalId)
       const { content, extension } = buildExport(
         filteredEntries,
         format,
-        filters.range,
+        {
+          ...filters,
+          work: selectedWork?.title || '',
+          goal: selectedGoal?.title || '',
+        },
         now
       )
       const { canceled, filePath } = await window.electronAPI.saveFile({

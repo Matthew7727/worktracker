@@ -366,7 +366,9 @@ const FilofaxLayout = ({ children }) => {
                 navigate(result.kind === 'note' ? '/notes' : '/', {
                   state: result.date
                     ? { initialDate: `${result.date}T12:00:00` }
-                    : undefined,
+                    : result.kind === 'note'
+                      ? { focusNoteId: result.fileName }
+                      : undefined,
                 })
               }
               renderTrigger={(open) => (

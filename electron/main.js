@@ -25,6 +25,21 @@ autoUpdater.logger = log
 
 // Settings Management
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json')
+const approvedExportPaths = new Set()
+
+const isInside = (root, target) => {
+  if (!root || !target) return false
+  const relative = path.relative(path.resolve(root), path.resolve(target))
+  return (
+    relative === '' ||
+    (!relative.startsWith('..') && !path.isAbsolute(relative))
+  )
+}
+
+async function isWorkspacePath(target) {
+  const settings = await loadSettings()
+  return isInside(settings.selectedDirectory, target)
+}
 
 async function loadSettings() {
   try {
@@ -166,6 +181,8 @@ async function handleFileOpen() {
   if (canceled) {
     return
   } else {
+    const settings = await loadSettings()
+    await saveSettings({ ...settings, selectedDirectory: filePaths[0] })
     return filePaths[0]
   }
 }
@@ -175,12 +192,16 @@ async function handleSaveDialog(event, options) {
   if (canceled) {
     return { canceled: true }
   } else {
+    approvedExportPaths.add(path.resolve(filePath))
     return { canceled: false, filePath }
   }
 }
 
 async function handleReadFile(event, filePath) {
   try {
+    if (!(await isWorkspacePath(filePath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     const data = await fs.readFile(filePath, 'utf-8')
     return { success: true, data }
   } catch (error) {
@@ -190,6 +211,13 @@ async function handleReadFile(event, filePath) {
 
 async function handleWriteFile(event, filePath, content) {
   try {
+    const resolved = path.resolve(filePath)
+    if (
+      !(await isWorkspacePath(resolved)) &&
+      !approvedExportPaths.has(resolved)
+    ) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     // Ensure directory exists
     await fs.mkdir(path.dirname(filePath), { recursive: true })
     await fs.writeFile(filePath, content, 'utf-8')
@@ -201,6 +229,9 @@ async function handleWriteFile(event, filePath, content) {
 
 async function handleDeleteFile(event, filePath) {
   try {
+    if (!(await isWorkspacePath(filePath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     await fs.unlink(filePath)
     return { success: true }
   } catch (error) {
@@ -210,6 +241,9 @@ async function handleDeleteFile(event, filePath) {
 
 async function handleListFiles(event, dirPath) {
   try {
+    if (!(await isWorkspacePath(dirPath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     const files = await fs.readdir(dirPath, { withFileTypes: true })
     // Return structured file info
     return {
@@ -246,6 +280,9 @@ async function getMarkdownFiles(dir) {
 
 async function handleListAllFiles(event, dirPath) {
   try {
+    if (!(await isWorkspacePath(dirPath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     const files = await getMarkdownFiles(dirPath)
     return { success: true, files }
   } catch (error) {
@@ -260,7 +297,7 @@ async function handleWatchWorkspace(event, rootDir) {
     await watcher.close()
   }
 
-  if (!rootDir) return
+  if (!rootDir || !(await isWorkspacePath(rootDir))) return
 
   watcher = chokidar.watch(rootDir, {
     ignored: /(^|[/\\])\../, // ignore dotfiles
@@ -280,6 +317,9 @@ async function handleWatchWorkspace(event, rootDir) {
 
 async function handleSearchEntries(event, { rootDir, query }) {
   if (!rootDir || !query) return { success: false, results: [] }
+  if (!(await isWorkspacePath(rootDir))) {
+    return { success: false, results: [] }
+  }
 
   try {
     const files = await getMarkdownFiles(rootDir)
@@ -301,10 +341,17 @@ async function handleSearchEntries(event, { rootDir, query }) {
         // resource-aware target rather than pretending every Markdown filename
         // is a date.
         const kind = dailyMatch
-          ? 'entry'
+          ? fileName.includes('_')
+            ? 'timed-entry'
+            : 'entry'
           : normalized.includes('/notes/')
             ? 'note'
             : 'file'
+
+        // Only surface resources the UI can open directly. Other workspace
+        // Markdown is deliberately left to the file system, not a dead-end
+        // search result.
+        if (kind === 'file') continue
 
         results.push({
           file,
@@ -450,7 +497,18 @@ app.whenReady().then(async () => {
   ipcMain.handle('fs:listAllFiles', handleListAllFiles)
   ipcMain.handle('fs:searchEntries', handleSearchEntries)
   ipcMain.handle('fs:watchWorkspace', handleWatchWorkspace)
-  ipcMain.handle('shell:openExternal', (event, url) => shell.openExternal(url))
+  ipcMain.handle('shell:openExternal', (event, url) => {
+    try {
+      const parsed = new URL(url)
+      if (!['https:', 'http:', 'mailto:'].includes(parsed.protocol)) {
+        return { success: false, error: 'Unsupported URL protocol' }
+      }
+      shell.openExternal(parsed.toString())
+      return { success: true }
+    } catch {
+      return { success: false, error: 'Invalid URL' }
+    }
+  })
 
   // Settings & Notifications IPC
   ipcMain.handle('settings:load', () => loadSettings())

@@ -81,8 +81,8 @@ Coloured chips represent your active projects and activities, each tinted with i
 
 You can also add free-form **tags** (e.g. \`meeting\`, \`review\`, \`travel\`). Tags are aggregated on the Dashboard's *Tag Insights* widget.
 
-### Auto-save
-You never press Save mid-session. The editor watches your keystrokes, waits for a **500 ms pause** (a debounce), then writes the file to disk. Switching days or steps also flushes the current text.
+### Saving
+Your writing stays in the editor while you move between steps. Press **Save day** on the final step to write it to disk; Work Tracker confirms once the Markdown file has been saved.
 
 ### Markdown support
 Entries support GitHub-Flavored Markdown:

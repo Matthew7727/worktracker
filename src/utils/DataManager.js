@@ -46,6 +46,48 @@ export const getProjectIdsByStream = (frontmatter) => {
 }
 
 /**
+ * Canonical work links. `projectLinks` keeps an id and a display snapshot
+ * together, avoiding the positional-array corruption possible with the
+ * earlier `projects` + `projectIds` representation.
+ */
+export const getProjectLinksByStream = (frontmatter) => {
+  if (
+    frontmatter.projectLinks &&
+    typeof frontmatter.projectLinks === 'object'
+  ) {
+    return Object.fromEntries(
+      Object.entries(frontmatter.projectLinks).map(([streamId, links]) => [
+        streamId,
+        (Array.isArray(links) ? links : [])
+          .filter((link) => link && typeof link.title === 'string')
+          .map((link) => ({ id: link.id || null, title: link.title })),
+      ])
+    )
+  }
+  const titlesByStream = getProjectsByStream(frontmatter)
+  const idsByStream = getProjectIdsByStream(frontmatter)
+  return Object.fromEntries(
+    Object.entries(titlesByStream).map(([streamId, titles]) => [
+      streamId,
+      titles.map((title, index) => ({
+        // Older data may have sparse/non-aligned IDs. Treat a missing ID as
+        // unresolved instead of risking an incorrect association.
+        id: idsByStream[streamId]?.[index] || null,
+        title,
+      })),
+    ])
+  )
+}
+
+/** Whole-entry goal links, including a read-only fallback for older files. */
+export const getGoalIds = (frontmatter = {}) => [
+  ...new Set([
+    ...(frontmatter.goalIds || []),
+    ...Object.values(frontmatter.streamGoalIds || {}).flat(),
+  ]),
+]
+
+/**
  * loads all daily entries from the project directory.
  * @param {string} rootDir
  * @param {Array} streams - Stream definitions from the workspace config
@@ -114,6 +156,7 @@ export const loadAllEntries = async (rootDir, streams = LEGACY_STREAMS) => {
         content: body,
         path: filePath,
         metadata: frontmatter,
+        projectLinksByStream: getProjectLinksByStream(frontmatter),
         projectsByStream: getProjectsByStream(frontmatter),
         projectIdsByStream: getProjectIdsByStream(frontmatter),
         streams: parsedStreams,
@@ -158,26 +201,16 @@ export const getEntryMentionCounts = (
 
   entries.forEach((entry) => {
     if (entry.date < cutoffStr) return
-    Object.entries(entry.projectsByStream || {}).forEach(
-      ([streamId, titles]) => {
-        titles.forEach((title) => {
-          byTitle[title] = (byTitle[title] || 0) + 1
-          byStream[streamId] = (byStream[streamId] || 0) + 1
-        })
-      }
-    )
-    Object.entries(entry.projectIdsByStream || {}).forEach(
-      ([streamId, ids]) => {
-        ids.forEach((id) => {
+    const linksByStream = entry.projectLinksByStream || {}
+    Object.entries(linksByStream).forEach(([streamId, links]) => {
+      links.forEach(({ id, title }) => {
+        byTitle[title] = (byTitle[title] || 0) + 1
+        byStream[streamId] = (byStream[streamId] || 0) + 1
+        if (id) {
           byId[id] = (byId[id] || 0) + 1
-          // New entries have stable IDs. Count the stream here; legacy title
-          // links above continue to support existing workspaces.
-          if (!(entry.projectsByStream || {})[streamId]) {
-            byStream[streamId] = (byStream[streamId] || 0) + 1
-          }
-        })
-      }
-    )
+        }
+      })
+    })
   })
 
   return { byId, byTitle, byStream }
