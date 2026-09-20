@@ -290,13 +290,15 @@ Switch between the light and dark themes from the header toggle. Your choice is 
     content: `
 # Tray Widget
 
-Work Tracker adds an icon to your system tray so you can log without bringing up the full window.
+Work Tracker adds a menu bar icon for quick capture without bringing up the full window.
 
 ### How it works
 The app runs two windows: the **main window** and a small, frameless, always-on-top **widget**. Clicking the tray icon toggles the widget popup.
 
-### Starting a log from the tray
-Hit **Start** in the widget and the app fires an internal event that navigates the main window straight to the **Daily Editor** for today — no hunting through the interface. It's the fastest path from "I should log that" to actually logging it.
+### Capture a todo or note
+Choose **Todo** to add a task directly to a project or activity. You can set a due date with a quick preset or any date. Choose **Quick note** to save a Markdown note; linking it is optional, so it also works as a fast inbox for unfiled thoughts.
+
+The footer keeps the common follow-on actions close: **Log today** opens the Daily Editor, and **All notes** opens the notes board. The arrow button opens the full app when you need more space.
 
 ### Staying available
 Keeping the app running in the tray is also what lets **daily reminder notifications** fire at your chosen time (see *Settings*).

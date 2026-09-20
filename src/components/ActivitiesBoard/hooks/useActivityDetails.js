@@ -94,6 +94,15 @@ const useActivityDetails = () => {
       : null
   const childActivities =
     !isProject && item ? getChildActivities(data.activities, item.id) : []
+  const parentOptions =
+    !isProject && item
+      ? data.activities.filter(
+          (activity) =>
+            activity.id !== item.id &&
+            !activity.parentId &&
+            getActivityStreamId(activity) === getActivityStreamId(item)
+        )
+      : []
 
   const save = (nextData) => {
     setData(nextData)
@@ -120,6 +129,25 @@ const useActivityDetails = () => {
       }),
     })
   }
+
+  // The board supports one level of nesting. A parent with children must stay
+  // top-level until those children have been moved or promoted.
+  const updateActivityParent = (parentId) => {
+    if (isProject || !item || itemReadOnly) return
+    if (
+      parentId &&
+      !parentOptions.some((activity) => activity.id === parentId)
+    ) {
+      return
+    }
+    if (parentId && childActivities.length > 0) return
+
+    updateItem({ parentId: parentId || null, order: Date.now() })
+  }
+  const canChangeParent =
+    !isProject &&
+    !itemReadOnly &&
+    (!!item?.parentId || childActivities.length === 0)
 
   const updateTasks = (updateFn) => {
     updateItem((entry) => ({ ...entry, tasks: updateFn(entry.tasks || []) }))
@@ -298,7 +326,10 @@ const useActivityDetails = () => {
     streamById,
     parentActivity,
     childActivities,
+    parentOptions,
+    canChangeParent,
     updateItem,
+    updateActivityParent,
     taskHandlers,
     teamMembers,
     teamInput,

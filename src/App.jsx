@@ -47,6 +47,13 @@ function App() {
     }
   }, [navigate])
 
+  useEffect(() => {
+    if (window.electronAPI?.onNavigateGlobal) {
+      window.electronAPI.onNavigateGlobal((route) => navigate(route))
+      return () => window.electronAPI.removeNavigateGlobalListeners?.()
+    }
+  }, [navigate])
+
   if (location.pathname === '/widget') {
     return <TrayWidget />
   }

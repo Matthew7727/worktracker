@@ -340,8 +340,8 @@ let widgetWindow = null
 
 function createWidgetWindow() {
   widgetWindow = new BrowserWindow({
-    width: 380,
-    height: 86,
+    width: 372,
+    height: 432,
     show: false,
     frame: false,
     resizable: false,
@@ -369,12 +369,21 @@ function createWidgetWindow() {
 }
 
 function createTray() {
-  // Use an empty image to satisfy the Tray constructor, and rely on the emoji for the visual!
-  const icon = nativeImage.createEmpty()
+  // A small template image lets macOS apply the correct menu-bar colour in
+  // both light and dark appearances. Keep it deliberately simple: a tick in
+  // a capture tray reads at 18px without looking like an app logo.
+  const traySvg = `
+    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#000" d="M3 2.25h12A.75.75 0 0 1 15.75 3v12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1-.75-.75V3A.75.75 0 0 1 3 2.25Zm.75 1.5v10.5h10.5V3.75H3.75Z"/>
+      <path fill="#000" d="m5.3 8.85 2.05 2.05 5.35-5.35 1.06 1.06-6.41 6.41-3.11-3.11L5.3 8.85Z"/>
+    </svg>`
+  const icon = nativeImage.createFromDataURL(
+    `data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`
+  )
+  icon.setTemplateImage(true)
 
   tray = new Tray(icon)
-  tray.setTitle('✅')
-  tray.setToolTip('Work Tracker Widget')
+  tray.setToolTip('Work Tracker — quick capture')
 
   tray.on('click', (event, bounds) => {
     const { x } = bounds
@@ -473,6 +482,24 @@ app.whenReady().then(async () => {
   // Widget IPC
   ipcMain.handle('widget:triggerStartFlow', () => {
     performStartFlow()
+  })
+  ipcMain.handle('widget:openRoute', (event, route) => {
+    if (widgetWindow) widgetWindow.hide()
+    const mainWins = BrowserWindow.getAllWindows().filter(
+      (window) => window !== widgetWindow
+    )
+    if (mainWins.length > 0) {
+      const mainWin = mainWins[0]
+      if (mainWin.isMinimized()) mainWin.restore()
+      mainWin.show()
+      mainWin.focus()
+      mainWin.webContents.send('app:navigate', route)
+    } else {
+      createWindow()
+      setTimeout(() => {
+        mainWindow?.webContents.send('app:navigate', route)
+      }, 1500)
+    }
   })
 
   createWindow()
