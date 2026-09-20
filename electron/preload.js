@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   watchWorkspace: (path) => ipcRenderer.invoke('fs:watchWorkspace', path),
   onWorkspaceChanged: (callback) =>
     ipcRenderer.on('workspace:changed', (event, data) => callback(data)),
+  removeWorkspaceChangedListeners: () =>
+    ipcRenderer.removeAllListeners('workspace:changed'),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
 
   // Settings & Notifications
@@ -25,9 +27,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Widget & Global Flow
   triggerGlobalStartFlow: () => ipcRenderer.invoke('widget:triggerStartFlow'),
+  openWidgetRoute: (route) => ipcRenderer.invoke('widget:openRoute', route),
   onStartFlowGlobal: (callback) => ipcRenderer.on('app:start-flow', callback),
+  onNavigateGlobal: (callback) =>
+    ipcRenderer.on('app:navigate', (event, route) => callback(route)),
   removeStartFlowGlobalListeners: () =>
     ipcRenderer.removeAllListeners('app:start-flow'),
+  removeNavigateGlobalListeners: () =>
+    ipcRenderer.removeAllListeners('app:navigate'),
 
   // Auto-update
   checkForUpdates: () => ipcRenderer.invoke('update:check'),

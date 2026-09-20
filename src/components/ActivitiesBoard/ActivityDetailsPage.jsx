@@ -13,6 +13,8 @@ import {
   FormControlLabel,
   Switch,
   Tooltip,
+  MenuItem,
+  Select,
 } from '@mui/material'
 import { ArrowBack, Add, Check, Close, Edit } from '@mui/icons-material'
 import { InkButton, StatStrip, MONO } from '../shared/ui'
@@ -121,7 +123,10 @@ const ActivityDetailsPage = () => {
     streamById,
     parentActivity,
     childActivities,
+    parentOptions,
+    canChangeParent,
     updateItem,
+    updateActivityParent,
     taskHandlers,
     teamMembers,
     teamInput,
@@ -403,6 +408,40 @@ const ActivityDetailsPage = () => {
               }}
             />
           </Panel>
+
+          {!isProject && (
+            <Panel label="Placement">
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
+                Parent activity
+              </Typography>
+              <Select
+                fullWidth
+                size="small"
+                value={item.parentId || ''}
+                onChange={(event) => updateActivityParent(event.target.value)}
+                disabled={!canChangeParent}
+                inputProps={{ 'aria-label': 'Parent activity' }}
+              >
+                <MenuItem value="">
+                  <em>Standalone activity</em>
+                </MenuItem>
+                {parentOptions.map((activity) => (
+                  <MenuItem key={activity.id} value={activity.id}>
+                    {activity.title}
+                  </MenuItem>
+                ))}
+              </Select>
+              {!canChangeParent && (
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1, color: 'text.secondary' }}
+                >
+                  Move or promote this activity’s sub-activities before making
+                  it a sub-activity.
+                </Typography>
+              )}
+            </Panel>
+          )}
 
           <Panel
             label="Todos"

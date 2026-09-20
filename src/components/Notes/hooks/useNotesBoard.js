@@ -31,7 +31,8 @@ export const positionFor = (note, index) =>
  * behaviour. Shared by the ledger notes board and the Filofax notes section.
  */
 const useNotesBoard = () => {
-  const { selectedDirectory, streamConfig, mainFocusStream } = useAppContext()
+  const { selectedDirectory, refreshTrigger, streamConfig, mainFocusStream } =
+    useAppContext()
   const [notes, setNotes] = useState([])
   const [activities, setActivities] = useState([])
   const [projects, setProjects] = useState([])
@@ -72,7 +73,7 @@ const useNotesBoard = () => {
   useEffect(() => {
     refresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDirectory])
+  }, [selectedDirectory, refreshTrigger])
 
   const streamForNote = (note) => {
     if (note.projectId) return mainFocusStream || null

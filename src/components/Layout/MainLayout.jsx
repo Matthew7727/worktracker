@@ -90,8 +90,14 @@ const MainLayout = ({ children }) => {
     },
   ]
 
-  const handleSearchResultClick = (date) => {
-    navigate('/', { state: { initialDate: date } })
+  const handleSearchResultClick = (result) => {
+    if (result.kind === 'entry' && result.date) {
+      navigate('/editor', { state: { initialDate: `${result.date}T12:00:00` } })
+    } else if (result.kind === 'note') {
+      navigate('/notes', { state: { focusNoteId: result.fileName } })
+    } else {
+      navigate('/workspace', { state: { searchFile: result.file } })
+    }
   }
 
   return (

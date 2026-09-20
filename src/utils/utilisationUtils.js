@@ -30,14 +30,36 @@ export const getUtilisationPrediction = (
 ) => {
   if (!standardWeeklyHours) return null
   const cycleStart = getUtilisationCycleStart(asOf)
-  const thisWeekKey = getWeekKey(asOf)
-
-  const weeksInCycle = Object.entries(staffitHours || {}).filter(
-    ([weekKey]) => weekKey >= getWeekKey(cycleStart) && weekKey <= thisWeekKey
+  const cycleMonday = new Date(getWeekKey(cycleStart) + 'T12:00:00')
+  const thisMonday = new Date(getWeekKey(asOf) + 'T12:00:00')
+  const elapsedWeeks =
+    Math.floor((thisMonday - cycleMonday) / (7 * 24 * 60 * 60 * 1000)) + 1
+  const declaredWeeks = Object.entries(staffitHours || {}).filter(
+    ([weekKey]) =>
+      weekKey >= getWeekKey(cycleStart) && weekKey <= getWeekKey(asOf)
   )
-  if (weeksInCycle.length === 0) return null
+  if (declaredWeeks.length === 0) return null
 
-  const totalHours = weeksInCycle.reduce((sum, [, h]) => sum + (h || 0), 0)
-  const totalCapacity = weeksInCycle.length * standardWeeklyHours
+  // A forecast must include capacity elapsed even when a weekly declaration
+  // has not been entered. Otherwise it silently reports an optimistic average
+  // of only completed weeks.
+  const totalHours = declaredWeeks.reduce((sum, [, h]) => sum + (h || 0), 0)
+  const totalCapacity = elapsedWeeks * standardWeeklyHours
   return Math.round((totalHours / totalCapacity) * 100)
+}
+
+export const getUtilisationCoverage = (staffitHours, asOf = new Date()) => {
+  const cycleStart = getUtilisationCycleStart(asOf)
+  const cycleMonday = new Date(getWeekKey(cycleStart) + 'T12:00:00')
+  const thisMonday = new Date(getWeekKey(asOf) + 'T12:00:00')
+  const elapsedWeeks =
+    Math.floor((thisMonday - cycleMonday) / (7 * 24 * 60 * 60 * 1000)) + 1
+  const declaredWeeks = Object.keys(staffitHours || {}).filter(
+    (key) => key >= getWeekKey(cycleStart) && key <= getWeekKey(asOf)
+  ).length
+  return {
+    elapsedWeeks,
+    declaredWeeks,
+    missingWeeks: elapsedWeeks - declaredWeeks,
+  }
 }

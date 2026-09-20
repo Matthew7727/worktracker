@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { getGoalIds } from '../../../utils/DataManager'
 import { Box, CircularProgress, Typography } from '@mui/material'
 import {
   AccountTree,
@@ -112,15 +113,10 @@ const buildGraph = ({ entries, data, notes, goals }) => {
         'recorded work'
       )
     })
-    Object.entries(entry.metadata?.streamGoalIds || {}).forEach(
-      ([stream, goalIds]) => {
-        if (!goalIds?.length) return
-        addEntryNode()
-        goalIds.forEach((goalId) =>
-          addEdge(nodeId('entry', entry.id), nodeId('goal', goalId), stream)
-        )
-      }
-    )
+    getGoalIds(entry.metadata).forEach((goalId) => {
+      addEntryNode()
+      addEdge(nodeId('entry', entry.id), nodeId('goal', goalId), 'supports')
+    })
   })
 
   const validIds = new Set(nodes.map((node) => node.id))

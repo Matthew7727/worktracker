@@ -62,10 +62,10 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  const handleSelect = (date) => {
+  const handleSelect = (result) => {
     setIsOpen(false)
     setQuery('')
-    onResultClick(date)
+    onResultClick(result)
   }
 
   return (
@@ -145,11 +145,11 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
               </Typography>
             ) : results.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {results.map((res, i) => (
+                {results.map((res) => (
                   <Paper
-                    key={i}
-                    onClick={() => handleSelect(res.date)}
-                    data-testid={`search-result-${res.date}`}
+                    key={res.file}
+                    onClick={() => handleSelect(res)}
+                    data-testid={`search-result-${res.fileName}`}
                     sx={
                       isFx
                         ? {
@@ -194,7 +194,9 @@ const GlobalSearch = ({ rootDir, onResultClick, renderTrigger }) => {
                           fontSize: '1.1rem',
                         }}
                       >
-                        {res.date}
+                        {res.kind === 'entry' || res.kind === 'timed-entry'
+                          ? res.date
+                          : 'Note / file'}
                       </Typography>
                       <Typography
                         sx={{

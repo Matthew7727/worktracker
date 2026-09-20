@@ -1,23 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import {
-  Autocomplete,
-  Box,
-  MenuItem,
-  Paper,
-  TextField,
-  Typography,
-} from '@mui/material'
+import React, { useEffect, useState } from 'react'
+import { Box, MenuItem, Paper, TextField, Typography } from '@mui/material'
 import { Add, Bolt, CheckCircleOutline, Notes } from '@mui/icons-material'
 import { ArrowBack } from '@mui/icons-material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppContext } from '../../context/AppContext'
 import { loadProjects } from '../../utils/projectsManager'
-import { loadAllEntries } from '../../utils/DataManager'
-import { createGoal, loadGoals, saveGoals } from '../../utils/goalsManager'
+import { getGoalIds, loadAllEntries } from '../../utils/DataManager'
+import {
+  createGoal,
+  loadGoals,
+  migrateLegacyGoalEvidence,
+  removeGoalEvidence,
+  saveGoals,
+} from '../../utils/goalsManager'
 import { InkButton, PageHeader } from '../shared/ui'
 import { useIsFilofax, useFilofaxTokens } from '../../styles/useUiStyle'
 
-const titleFor = (item) => item.text || item.title || item.label
 const countdownFor = (targetDate) => {
   if (!targetDate) return 'No review date set'
   const today = new Date()
@@ -67,10 +65,17 @@ const GoalsPage = () => {
       loadGoals(selectedDirectory),
       loadProjects(selectedDirectory),
       loadAllEntries(selectedDirectory, streamConfig?.streams),
-    ]).then(([goalData, projectData, entryData]) => {
+    ]).then(async ([goalData, projectData, entryData]) => {
       if (cancelled) return
-      setGoals(goalData)
-      setProjects(projectData)
+      const migrated = await migrateLegacyGoalEvidence(
+        selectedDirectory,
+        goalData,
+        projectData,
+        entryData
+      )
+      if (cancelled) return
+      setGoals(migrated.goals)
+      setProjects(migrated.projects)
       setEntries(entryData)
     })
     return () => {
@@ -78,28 +83,6 @@ const GoalsPage = () => {
     }
   }, [selectedDirectory, streamConfig])
 
-  const workOptions = useMemo(() => {
-    const owners = [...projects.clientProjects, ...projects.activities]
-    return owners.flatMap((owner) => [
-      {
-        id: `activity:${owner.id}`,
-        kind: 'activity',
-        refId: owner.id,
-        title: owner.title,
-      },
-      ...(owner.tasks || []).map((task) => ({
-        id: `task:${task.id}`,
-        kind: 'task',
-        refId: task.id,
-        title: task.text,
-        owner: owner.title,
-      })),
-    ])
-  }, [projects])
-  const entryOptions = entries.map((entry) => ({
-    id: entry.id,
-    label: `${entry.date}${entry.time ? ` ${entry.time}` : ''}`,
-  }))
   const yearGoals = goals.filter((goal) => Number(goal.year) === Number(year))
   const save = async (goal) => {
     const next = goals.some((g) => g.id === goal.id)
@@ -108,6 +91,22 @@ const GoalsPage = () => {
     setGoals(next)
     await saveGoals(selectedDirectory, next)
     setEditing(null)
+  }
+
+  const remove = async (goal) => {
+    if (!window.confirm(`Delete “${goal.title}” and unlink its evidence?`))
+      return
+    const nextProjects = await removeGoalEvidence(
+      selectedDirectory,
+      goal.id,
+      projects,
+      entries
+    )
+    const next = goals.filter((item) => item.id !== goal.id)
+    setProjects(nextProjects)
+    setGoals(next)
+    await saveGoals(selectedDirectory, next)
+    navigate('/goals')
   }
 
   const selectedGoal = goalId ? goals.find((goal) => goal.id === goalId) : null
@@ -124,13 +123,34 @@ const GoalsPage = () => {
           All goals
         </InkButton>
         {selectedGoal ? (
-          <GoalCard
-            goal={selectedGoal}
-            projects={projects}
-            entries={entries}
-            isFx={isFx}
-            ff={ff}
-          />
+          <>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <InkButton size="sm" onClick={() => setEditing(selectedGoal)}>
+                Edit goal
+              </InkButton>
+              <InkButton
+                size="sm"
+                color="#ff6b6b"
+                onClick={() => remove(selectedGoal)}
+              >
+                Delete goal
+              </InkButton>
+            </Box>
+            {editing && (
+              <GoalEditor
+                goal={editing}
+                onSave={save}
+                onCancel={() => setEditing(null)}
+              />
+            )}
+            <GoalCard
+              goal={selectedGoal}
+              projects={projects}
+              entries={entries}
+              isFx={isFx}
+              ff={ff}
+            />
+          </>
         ) : (
           <Typography>This goal could not be found.</Typography>
         )}
@@ -167,9 +187,6 @@ const GoalsPage = () => {
       {editing && (
         <GoalEditor
           goal={editing}
-          isNew={!goals.some((goal) => goal.id === editing.id)}
-          workOptions={workOptions}
-          entryOptions={entryOptions}
           onSave={save}
           onCancel={() => setEditing(null)}
         />
@@ -191,8 +208,6 @@ const GoalsPage = () => {
             <GoalCard
               key={goal.id}
               goal={goal}
-              workOptions={workOptions}
-              entryOptions={entryOptions}
               projects={projects}
               entries={entries}
               isFx={isFx}
@@ -254,23 +269,23 @@ const GoalCard = ({
         detail: `${task.completed ? 'Completed' : 'Open'} · ${owner.title}`,
       }))
   )
-  const dailyEntries = entries.flatMap((entry) =>
-    Object.entries(entry.metadata?.streamGoalIds || {})
-      .filter(([, goalIds]) => goalIds.includes(goal.id))
-      .map(([streamName]) => ({
-        id: `e-${entry.id}`,
-        type: 'entry',
-        date: entry.date,
-        title: `${streamName} — ${
-          entry.content
-            .replace(/[#*_`]/g, '')
-            .trim()
-            .slice(0, 70) || 'Recorded work'
-        }`,
-        detail: `Written on ${dateLabel(entry.date)}`,
-        entry,
-      }))
-  )
+  const dailyEntries = entries
+    .filter((entry) => {
+      return getGoalIds(entry.metadata).includes(goal.id)
+    })
+    .map((entry) => ({
+      id: `e-${entry.id}`,
+      type: 'entry',
+      date: entry.date,
+      title: `Daily entry — ${
+        entry.content
+          .replace(/[#*_`]/g, '')
+          .trim()
+          .slice(0, 70) || 'Recorded work'
+      }`,
+      detail: `Written on ${dateLabel(entry.date)}`,
+      entry,
+    }))
   const events = [...activities, ...todos, ...dailyEntries].sort((a, b) =>
     String(b.date || '').localeCompare(String(a.date || ''))
   )
@@ -688,23 +703,8 @@ const TimelineItem = ({ event, onOpen }) => {
   )
 }
 
-const GoalEditor = ({
-  goal,
-  isNew,
-  workOptions,
-  entryOptions,
-  onSave,
-  onCancel,
-}) => {
+const GoalEditor = ({ goal, onSave, onCancel }) => {
   const [draft, setDraft] = useState(goal)
-  const selectedWork = workOptions.filter(
-    (item) =>
-      draft.activityIds?.includes(item.refId) ||
-      draft.taskIds?.includes(item.refId)
-  )
-  const selectedEntries = entryOptions.filter((entry) =>
-    draft.entryIds?.includes(entry.id)
-  )
   const patch = (key, value) =>
     setDraft((current) => ({ ...current, [key]: value }))
   return (
@@ -726,56 +726,6 @@ const GoalEditor = ({
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ maxWidth: 240 }}
         />
-        {!isNew && (
-          <>
-            <Autocomplete
-              multiple
-              options={workOptions}
-              value={selectedWork}
-              getOptionLabel={(item) =>
-                `${titleFor(item)}${item.owner ? ` — ${item.owner}` : ''}`
-              }
-              onChange={(_, values) => {
-                patch(
-                  'activityIds',
-                  values
-                    .filter((v) => v.kind === 'activity')
-                    .map((v) => v.refId)
-                )
-                patch(
-                  'taskIds',
-                  values.filter((v) => v.kind === 'task').map((v) => v.refId)
-                )
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Linked activities and todos"
-                  placeholder="Add work as evidence"
-                />
-              )}
-            />
-            <Autocomplete
-              multiple
-              options={entryOptions}
-              value={selectedEntries}
-              getOptionLabel={(item) => item.label}
-              onChange={(_, values) =>
-                patch(
-                  'entryIds',
-                  values.map((v) => v.id)
-                )
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Linked daily entries"
-                  placeholder="Add review evidence"
-                />
-              )}
-            />
-          </>
-        )}
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
           <InkButton tone="ghost" onClick={onCancel}>
             Cancel

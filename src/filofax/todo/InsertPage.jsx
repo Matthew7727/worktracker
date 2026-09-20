@@ -6,6 +6,8 @@ import {
   Switch,
   FormControlLabel,
   IconButton,
+  MenuItem,
+  Select,
 } from '@mui/material'
 import { ChevronLeft, Close, Add, Check, Edit } from '@mui/icons-material'
 import useActivityDetails from '../../components/ActivitiesBoard/hooks/useActivityDetails'
@@ -306,6 +308,35 @@ const InsertPage = () => {
               onChange={(goalIds) => updateItem({ goalIds })}
             />
           </Box>
+
+          {!isProject && (
+            <Box component="section">
+              <PrintHeading>Placement</PrintHeading>
+              <Select
+                fullWidth
+                size="small"
+                value={item.parentId || ''}
+                onChange={(event) => d.updateActivityParent(event.target.value)}
+                disabled={!d.canChangeParent}
+                inputProps={{ 'aria-label': 'Parent activity' }}
+              >
+                <MenuItem value="">
+                  <em>Standalone activity</em>
+                </MenuItem>
+                {d.parentOptions.map((activity) => (
+                  <MenuItem key={activity.id} value={activity.id}>
+                    {activity.title}
+                  </MenuItem>
+                ))}
+              </Select>
+              {!d.canChangeParent && (
+                <BlankLine>
+                  Move or promote this activity’s sub-activities before making
+                  it a sub-activity.
+                </BlankLine>
+              )}
+            </Box>
+          )}
 
           {canHaveChildren && (childActivities.length > 0 || !itemReadOnly) && (
             <Box component="section">

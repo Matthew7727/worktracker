@@ -173,7 +173,7 @@ const DayWrite = ({ editor, canCancel, onCancel }) => {
     allAvailableProjects,
     selectedFlowProjects,
     toggleFlowProject,
-    completedTodosByTitle,
+    completedTodosByProjectId,
     projectDrafts,
     updateProjectDraft,
     handleSaveDay,
@@ -197,10 +197,10 @@ const DayWrite = ({ editor, canCancel, onCancel }) => {
     }
     g.projects.push(p)
   })
-  const isPicked = (p) => selectedFlowProjects.some((s) => s.title === p.title)
+  const isPicked = (p) => selectedFlowProjects.some((s) => s.id === p.id)
   // Projects written about before but no longer active still keep their page.
   const orphaned = selectedFlowProjects.filter(
-    (p) => !allAvailableProjects.some((a) => a.title === p.title)
+    (p) => !allAvailableProjects.some((a) => a.id === p.id)
   )
 
   return (
@@ -253,10 +253,11 @@ const DayWrite = ({ editor, canCancel, onCancel }) => {
                 <Box key={g.streamId} sx={{ mb: 1.5 }}>
                   <StreamMark stream={{ name: g.name, color: g.color }} />
                   {g.projects.map((p) => {
-                    const done = (completedTodosByTitle?.[p.title] || []).length
+                    const done = (completedTodosByProjectId?.[p.id] || [])
+                      .length
                     return (
                       <Box
-                        key={p.title}
+                        key={p.id}
                         component="label"
                         sx={{
                           display: 'flex',
@@ -300,9 +301,9 @@ const DayWrite = ({ editor, canCancel, onCancel }) => {
           )}
 
           {[...selectedFlowProjects].map((project) => {
-            const ticked = completedTodosByTitle?.[project.title] || []
+            const ticked = completedTodosByProjectId?.[project.id] || []
             return (
-              <Box key={project.title} component="section" sx={{ mb: 4 }}>
+              <Box key={project.id} component="section" sx={{ mb: 4 }}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -340,8 +341,8 @@ const DayWrite = ({ editor, canCancel, onCancel }) => {
                 )}
                 <EntryField
                   label={`What you did on ${project.title}`}
-                  value={projectDrafts[project.title] || ''}
-                  onChange={(text) => updateProjectDraft(project.title, text)}
+                  value={projectDrafts[project.id] || ''}
+                  onChange={(text) => updateProjectDraft(project.id, text)}
                   placeholder="What moved forward? Decisions, blockers, who you worked with…"
                   minRows={4}
                 />

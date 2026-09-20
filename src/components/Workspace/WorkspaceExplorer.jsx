@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import { useAppContext } from '../../context/AppContext'
@@ -6,6 +6,7 @@ import DirectoryTree from './components/DirectoryTree'
 import EntryViewer from './components/EntryViewer'
 import WorkspaceMap from './components/WorkspaceMap'
 import { InkButton, PageHeader, Segmented } from '../shared/ui'
+import { loadAllEntries } from '../../utils/DataManager'
 
 const WorkspaceExplorer = () => {
   const { selectedDirectory, setProjectDirectory, streams } = useAppContext()
@@ -15,6 +16,16 @@ const WorkspaceExplorer = () => {
   const [selectedEntry, setSelectedEntry] = useState(
     () => location.state?.entry || null
   )
+
+  useEffect(() => {
+    if (!location.state?.searchFile) return
+    loadAllEntries(selectedDirectory, streams).then((entries) => {
+      const entry = entries.find(
+        (item) => item.path === location.state.searchFile
+      )
+      if (entry) setSelectedEntry(entry)
+    })
+  }, [location.state?.searchFile, selectedDirectory, streams])
 
   return (
     <Box

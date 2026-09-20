@@ -6,6 +6,7 @@ import ToDoPage from './todo/ToDoPage'
 import InsertPage from './todo/InsertPage'
 import NotesPage from './notes/NotesPage'
 import GoalsPage from '../components/Goals/GoalsPage'
+import Reports from '../components/Reports/Reports'
 import PlannerPage from './planner/PlannerPage'
 import ContactsPage from './contacts/ContactsPage'
 import IndexPage from './index/IndexPage'
@@ -30,7 +31,7 @@ const FilofaxApp = () => (
       <Route path="/info" element={<InfoPage />} />
       <Route path="/dashboard" element={<Navigate to="/planner" replace />} />
       <Route path="/workspace" element={<Navigate to="/index" replace />} />
-      <Route path="/reports" element={<Navigate to="/index" replace />} />
+      <Route path="/reports" element={<Reports />} />
       <Route path="/settings" element={<Navigate to="/info" replace />} />
       <Route
         path="/docs"

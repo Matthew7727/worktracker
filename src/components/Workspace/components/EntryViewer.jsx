@@ -9,6 +9,7 @@ import { MONO } from '../../shared/ui'
 import GoalLinkPicker from '../../Goals/GoalLinkPicker'
 import { writeFile } from '../../../services/fileSystem'
 import { stringifyMarkdown } from '../../../utils/markdownParser'
+import { getGoalIds } from '../../../utils/DataManager'
 
 // Older entries keep the three original stream names as H1 sections.
 const LEGACY_STREAM_COLORS = {
@@ -19,19 +20,16 @@ const LEGACY_STREAM_COLORS = {
 
 const EntryViewer = ({ entry, onClose }) => {
   const { streams = [] } = useAppContext()
-  const [streamGoalIds, setStreamGoalIds] = useState(
-    entry.metadata?.streamGoalIds || {}
-  )
-  const [linkingStream, setLinkingStream] = useState(null)
+  const [goalIds, setGoalIds] = useState(getGoalIds(entry.metadata))
+  const [linking, setLinking] = useState(false)
 
-  const setStreamGoals = async (streamKey, nextGoalIds) => {
-    const next = { ...streamGoalIds, [streamKey]: nextGoalIds }
-    setStreamGoalIds(next)
+  const setGoals = async (nextGoalIds) => {
+    setGoalIds(nextGoalIds)
     await writeFile(
       entry.path,
       stringifyMarkdown(entry.content || '', {
         ...(entry.metadata || {}),
-        streamGoalIds: next,
+        goalIds: nextGoalIds,
         lastModified: new Date().toISOString(),
       })
     )
@@ -48,8 +46,6 @@ const EntryViewer = ({ entry, onClose }) => {
 
   const markdownComponents = {
     h1: ({ children }) => {
-      const heading = String(children)
-      const streamKey = heading.toLowerCase().trim()
       return (
         <Box
           component="h2"
@@ -72,18 +68,12 @@ const EntryViewer = ({ entry, onClose }) => {
             <Box
               component="button"
               type="button"
-              onClick={() =>
-                setLinkingStream(linkingStream === streamKey ? null : streamKey)
-              }
+              onClick={() => setLinking(!linking)}
               sx={{
                 border: '1.5px solid',
                 borderColor: 'text.primary',
-                bgcolor:
-                  linkingStream === streamKey ? 'text.primary' : 'transparent',
-                color:
-                  linkingStream === streamKey
-                    ? 'background.paper'
-                    : 'text.primary',
+                bgcolor: linking ? 'text.primary' : 'transparent',
+                color: linking ? 'background.paper' : 'text.primary',
                 fontFamily: 'inherit',
                 fontSize: '.68rem',
                 fontWeight: 800,
@@ -95,12 +85,12 @@ const EntryViewer = ({ entry, onClose }) => {
               Link
             </Box>
           </Box>
-          {linkingStream === streamKey && (
+          {linking && (
             <Box sx={{ mt: 1.25, maxWidth: 420 }}>
               <GoalLinkPicker
-                value={streamGoalIds[streamKey] || []}
-                onChange={(goalIds) => setStreamGoals(streamKey, goalIds)}
-                label={`Goals supported by ${heading}`}
+                value={goalIds}
+                onChange={setGoals}
+                label="Goals supported by this day"
               />
             </Box>
           )}

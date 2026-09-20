@@ -26,6 +26,7 @@ const UtilisationCycle = ({
   standardWeeklyHours,
   utilisationTarget,
   utilisationPrediction,
+  utilisationCoverage,
 }) => {
   const { weeks, weekNumber, totalWeeks } = cycleWeeks
   const start = weeks[0]?.weekStart
@@ -79,6 +80,15 @@ const UtilisationCycle = ({
               {diff >= 0 ? `▲ +${diff}% ahead` : `▼ ${Math.abs(diff)}% behind`}
             </Typography>
           </Stack>
+          {utilisationCoverage && (
+            <Typography sx={{ ...label, mb: 1.5 }}>
+              Based on {utilisationCoverage.declaredWeeks} of{' '}
+              {utilisationCoverage.elapsedWeeks} elapsed weeks declared
+              {utilisationCoverage.missingWeeks > 0
+                ? ` · ${utilisationCoverage.missingWeeks} missing week${utilisationCoverage.missingWeeks === 1 ? '' : 's'} count as zero until entered`
+                : ''}
+            </Typography>
+          )}
           <Box
             sx={{
               position: 'relative',

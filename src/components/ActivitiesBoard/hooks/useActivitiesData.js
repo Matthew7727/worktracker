@@ -18,8 +18,13 @@ export const COMPLETED_TODO_GRACE_MS = 5000
  * board offers. Shared by the ledger board and the Filofax To do section.
  */
 const useActivitiesData = () => {
-  const { selectedDirectory, streamConfig, streams, mainFocusStream } =
-    useAppContext()
+  const {
+    selectedDirectory,
+    refreshTrigger,
+    streamConfig,
+    streams,
+    mainFocusStream,
+  } = useAppContext()
   const [data, setData] = useState({ activities: [], clientProjects: [] })
   const [recentlyCompleted, setRecentlyCompleted] = useState({})
   const completionTimersRef = useRef({})
@@ -42,7 +47,7 @@ const useActivitiesData = () => {
   useEffect(() => {
     if (!selectedDirectory) return
     loadProjects(selectedDirectory).then(setData)
-  }, [selectedDirectory])
+  }, [selectedDirectory, refreshTrigger])
 
   useEffect(() => {
     const timers = completionTimersRef.current

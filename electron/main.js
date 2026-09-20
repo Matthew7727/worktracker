@@ -25,6 +25,21 @@ autoUpdater.logger = log
 
 // Settings Management
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json')
+const approvedExportPaths = new Set()
+
+const isInside = (root, target) => {
+  if (!root || !target) return false
+  const relative = path.relative(path.resolve(root), path.resolve(target))
+  return (
+    relative === '' ||
+    (!relative.startsWith('..') && !path.isAbsolute(relative))
+  )
+}
+
+async function isWorkspacePath(target) {
+  const settings = await loadSettings()
+  return isInside(settings.selectedDirectory, target)
+}
 
 async function loadSettings() {
   try {
@@ -166,6 +181,8 @@ async function handleFileOpen() {
   if (canceled) {
     return
   } else {
+    const settings = await loadSettings()
+    await saveSettings({ ...settings, selectedDirectory: filePaths[0] })
     return filePaths[0]
   }
 }
@@ -175,12 +192,16 @@ async function handleSaveDialog(event, options) {
   if (canceled) {
     return { canceled: true }
   } else {
+    approvedExportPaths.add(path.resolve(filePath))
     return { canceled: false, filePath }
   }
 }
 
 async function handleReadFile(event, filePath) {
   try {
+    if (!(await isWorkspacePath(filePath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     const data = await fs.readFile(filePath, 'utf-8')
     return { success: true, data }
   } catch (error) {
@@ -190,6 +211,13 @@ async function handleReadFile(event, filePath) {
 
 async function handleWriteFile(event, filePath, content) {
   try {
+    const resolved = path.resolve(filePath)
+    if (
+      !(await isWorkspacePath(resolved)) &&
+      !approvedExportPaths.has(resolved)
+    ) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     // Ensure directory exists
     await fs.mkdir(path.dirname(filePath), { recursive: true })
     await fs.writeFile(filePath, content, 'utf-8')
@@ -201,6 +229,9 @@ async function handleWriteFile(event, filePath, content) {
 
 async function handleDeleteFile(event, filePath) {
   try {
+    if (!(await isWorkspacePath(filePath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     await fs.unlink(filePath)
     return { success: true }
   } catch (error) {
@@ -210,6 +241,9 @@ async function handleDeleteFile(event, filePath) {
 
 async function handleListFiles(event, dirPath) {
   try {
+    if (!(await isWorkspacePath(dirPath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     const files = await fs.readdir(dirPath, { withFileTypes: true })
     // Return structured file info
     return {
@@ -246,6 +280,9 @@ async function getMarkdownFiles(dir) {
 
 async function handleListAllFiles(event, dirPath) {
   try {
+    if (!(await isWorkspacePath(dirPath))) {
+      return { success: false, error: 'Path is outside the active workspace' }
+    }
     const files = await getMarkdownFiles(dirPath)
     return { success: true, files }
   } catch (error) {
@@ -260,7 +297,7 @@ async function handleWatchWorkspace(event, rootDir) {
     await watcher.close()
   }
 
-  if (!rootDir) return
+  if (!rootDir || !(await isWorkspacePath(rootDir))) return
 
   watcher = chokidar.watch(rootDir, {
     ignored: /(^|[/\\])\../, // ignore dotfiles
@@ -280,6 +317,9 @@ async function handleWatchWorkspace(event, rootDir) {
 
 async function handleSearchEntries(event, { rootDir, query }) {
   if (!rootDir || !query) return { success: false, results: [] }
+  if (!(await isWorkspacePath(rootDir))) {
+    return { success: false, results: [] }
+  }
 
   try {
     const files = await getMarkdownFiles(rootDir)
@@ -295,6 +335,23 @@ async function handleSearchEntries(event, { rootDir, query }) {
           l.toLowerCase().includes(lowerQuery)
         )
         const fileName = path.basename(file, '.md')
+        const dailyMatch = fileName.match(/^(\d{4}-\d{2}-\d{2})(?:_\d{6})?$/)
+        const normalized = file.split(path.sep).join('/')
+        // Search can legitimately find notes as well as daily logs. Return a
+        // resource-aware target rather than pretending every Markdown filename
+        // is a date.
+        const kind = dailyMatch
+          ? fileName.includes('_')
+            ? 'timed-entry'
+            : 'entry'
+          : normalized.includes('/notes/')
+            ? 'note'
+            : 'file'
+
+        // Only surface resources the UI can open directly. Other workspace
+        // Markdown is deliberately left to the file system, not a dead-end
+        // search result.
+        if (kind === 'file') continue
 
         results.push({
           file,
@@ -302,7 +359,8 @@ async function handleSearchEntries(event, { rootDir, query }) {
           snippet: matchedLine
             ? matchedLine.trim()
             : 'Match in frontmatter or content',
-          date: fileName.split('_')[0], // Correctly extract YYYY-MM-DD
+          kind,
+          date: dailyMatch?.[1] || null,
         })
       }
     }
@@ -340,8 +398,8 @@ let widgetWindow = null
 
 function createWidgetWindow() {
   widgetWindow = new BrowserWindow({
-    width: 380,
-    height: 86,
+    width: 372,
+    height: 432,
     show: false,
     frame: false,
     resizable: false,
@@ -369,12 +427,21 @@ function createWidgetWindow() {
 }
 
 function createTray() {
-  // Use an empty image to satisfy the Tray constructor, and rely on the emoji for the visual!
-  const icon = nativeImage.createEmpty()
+  // A small template image lets macOS apply the correct menu-bar colour in
+  // both light and dark appearances. Keep it deliberately simple: a tick in
+  // a capture tray reads at 18px without looking like an app logo.
+  const traySvg = `
+    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#000" d="M3 2.25h12A.75.75 0 0 1 15.75 3v12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1-.75-.75V3A.75.75 0 0 1 3 2.25Zm.75 1.5v10.5h10.5V3.75H3.75Z"/>
+      <path fill="#000" d="m5.3 8.85 2.05 2.05 5.35-5.35 1.06 1.06-6.41 6.41-3.11-3.11L5.3 8.85Z"/>
+    </svg>`
+  const icon = nativeImage.createFromDataURL(
+    `data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`
+  )
+  icon.setTemplateImage(true)
 
   tray = new Tray(icon)
-  tray.setTitle('✅')
-  tray.setToolTip('Work Tracker Widget')
+  tray.setToolTip('Work Tracker — quick capture')
 
   tray.on('click', (event, bounds) => {
     const { x } = bounds
@@ -430,7 +497,18 @@ app.whenReady().then(async () => {
   ipcMain.handle('fs:listAllFiles', handleListAllFiles)
   ipcMain.handle('fs:searchEntries', handleSearchEntries)
   ipcMain.handle('fs:watchWorkspace', handleWatchWorkspace)
-  ipcMain.handle('shell:openExternal', (event, url) => shell.openExternal(url))
+  ipcMain.handle('shell:openExternal', (event, url) => {
+    try {
+      const parsed = new URL(url)
+      if (!['https:', 'http:', 'mailto:'].includes(parsed.protocol)) {
+        return { success: false, error: 'Unsupported URL protocol' }
+      }
+      shell.openExternal(parsed.toString())
+      return { success: true }
+    } catch {
+      return { success: false, error: 'Invalid URL' }
+    }
+  })
 
   // Settings & Notifications IPC
   ipcMain.handle('settings:load', () => loadSettings())
@@ -473,6 +551,24 @@ app.whenReady().then(async () => {
   // Widget IPC
   ipcMain.handle('widget:triggerStartFlow', () => {
     performStartFlow()
+  })
+  ipcMain.handle('widget:openRoute', (event, route) => {
+    if (widgetWindow) widgetWindow.hide()
+    const mainWins = BrowserWindow.getAllWindows().filter(
+      (window) => window !== widgetWindow
+    )
+    if (mainWins.length > 0) {
+      const mainWin = mainWins[0]
+      if (mainWin.isMinimized()) mainWin.restore()
+      mainWin.show()
+      mainWin.focus()
+      mainWin.webContents.send('app:navigate', route)
+    } else {
+      createWindow()
+      setTimeout(() => {
+        mainWindow?.webContents.send('app:navigate', route)
+      }, 1500)
+    }
   })
 
   createWindow()

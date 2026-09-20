@@ -59,6 +59,7 @@ const Dashboard = () => {
     utilisationPrediction,
     staffitHours,
     standardWeeklyHours,
+    utilisationCoverage,
     loading,
   } = useDashboardData()
   const { streamConfig } = useAppContext()
@@ -168,6 +169,7 @@ const Dashboard = () => {
                 stats={stats}
                 utilisationTarget={utilisationTarget}
                 utilisationPrediction={utilisationPrediction}
+                utilisationCoverage={utilisationCoverage}
                 tagCounts={tagCounts}
                 collaborators={collaborators}
                 taskTotals={taskTotals}

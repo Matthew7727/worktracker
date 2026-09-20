@@ -31,6 +31,63 @@ export const getProjectsByStream = (frontmatter) => {
 }
 
 /**
+ * Stable project/activity references for an entry. New entries write these
+ * alongside the human-readable `projects` map, so renamed work keeps its
+ * history while older Markdown remains fully readable.
+ */
+export const getProjectIdsByStream = (frontmatter) => {
+  const byStream = {}
+  if (frontmatter.projectIds && typeof frontmatter.projectIds === 'object') {
+    Object.entries(frontmatter.projectIds).forEach(([streamId, ids]) => {
+      if (Array.isArray(ids) && ids.length > 0) byStream[streamId] = ids
+    })
+  }
+  return byStream
+}
+
+/**
+ * Canonical work links. `projectLinks` keeps an id and a display snapshot
+ * together, avoiding the positional-array corruption possible with the
+ * earlier `projects` + `projectIds` representation.
+ */
+export const getProjectLinksByStream = (frontmatter) => {
+  if (
+    frontmatter.projectLinks &&
+    typeof frontmatter.projectLinks === 'object'
+  ) {
+    return Object.fromEntries(
+      Object.entries(frontmatter.projectLinks).map(([streamId, links]) => [
+        streamId,
+        (Array.isArray(links) ? links : [])
+          .filter((link) => link && typeof link.title === 'string')
+          .map((link) => ({ id: link.id || null, title: link.title })),
+      ])
+    )
+  }
+  const titlesByStream = getProjectsByStream(frontmatter)
+  const idsByStream = getProjectIdsByStream(frontmatter)
+  return Object.fromEntries(
+    Object.entries(titlesByStream).map(([streamId, titles]) => [
+      streamId,
+      titles.map((title, index) => ({
+        // Older data may have sparse/non-aligned IDs. Treat a missing ID as
+        // unresolved instead of risking an incorrect association.
+        id: idsByStream[streamId]?.[index] || null,
+        title,
+      })),
+    ])
+  )
+}
+
+/** Whole-entry goal links, including a read-only fallback for older files. */
+export const getGoalIds = (frontmatter = {}) => [
+  ...new Set([
+    ...(frontmatter.goalIds || []),
+    ...Object.values(frontmatter.streamGoalIds || {}).flat(),
+  ]),
+]
+
+/**
  * loads all daily entries from the project directory.
  * @param {string} rootDir
  * @param {Array} streams - Stream definitions from the workspace config
@@ -99,7 +156,9 @@ export const loadAllEntries = async (rootDir, streams = LEGACY_STREAMS) => {
         content: body,
         path: filePath,
         metadata: frontmatter,
+        projectLinksByStream: getProjectLinksByStream(frontmatter),
         projectsByStream: getProjectsByStream(frontmatter),
+        projectIdsByStream: getProjectIdsByStream(frontmatter),
         streams: parsedStreams,
         streamCounts,
         totalWords,
@@ -126,7 +185,7 @@ const DEFAULT_MENTION_WINDOW_DAYS = 90
  * actually taking, since we can't tie PD/BD work to hours the way STAFFIT
  * ties client work to hours.
  *
- * @returns {{ byTitle: Object<string, number>, byStream: Object<string, number> }}
+ * @returns {{ byId: Object<string, number>, byTitle: Object<string, number>, byStream: Object<string, number> }}
  */
 export const getEntryMentionCounts = (
   entries,
@@ -137,19 +196,22 @@ export const getEntryMentionCounts = (
   const cutoffStr = cutoff.toISOString().split('T')[0]
 
   const byTitle = {}
+  const byId = {}
   const byStream = {}
 
   entries.forEach((entry) => {
     if (entry.date < cutoffStr) return
-    Object.entries(entry.projectsByStream || {}).forEach(
-      ([streamId, titles]) => {
-        titles.forEach((title) => {
-          byTitle[title] = (byTitle[title] || 0) + 1
-          byStream[streamId] = (byStream[streamId] || 0) + 1
-        })
-      }
-    )
+    const linksByStream = entry.projectLinksByStream || {}
+    Object.entries(linksByStream).forEach(([streamId, links]) => {
+      links.forEach(({ id, title }) => {
+        byTitle[title] = (byTitle[title] || 0) + 1
+        byStream[streamId] = (byStream[streamId] || 0) + 1
+        if (id) {
+          byId[id] = (byId[id] || 0) + 1
+        }
+      })
+    })
   })
 
-  return { byTitle, byStream }
+  return { byId, byTitle, byStream }
 }

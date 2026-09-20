@@ -180,8 +180,14 @@ const IndexPage = () => {
       >
         <GlobalSearch
           rootDir={selectedDirectory}
-          onResultClick={(date) =>
-            navigate('/', { state: { initialDate: date } })
+          onResultClick={(result) =>
+            navigate(result.kind === 'note' ? '/notes' : '/', {
+              state: result.date
+                ? { initialDate: `${result.date}T12:00:00` }
+                : result.kind === 'note'
+                  ? { focusNoteId: result.fileName }
+                  : undefined,
+            })
           }
           renderTrigger={(open) => (
             <InkButton tone="outline" startIcon={<Search />} onClick={open}>
