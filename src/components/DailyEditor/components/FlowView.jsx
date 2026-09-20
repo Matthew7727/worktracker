@@ -22,9 +22,9 @@ const StepRail = ({ projects, drafts, currentStep, onJump }) => (
   >
     {projects.map((project, i) => {
       const isCurrent = i === currentStep
-      const hasDraft = !!drafts[project.title]?.trim()
+      const hasDraft = !!drafts[project.id]?.trim()
       return (
-        <Box component="li" key={project.title}>
+        <Box component="li" key={project.id}>
           <Box
             component="button"
             type="button"
@@ -93,7 +93,7 @@ const StepRail = ({ projects, drafts, currentStep, onJump }) => (
 
 const FlowView = ({
   selectedFlowProjects,
-  completedTodosByTitle,
+  completedTodosByProjectId,
   projectDrafts,
   updateProjectDraft,
   goalIds,
@@ -135,7 +135,7 @@ const FlowView = ({
   const total = selectedFlowProjects.length
   const isLastStep = currentStep === total - 1
   const color = project.color || 'primary.main'
-  const completedTodos = completedTodosByTitle?.[project.title] || []
+  const completedTodos = completedTodosByProjectId?.[project.id] || []
 
   return (
     <Box
@@ -252,9 +252,9 @@ const FlowView = ({
           )}
 
           <EntryCard
-            key={project.title}
-            content={projectDrafts[project.title] || ''}
-            onChange={(content) => updateProjectDraft(project.title, content)}
+            key={project.id}
+            content={projectDrafts[project.id] || ''}
+            onChange={(content) => updateProjectDraft(project.id, content)}
             accentColor={color}
           />
           <Box

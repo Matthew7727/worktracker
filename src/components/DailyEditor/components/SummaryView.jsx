@@ -134,7 +134,7 @@ const SummaryView = ({ streams, streamDefs = [], projectEntries, onEdit }) => {
         {rows.map(({ stream, entries }, i) => (
           <StreamRow key={stream.id} stream={stream} first={i === 0}>
             {entries.map((project) => (
-              <Box key={project.title}>
+              <Box key={project.id || project.title}>
                 <Typography
                   sx={{ fontWeight: 900, fontSize: '1.05rem', mb: 0.75 }}
                 >

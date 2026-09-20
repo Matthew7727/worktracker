@@ -31,6 +31,21 @@ export const getProjectsByStream = (frontmatter) => {
 }
 
 /**
+ * Stable project/activity references for an entry. New entries write these
+ * alongside the human-readable `projects` map, so renamed work keeps its
+ * history while older Markdown remains fully readable.
+ */
+export const getProjectIdsByStream = (frontmatter) => {
+  const byStream = {}
+  if (frontmatter.projectIds && typeof frontmatter.projectIds === 'object') {
+    Object.entries(frontmatter.projectIds).forEach(([streamId, ids]) => {
+      if (Array.isArray(ids) && ids.length > 0) byStream[streamId] = ids
+    })
+  }
+  return byStream
+}
+
+/**
  * loads all daily entries from the project directory.
  * @param {string} rootDir
  * @param {Array} streams - Stream definitions from the workspace config
@@ -100,6 +115,7 @@ export const loadAllEntries = async (rootDir, streams = LEGACY_STREAMS) => {
         path: filePath,
         metadata: frontmatter,
         projectsByStream: getProjectsByStream(frontmatter),
+        projectIdsByStream: getProjectIdsByStream(frontmatter),
         streams: parsedStreams,
         streamCounts,
         totalWords,
@@ -126,7 +142,7 @@ const DEFAULT_MENTION_WINDOW_DAYS = 90
  * actually taking, since we can't tie PD/BD work to hours the way STAFFIT
  * ties client work to hours.
  *
- * @returns {{ byTitle: Object<string, number>, byStream: Object<string, number> }}
+ * @returns {{ byId: Object<string, number>, byTitle: Object<string, number>, byStream: Object<string, number> }}
  */
 export const getEntryMentionCounts = (
   entries,
@@ -137,6 +153,7 @@ export const getEntryMentionCounts = (
   const cutoffStr = cutoff.toISOString().split('T')[0]
 
   const byTitle = {}
+  const byId = {}
   const byStream = {}
 
   entries.forEach((entry) => {
@@ -149,7 +166,19 @@ export const getEntryMentionCounts = (
         })
       }
     )
+    Object.entries(entry.projectIdsByStream || {}).forEach(
+      ([streamId, ids]) => {
+        ids.forEach((id) => {
+          byId[id] = (byId[id] || 0) + 1
+          // New entries have stable IDs. Count the stream here; legacy title
+          // links above continue to support existing workspaces.
+          if (!(entry.projectsByStream || {})[streamId]) {
+            byStream[streamId] = (byStream[streamId] || 0) + 1
+          }
+        })
+      }
+    )
   })
 
-  return { byTitle, byStream }
+  return { byId, byTitle, byStream }
 }

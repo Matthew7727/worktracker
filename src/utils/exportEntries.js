@@ -12,6 +12,42 @@ export const filterEntriesByRange = (entries, range, now = new Date()) => {
   return entries
 }
 
+/** Filter entries for a review without losing compatibility with title links. */
+export const filterEntries = (entries, filters = {}, now = new Date()) => {
+  let result = filterEntriesByRange(entries, filters.range || 'all', now)
+  if (filters.startDate) {
+    result = result.filter((entry) => entry.date >= filters.startDate)
+  }
+  if (filters.endDate) {
+    result = result.filter((entry) => entry.date <= filters.endDate)
+  }
+  if (filters.tag) {
+    result = result.filter((entry) => entry.tags?.includes(filters.tag))
+  }
+  if (filters.workId) {
+    result = result.filter(
+      (entry) =>
+        Object.values(entry.projectIdsByStream || {}).some((ids) =>
+          ids.includes(filters.workId)
+        ) ||
+        (filters.workTitle &&
+          Object.values(entry.projectsByStream || {}).some((titles) =>
+            titles.includes(filters.workTitle)
+          ))
+    )
+  }
+  if (filters.goalId) {
+    result = result.filter((entry) => {
+      const streamGoals = Object.values(entry.metadata?.streamGoalIds || {})
+      return (
+        entry.metadata?.goalIds?.includes(filters.goalId) ||
+        streamGoals.some((ids) => ids?.includes(filters.goalId))
+      )
+    })
+  }
+  return result
+}
+
 /**
  * Serialises entries for export.
  * @returns {{ content: string, extension: 'json' | 'md' }}

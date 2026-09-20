@@ -6,7 +6,10 @@ import {
 } from '../../../utils/DataManager'
 import { loadProjects } from '../../../utils/projectsManager'
 import { loadStaffitHours } from '../../../utils/staffitManager'
-import { getUtilisationPrediction } from '../../../utils/utilisationUtils'
+import {
+  getUtilisationCoverage,
+  getUtilisationPrediction,
+} from '../../../utils/utilisationUtils'
 import {
   calculateWorkingDayStreak,
   isWeekend,
@@ -34,6 +37,7 @@ const useDashboardData = () => {
   const [utilisationPrediction, setUtilisationPrediction] = useState(null)
   const [staffitHours, setStaffitHours] = useState({})
   const [standardWeeklyHours, setStandardWeeklyHours] = useState(null)
+  const [utilisationCoverage, setUtilisationCoverage] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -60,6 +64,7 @@ const useDashboardData = () => {
         setUtilisationPrediction(
           getUtilisationPrediction(staffitHours, settings.standardWeeklyHours)
         )
+        setUtilisationCoverage(getUtilisationCoverage(staffitHours))
 
         // Weekend logs are intentionally available from Entries when needed,
         // but dashboard totals and trends use the default working-week view.
@@ -120,6 +125,7 @@ const useDashboardData = () => {
     utilisationPrediction,
     staffitHours,
     standardWeeklyHours,
+    utilisationCoverage,
     loading,
   }
 }

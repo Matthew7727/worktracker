@@ -100,7 +100,7 @@ const ProjectSelectionView = ({
   dayNote,
   onNoteChange,
   allAvailableProjects,
-  completedTodosByTitle,
+  completedTodosByProjectId,
   selectedFlowProjects,
   onToggleProject,
   onStart,
@@ -183,7 +183,7 @@ const ProjectSelectionView = ({
               >
                 {streamGroups.map((group) => {
                   const picked = group.projects.filter((p) =>
-                    selectedFlowProjects.some((s) => s.title === p.title)
+                    selectedFlowProjects.some((s) => s.id === p.id)
                   ).length
                   return (
                     <Box
@@ -221,13 +221,13 @@ const ProjectSelectionView = ({
                       </Box>
                       {group.projects.map((project) => (
                         <ProjectToggle
-                          key={project.title}
+                          key={project.id}
                           project={project}
                           selected={selectedFlowProjects.some(
-                            (p) => p.title === project.title
+                            (p) => p.id === project.id
                           )}
                           doneCount={
-                            (completedTodosByTitle?.[project.title] || [])
+                            (completedTodosByProjectId?.[project.id] || [])
                               .length
                           }
                           onToggle={() => onToggleProject(project)}

@@ -295,6 +295,16 @@ async function handleSearchEntries(event, { rootDir, query }) {
           l.toLowerCase().includes(lowerQuery)
         )
         const fileName = path.basename(file, '.md')
+        const dailyMatch = fileName.match(/^(\d{4}-\d{2}-\d{2})(?:_\d{6})?$/)
+        const normalized = file.split(path.sep).join('/')
+        // Search can legitimately find notes as well as daily logs. Return a
+        // resource-aware target rather than pretending every Markdown filename
+        // is a date.
+        const kind = dailyMatch
+          ? 'entry'
+          : normalized.includes('/notes/')
+            ? 'note'
+            : 'file'
 
         results.push({
           file,
@@ -302,7 +312,8 @@ async function handleSearchEntries(event, { rootDir, query }) {
           snippet: matchedLine
             ? matchedLine.trim()
             : 'Match in frontmatter or content',
-          date: fileName.split('_')[0], // Correctly extract YYYY-MM-DD
+          kind,
+          date: dailyMatch?.[1] || null,
         })
       }
     }

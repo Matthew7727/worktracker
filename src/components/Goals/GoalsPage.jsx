@@ -222,7 +222,10 @@ const GoalCard = ({
     projects.clientProjects.map((project) => project.id)
   )
   const activities = owners
-    .filter((item) => item.goalIds?.includes(goal.id))
+    .filter(
+      (item) =>
+        item.goalIds?.includes(goal.id) || goal.activityIds?.includes(item.id)
+    )
     .map((item) => ({
       id: `a-${item.id}`,
       type: 'activity',
@@ -243,7 +246,10 @@ const GoalCard = ({
     }))
   const todos = owners.flatMap((owner) =>
     (owner.tasks || [])
-      .filter((task) => task.goalIds?.includes(goal.id))
+      .filter(
+        (task) =>
+          task.goalIds?.includes(goal.id) || goal.taskIds?.includes(task.id)
+      )
       .map((task) => ({
         id: `t-${task.id}`,
         type: 'todo',
@@ -254,23 +260,28 @@ const GoalCard = ({
         detail: `${task.completed ? 'Completed' : 'Open'} · ${owner.title}`,
       }))
   )
-  const dailyEntries = entries.flatMap((entry) =>
-    Object.entries(entry.metadata?.streamGoalIds || {})
-      .filter(([, goalIds]) => goalIds.includes(goal.id))
-      .map(([streamName]) => ({
-        id: `e-${entry.id}`,
-        type: 'entry',
-        date: entry.date,
-        title: `${streamName} — ${
-          entry.content
-            .replace(/[#*_`]/g, '')
-            .trim()
-            .slice(0, 70) || 'Recorded work'
-        }`,
-        detail: `Written on ${dateLabel(entry.date)}`,
-        entry,
-      }))
-  )
+  const dailyEntries = entries
+    .filter((entry) => {
+      const streamGoals = Object.values(entry.metadata?.streamGoalIds || {})
+      return (
+        entry.metadata?.goalIds?.includes(goal.id) ||
+        goal.entryIds?.includes(entry.id) ||
+        streamGoals.some((ids) => ids?.includes(goal.id))
+      )
+    })
+    .map((entry) => ({
+      id: `e-${entry.id}`,
+      type: 'entry',
+      date: entry.date,
+      title: `Daily entry — ${
+        entry.content
+          .replace(/[#*_`]/g, '')
+          .trim()
+          .slice(0, 70) || 'Recorded work'
+      }`,
+      detail: `Written on ${dateLabel(entry.date)}`,
+      entry,
+    }))
   const events = [...activities, ...todos, ...dailyEntries].sort((a, b) =>
     String(b.date || '').localeCompare(String(a.date || ''))
   )

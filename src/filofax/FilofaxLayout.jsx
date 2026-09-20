@@ -362,8 +362,12 @@ const FilofaxLayout = ({ children }) => {
           >
             <GlobalSearch
               rootDir={selectedDirectory}
-              onResultClick={(date) =>
-                navigate('/', { state: { initialDate: date } })
+              onResultClick={(result) =>
+                navigate(result.kind === 'note' ? '/notes' : '/', {
+                  state: result.date
+                    ? { initialDate: `${result.date}T12:00:00` }
+                    : undefined,
+                })
               }
               renderTrigger={(open) => (
                 <Stud label="Search entries (Ctrl+F)" onClick={open} ff={ff}>

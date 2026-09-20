@@ -82,7 +82,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
   const [selectedFlowProjects, setSelectedFlowProjects] = useState([])
 
   const [availableByStream, setAvailableByStream] = useState({})
-  const [completedTodosByTitle, setCompletedTodosByTitle] = useState({})
+  const [completedTodosByProjectId, setCompletedTodosByProjectId] = useState({})
   const [staffitHours, setStaffitHours] = useState(null)
   const [viewMode, setViewMode] = useState('start')
   const [currentStep, setCurrentStep] = useState(0)
@@ -105,6 +105,15 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
     }
   }, [location.state])
 
+  // Search and calendar links can change route state without remounting the
+  // editor. Keep the selected page in sync in that case.
+  useEffect(() => {
+    if (location.state?.initialDate) {
+      const nextDate = new Date(location.state.initialDate)
+      if (!Number.isNaN(nextDate.getTime())) setCurrentDate(nextDate)
+    }
+  }, [location.state?.initialDate])
+
   // Load active projects and activities for selection chips, plus which of
   // their todos were completed on the day currently being journaled.
   useEffect(() => {
@@ -117,13 +126,13 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
       Object.entries(byStream).forEach(([streamId, projects]) => {
         active[streamId] = projects
           .filter((p) => p.status === 'active')
-          .map((p) => p.title)
+          .map((p) => ({ id: p.id, title: p.title }))
         projects.forEach((p) => {
-          completedToday[p.title] = getTasksCompletedOn(p.tasks, dateStr)
+          completedToday[p.id] = getTasksCompletedOn(p.tasks, dateStr)
         })
       })
       setAvailableByStream(active)
-      setCompletedTodosByTitle(completedToday)
+      setCompletedTodosByProjectId(completedToday)
     })
   }, [selectedDirectory, streamConfig, currentDate])
 
@@ -144,8 +153,8 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
 
   // Flat list of all available projects with stream metadata
   const allAvailableProjects = streams.flatMap((stream) =>
-    (availableByStream[stream.id] || []).map((title) => ({
-      title,
+    (availableByStream[stream.id] || []).map((project) => ({
+      ...project,
       streamId: stream.id,
       streamName: stream.name,
       color: stream.color,
@@ -154,7 +163,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
 
   // Per-project entries for the summary view (new format)
   const projectEntries = selectedFlowProjects
-    .map((p) => ({ ...p, content: projectDrafts[p.title] || '' }))
+    .map((p) => ({ ...p, content: projectDrafts[p.id] || '' }))
     .filter((p) => p.content.trim())
 
   // Load completion status for the five most recent working days
@@ -224,7 +233,10 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
             ([streamId, titles]) => {
               const stream = streamById[streamId]
               if (!stream) return []
-              return titles.map((title) => ({
+              return titles.map((title, index) => ({
+                id:
+                  frontmatter.projectIds?.[streamId]?.[index] ||
+                  `legacy:${streamId}:${title}`,
                 title,
                 streamId,
                 streamName: stream.name,
@@ -240,7 +252,12 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
             const projects = parseStreamProjects(parsedStreams[s.id])
             if (projects)
               projects.forEach((p) => {
-                drafts[p.title] = p.content
+                const matchingProject = flowProjects.find(
+                  (project) =>
+                    project.title === p.title && project.streamId === s.id
+                )
+                drafts[matchingProject?.id || `legacy:${s.id}:${p.title}`] =
+                  p.content
               })
           })
           setProjectDrafts(drafts)
@@ -277,15 +294,29 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
     selectedDirectory,
     streamConfig,
     location.state?.autoStartFlow,
+    allStreams,
+    emptyStreams,
+    streamById,
   ])
 
   const buildProjectsFrontmatter = (flowProjects) => {
     const projects = {}
+    const projectIds = {}
     flowProjects.forEach((p) => {
       if (!projects[p.streamId]) projects[p.streamId] = []
       projects[p.streamId].push(p.title)
+      const resolvedId = p.id?.startsWith('legacy:')
+        ? allAvailableProjects.find(
+            (candidate) =>
+              candidate.streamId === p.streamId && candidate.title === p.title
+          )?.id
+        : p.id
+      if (resolvedId) {
+        if (!projectIds[p.streamId]) projectIds[p.streamId] = []
+        projectIds[p.streamId].push(resolvedId)
+      }
     })
-    const frontmatter = { projects }
+    const frontmatter = { projects, projectIds }
     Object.entries(LEGACY_FRONTMATTER_STREAMS).forEach(([streamId, key]) => {
       if (streamById[streamId]) {
         frontmatter[key] = projects[streamId] || []
@@ -302,7 +333,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
 
       const projectList = selectedFlowProjects.map((p) => ({
         ...p,
-        content: projectDrafts[p.title] || '',
+        content: projectDrafts[p.id] || '',
       }))
       const body = stringifyProjectEntries(projectList, allStreams)
 
@@ -315,6 +346,11 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
         ...buildProjectsFrontmatter(selectedFlowProjects),
         dayStatus: 'working',
         goalIds,
+        streamGoalIds: Object.fromEntries(
+          [...new Set(selectedFlowProjects.map((p) => p.streamId))].map(
+            (id) => [id, goalIds]
+          )
+        ),
       }
 
       const fileContent = stringifyMarkdown(body, frontmatter)
@@ -411,14 +447,23 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
     }
   }
 
-  const updateProjectDraft = (title, content) => {
-    setProjectDrafts((prev) => ({ ...prev, [title]: content }))
+  const updateProjectDraft = (projectId, content) => {
+    setProjectDrafts((prev) => ({ ...prev, [projectId]: content }))
   }
 
   const toggleFlowProject = (project) => {
     setSelectedFlowProjects((prev) => {
-      const exists = prev.find((p) => p.title === project.title)
-      if (exists) return prev.filter((p) => p.title !== project.title)
+      const exists = prev.find(
+        (p) =>
+          p.id === project.id ||
+          (p.streamId === project.streamId && p.title === project.title)
+      )
+      if (exists)
+        return prev.filter(
+          (p) =>
+            p.id !== project.id &&
+            !(p.streamId === project.streamId && p.title === project.title)
+        )
       return [...prev, project]
     })
   }
@@ -441,7 +486,7 @@ export const useDailyEditor = ({ weekRange = 'recent' } = {}) => {
     selectedFlowProjects,
     toggleFlowProject,
     allAvailableProjects,
-    completedTodosByTitle,
+    completedTodosByProjectId,
     staffitHours,
     handleSaveStaffitHours,
     projectEntries,
