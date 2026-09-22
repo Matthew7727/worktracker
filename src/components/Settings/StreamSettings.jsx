@@ -7,6 +7,8 @@ import {
   Tooltip,
   Menu,
   InputBase,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material'
 import {
   Star,
@@ -21,7 +23,7 @@ import {
 import { useAppContext } from '../../context/AppContext'
 import {
   STREAM_PALETTE,
-  MAX_STREAMS,
+  RECOMMENDED_STREAMS,
   MIN_STREAMS,
   renameStream,
   setStreamColor,
@@ -32,9 +34,19 @@ import {
   getActiveStreams,
   getArchivedStreams,
   nextPaletteColor,
+  needsFocusAcknowledgement,
+  acknowledgeFocusSpread,
 } from '../../utils/streamConfig'
 import { SettingsSection, SettingRow } from './SettingsSection'
 import { InkButton } from '../shared/ui'
+import ConfirmDialog from '../ActivitiesBoard/components/ConfirmDialog'
+
+const ordinal = (n) => {
+  const rem100 = n % 100
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`
+  const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'
+  return `${n}${suffix}`
+}
 
 const ColorSwatch = ({ stream, onPick }) => {
   const [anchorEl, setAnchorEl] = useState(null)
@@ -272,12 +284,15 @@ const StreamSettings = () => {
   } = useAppContext()
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
+  const [pending, setPending] = useState(null)
+  const [accepted, setAccepted] = useState(false)
 
   if (!streamConfig) return null
 
   const active = getActiveStreams(streamConfig)
   const archived = getArchivedStreams(streamConfig)
-  const atMax = active.length >= MAX_STREAMS
+  const needsAck = needsFocusAcknowledgement(active.length)
+  const acknowledgedAt = streamConfig.focusAcknowledgedAt
 
   const applyUpdate = async (fn) => {
     try {
@@ -288,13 +303,46 @@ const StreamSettings = () => {
     }
   }
 
+  const addNamed = (name) => (config) =>
+    addStream(config, name, nextPaletteColor(config))
+
+  const restoreStream = (id) => (config) => setStreamArchived(config, id, false)
+
+  const openAcknowledgement = (mutate, label, verb) => {
+    setAccepted(false)
+    setPending({ mutate, label, verb })
+  }
+
+  const closeAcknowledgement = () => {
+    setAccepted(false)
+    setPending(null)
+  }
+
+  const confirmAcknowledgement = () => {
+    if (!pending) return
+    const { mutate } = pending
+    applyUpdate((config) => acknowledgeFocusSpread(mutate(config)))
+    closeAcknowledgement()
+  }
+
   const handleAdd = () => {
-    if (!newName.trim()) return
-    applyUpdate((config) =>
-      addStream(config, newName, nextPaletteColor(config))
-    )
+    const name = newName.trim()
+    if (!name) return
+    if (needsAck) {
+      openAcknowledgement(addNamed(name), name, 'Adding')
+    } else {
+      applyUpdate(addNamed(name))
+    }
     setNewName('')
     setAdding(false)
+  }
+
+  const handleRestore = (stream) => {
+    if (needsAck) {
+      openAcknowledgement(restoreStream(stream.id), stream.name, 'Restoring')
+    } else {
+      applyUpdate(restoreStream(stream.id))
+    }
   }
 
   return (
@@ -302,7 +350,7 @@ const StreamSettings = () => {
       <SettingsSection
         id="streams"
         title="Work streams"
-        description="The streams your days are split into. Rename or recolour them any time and your history follows. Star one as your main goal and the dashboard leads with it."
+        description={`The streams your days are split into. Rename or recolour them any time and your history follows. Star one as your main goal and the dashboard leads with it. ${RECOMMENDED_STREAMS} is the recommended number, not a limit — you can add more, you'll just be asked to confirm it each time.`}
         action={
           !adding && (
             <InkButton
@@ -310,9 +358,8 @@ const StreamSettings = () => {
               size="sm"
               startIcon={<Add />}
               onClick={() => setAdding(true)}
-              disabled={atMax}
             >
-              {atMax ? `Maximum ${MAX_STREAMS}` : 'Add stream'}
+              Add stream
             </InkButton>
           )
         }
@@ -396,21 +443,12 @@ const StreamSettings = () => {
                 >
                   {s.name}
                 </Typography>
-                <Tooltip
-                  title={
-                    atMax ? 'Archive another stream first' : 'Restore stream'
-                  }
-                >
+                <Tooltip title="Restore stream">
                   <span>
                     <IconButton
                       size="small"
                       aria-label={`Restore ${s.name}`}
-                      onClick={() =>
-                        applyUpdate((config) =>
-                          setStreamArchived(config, s.id, false)
-                        )
-                      }
-                      disabled={atMax}
+                      onClick={() => handleRestore(s)}
                     >
                       <Unarchive fontSize="small" />
                     </IconButton>
@@ -418,6 +456,19 @@ const StreamSettings = () => {
                 </Tooltip>
               </Box>
             ))}
+          </Box>
+        )}
+
+        {acknowledgedAt && active.length > RECOMMENDED_STREAMS && (
+          <Box sx={{ borderTop: '3px solid', borderColor: 'text.primary' }}>
+            <Typography
+              variant="body2"
+              sx={{ px: 3, py: 1.5, color: 'text.secondary', fontWeight: 700 }}
+            >
+              You chose to run more than {RECOMMENDED_STREAMS} streams on{' '}
+              {new Date(acknowledgedAt).toLocaleDateString()}. Archive any you
+              are no longer actively working on to bring the focus back.
+            </Typography>
           </Box>
         )}
       </SettingsSection>
@@ -456,6 +507,36 @@ const StreamSettings = () => {
           />
         </SettingRow>
       </SettingsSection>
+
+      <ConfirmDialog
+        open={!!pending}
+        title={`That would be your ${ordinal(active.length + 1)} stream`}
+        message={`${RECOMMENDED_STREAMS} streams is already a lot to hold at once. ${pending?.verb || 'Adding'} "${pending?.label || ''}" splits the same week's hours further and dilutes the balance score your dashboard leads with. Archiving a stream you are not actively working on is usually the better move.`}
+        confirmLabel={
+          pending?.verb === 'Restoring' ? 'Restore it anyway' : 'Add it anyway'
+        }
+        confirmDisabled={!accepted}
+        onConfirm={confirmAcknowledgement}
+        onCancel={closeAcknowledgement}
+      >
+        <FormControlLabel
+          sx={{ mt: 1.5, alignItems: 'flex-start' }}
+          control={
+            <Checkbox
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              inputProps={{
+                'aria-label': 'Acknowledge the extra work of another stream',
+              }}
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ fontWeight: 700, mt: 1 }}>
+              I accept this is more to keep on top of
+            </Typography>
+          }
+        />
+      </ConfirmDialog>
     </>
   )
 }
