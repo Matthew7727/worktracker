@@ -8,6 +8,8 @@ import {
   createActivity,
   getActivityStreamId,
   getChildActivities,
+  setTaskRecurrence,
+  toggleTaskCompletion,
 } from '../../../utils/projectsManager'
 import { getStreamAbbrev } from '../../../utils/streamConfig'
 import {
@@ -157,19 +159,7 @@ const useActivityDetails = () => {
   const taskHandlers = {
     onAddTask: (text) => updateTasks((tasks) => [...tasks, createTask(text)]),
     onToggleTask: (taskId) =>
-      updateTasks((tasks) =>
-        tasks.map((t) => {
-          if (t.id !== taskId) return t
-          const nextCompleted = !t.completed
-          return {
-            ...t,
-            completed: nextCompleted,
-            completedAt: nextCompleted
-              ? new Date().toISOString().split('T')[0]
-              : null,
-          }
-        })
-      ),
+      updateTasks((tasks) => toggleTaskCompletion(tasks, taskId).tasks),
     onDeleteTask: (taskId) =>
       updateTasks((tasks) => tasks.filter((t) => t.id !== taskId)),
     onRenameTask: (taskId, text) =>
@@ -186,6 +176,8 @@ const useActivityDetails = () => {
       updateTasks((tasks) =>
         tasks.map((t) => (t.id === taskId ? { ...t, dueDate } : t))
       ),
+    onSetTaskRecurrence: (taskId, recurrence) =>
+      updateTasks((tasks) => setTaskRecurrence(tasks, taskId, recurrence)),
     onSetTaskGoalIds: (taskId, goalIds) =>
       updateTasks((tasks) =>
         tasks.map((t) => (t.id === taskId ? { ...t, goalIds } : t))
