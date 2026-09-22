@@ -16,6 +16,7 @@ import {
 } from '../../utils/taskUrgency'
 import TodoDueChip from '../../components/shared/TodoDueChip'
 import TodoAgeChip from '../../components/shared/TodoAgeChip'
+import TodoRecurrenceChip from '../../components/shared/TodoRecurrenceChip'
 import { getDateKey } from '../../components/DailyEditor/utils/weekDays'
 import { PrintHeading, TickBox, BlankLine } from '../paper'
 import { LINE } from '../paperStyles'
@@ -121,6 +122,7 @@ const Row = ({ task, onToggle, onOpen }) => {
         >
           <TodoDueChip item={task} />
           {!task.dueDate && <TodoAgeChip item={task} />}
+          <TodoRecurrenceChip item={task} />
         </Box>
       )}
     </Box>

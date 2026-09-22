@@ -290,6 +290,7 @@ const InsertPage = () => {
               onRenameTask={ro(taskHandlers.onRenameTask)}
               onToggleTaskImportant={ro(taskHandlers.onToggleTaskImportant)}
               onSetTaskDueDate={ro(taskHandlers.onSetTaskDueDate)}
+              onSetTaskRecurrence={ro(taskHandlers.onSetTaskRecurrence)}
               onAddSubtask={ro(taskHandlers.onAddSubtask)}
               onToggleSubtask={ro(taskHandlers.onToggleSubtask)}
               onDeleteSubtask={ro(taskHandlers.onDeleteSubtask)}

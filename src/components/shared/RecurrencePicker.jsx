@@ -50,7 +50,9 @@ const RecurrencePicker = ({ value, onChange }) => {
   const rule = normalizeRecurrence(value)
 
   const update = (patch) =>
-    onChange(normalizeRecurrence({ ...(rule || { frequency: 'weekly' }), ...patch }))
+    onChange(
+      normalizeRecurrence({ ...(rule || { frequency: 'weekly' }), ...patch })
+    )
 
   const toggleWeekday = (day) => {
     const current = rule?.weekdays || []
@@ -73,7 +75,12 @@ const RecurrencePicker = ({ value, onChange }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       <Box
-        sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.75 }}
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 0.75,
+        }}
       >
         <Button
           size="small"
@@ -145,7 +152,9 @@ const RecurrencePicker = ({ value, onChange }) => {
             type="date"
             label="Until"
             value={rule.endDate || ''}
-            onChange={(event) => update({ endDate: event.target.value || null })}
+            onChange={(event) =>
+              update({ endDate: event.target.value || null })
+            }
             slotProps={{ inputLabel: { shrink: true } }}
             sx={{ minWidth: 170 }}
           />
