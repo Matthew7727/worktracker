@@ -3,9 +3,11 @@ import {
   Box,
   Checkbox,
   Collapse,
+  FormControlLabel,
   IconButton,
   MenuItem,
   Paper,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -31,6 +33,7 @@ import TodoRecurrenceChip from '../../shared/TodoRecurrenceChip'
 import RecurrencePicker from '../../shared/RecurrencePicker'
 import { EmptyState, MONO } from '../../shared/ui'
 import { useIsFilofax } from '../../../styles/useUiStyle'
+import { DUE_BUCKETS, getTaskDueBucket } from '../../../utils/taskUrgency'
 
 const SORT_FIELDS = {
   name: (todo) => todo.text || '',
@@ -64,6 +67,7 @@ const AllTodosView = ({
   const isFx = useIsFilofax()
   const [sortField, setSortField] = useState('dueDate')
   const [sortDirection, setSortDirection] = useState('asc')
+  const [groupByDue, setGroupByDue] = useState(true)
   const [showCompleted, setShowCompleted] = useState(false)
   const [newText, setNewText] = useState('')
   const [newActivityId, setNewActivityId] = useState('')
@@ -158,6 +162,129 @@ const AllTodosView = ({
     >
       {label}
     </TableSortLabel>
+  )
+
+  const buildDueGroups = (todos) =>
+    DUE_BUCKETS.map((bucket) => ({
+      ...bucket,
+      items: todos.filter((todo) => getTaskDueBucket(todo) === bucket.key),
+    })).filter((group) => group.items.length > 0)
+
+  const renderTodoRow = (todo, completed) => (
+    <React.Fragment key={`${todo.ownerType}-${todo.ownerId}-${todo.id}`}>
+      <TableRow hover>
+        <TableCell padding="checkbox">
+          <Checkbox
+            size="small"
+            checked={completed}
+            disabled={todo.ownerReadOnly}
+            aria-label={`${completed ? 'Reopen' : 'Complete'} ${todo.text}`}
+            onChange={() => onToggleTask(todo.ownerType, todo.ownerId, todo.id)}
+          />
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            {todo.important && (
+              <Star sx={{ fontSize: '0.9rem', color: '#f59e0b' }} />
+            )}
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: isFx ? 400 : completed ? 500 : 650,
+                color: completed ? 'text.secondary' : 'text.primary',
+                textDecoration: completed ? 'line-through' : 'none',
+              }}
+            >
+              {todo.text}
+            </Typography>
+          </Box>
+        </TableCell>
+        <TableCell>
+          {todo.stream ? (
+            <StreamTag stream={todo.stream} label={todo.stream.name} />
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+        <TableCell>
+          <Box
+            onClick={() => onOpenItem(todo.ownerType, todo.ownerId)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              width: 'fit-content',
+              '&:hover .todo-owner': { textDecoration: 'underline' },
+            }}
+          >
+            <Box>
+              <Typography
+                className="todo-owner"
+                sx={{
+                  fontWeight: isFx ? 400 : 800,
+                  fontSize: '0.9rem',
+                }}
+              >
+                {todo.ownerTitle}
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                {todo.ownerType === 'project' ? 'Project' : 'Activity'}
+              </Typography>
+            </Box>
+          </Box>
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {todo.dueDate ? (
+              <TodoDueChip item={todo} />
+            ) : (
+              <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+                No due date
+              </Typography>
+            )}
+            {!todo.dueDate && <TodoAgeChip item={todo} />}
+            <TodoRecurrenceChip item={todo} />
+            {!completed && !todo.ownerReadOnly && onSetTaskRecurrence && (
+              <IconButton
+                size="small"
+                onClick={() =>
+                  setRecurrenceTodo((current) =>
+                    current === todo.id ? null : todo.id
+                  )
+                }
+                aria-label={`Set repeat for ${todo.text}`}
+                sx={{
+                  p: 0.25,
+                  ml: 'auto',
+                  color: todo.recurrence ? 'text.primary' : 'text.disabled',
+                }}
+              >
+                <Repeat fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+        </TableCell>
+      </TableRow>
+      {recurrenceTodo === todo.id && !completed && (
+        <TableRow>
+          <TableCell colSpan={5}>
+            <RecurrencePicker
+              value={todo.recurrence}
+              onChange={(recurrence) =>
+                onSetTaskRecurrence?.(
+                  todo.ownerType,
+                  todo.ownerId,
+                  todo.id,
+                  recurrence
+                )
+              }
+            />
+          </TableCell>
+        </TableRow>
+      )}
+    </React.Fragment>
   )
 
   const renderTable = (todos, completed = false) => (
@@ -303,137 +430,48 @@ const AllTodosView = ({
               </TableCell>
             </TableRow>
           )}
-          {todos.map((todo) => (
-            <React.Fragment
-              key={`${todo.ownerType}-${todo.ownerId}-${todo.id}`}
-            >
-              <TableRow hover>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    size="small"
-                    checked={completed}
-                    disabled={todo.ownerReadOnly}
-                    aria-label={`${completed ? 'Reopen' : 'Complete'} ${todo.text}`}
-                    onChange={() =>
-                      onToggleTask(todo.ownerType, todo.ownerId, todo.id)
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box
-                    sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
-                  >
-                    {todo.important && (
-                      <Star sx={{ fontSize: '0.9rem', color: '#f59e0b' }} />
-                    )}
-                    <Typography
-                      variant="body2"
+          {groupByDue
+            ? buildDueGroups(todos).map((group) => (
+                <React.Fragment key={group.key}>
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
                       sx={{
-                        fontWeight: isFx ? 400 : completed ? 500 : 650,
-                        color: completed ? 'text.secondary' : 'text.primary',
-                        textDecoration: completed ? 'line-through' : 'none',
+                        bgcolor: isFx ? 'transparent' : 'background.subtle',
+                        py: 0.75,
                       }}
                     >
-                      {todo.text}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  {todo.stream ? (
-                    <StreamTag stream={todo.stream} label={todo.stream.name} />
-                  ) : (
-                    <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                      —
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Box
-                    onClick={() => onOpenItem(todo.ownerType, todo.ownerId)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      width: 'fit-content',
-                      '&:hover .todo-owner': { textDecoration: 'underline' },
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        className="todo-owner"
-                        sx={{
-                          fontWeight: isFx ? 400 : 800,
-                          fontSize: '0.9rem',
-                        }}
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}
                       >
-                        {todo.ownerTitle}
-                      </Typography>
-                      <Typography
-                        sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
-                      >
-                        {todo.ownerType === 'project' ? 'Project' : 'Activity'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {todo.dueDate ? (
-                      <TodoDueChip item={todo} />
-                    ) : (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: 'text.disabled' }}
-                      >
-                        No due date
-                      </Typography>
-                    )}
-                    {!todo.dueDate && <TodoAgeChip item={todo} />}
-                    <TodoRecurrenceChip item={todo} />
-                    {!completed &&
-                      !todo.ownerReadOnly &&
-                      onSetTaskRecurrence && (
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            setRecurrenceTodo((current) =>
-                              current === todo.id ? null : todo.id
-                            )
-                          }
-                          aria-label={`Set repeat for ${todo.text}`}
+                        <Typography
+                          component="span"
                           sx={{
-                            p: 0.25,
-                            ml: 'auto',
-                            color: todo.recurrence
-                              ? 'text.primary'
-                              : 'text.disabled',
+                            fontSize: '0.85rem',
+                            fontWeight: isFx ? 600 : 900,
+                            textTransform: isFx ? 'none' : 'uppercase',
+                            letterSpacing: isFx ? 0 : '0.06em',
                           }}
                         >
-                          <Repeat fontSize="small" />
-                        </IconButton>
-                      )}
-                  </Box>
-                </TableCell>
-              </TableRow>
-              {recurrenceTodo === todo.id && !completed && (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <RecurrencePicker
-                      value={todo.recurrence}
-                      onChange={(recurrence) =>
-                        onSetTaskRecurrence?.(
-                          todo.ownerType,
-                          todo.ownerId,
-                          todo.id,
-                          recurrence
-                        )
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
-            </React.Fragment>
-          ))}
+                          {group.label}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontFamily: MONO,
+                            fontSize: '0.75rem',
+                            color: 'text.secondary',
+                          }}
+                        >
+                          {group.items.length}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                  {group.items.map((todo) => renderTodoRow(todo, completed))}
+                </React.Fragment>
+              ))
+            : todos.map((todo) => renderTodoRow(todo, completed))}
         </TableBody>
       </Table>
     </TableContainer>
@@ -441,6 +479,22 @@ const AllTodosView = ({
 
   return (
     <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={groupByDue}
+              onChange={(event) => setGroupByDue(event.target.checked)}
+            />
+          }
+          label={
+            <Typography variant="body2" sx={{ fontWeight: isFx ? 400 : 700 }}>
+              Group by due date
+            </Typography>
+          }
+        />
+      </Box>
       {openTodos.length > 0 || activeActivities.length > 0 ? (
         renderTable(openTodos)
       ) : (
