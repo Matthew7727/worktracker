@@ -441,9 +441,13 @@ function createTray() {
   // Keep a visible status item even if Electron cannot decode the SVG on a
   // particular platform/build.
   const useTemplateIcon = !icon.isEmpty()
-  const trayIcon = useTemplateIcon
+  const sourceIcon = useTemplateIcon
     ? icon
     : nativeImage.createFromPath(path.join(__dirname, '../build/icon.png'))
+  // macOS does not always constrain a fallback tray image to menu-bar size.
+  // The packaged application artwork is intentionally high resolution, so it
+  // must be reduced before passing it to Tray or it can occupy the whole bar.
+  const trayIcon = sourceIcon.resize({ width: 18, height: 18 })
   trayIcon.setTemplateImage(process.platform === 'darwin' && useTemplateIcon)
 
   tray = new Tray(trayIcon)
