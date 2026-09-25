@@ -226,6 +226,24 @@ const useActivitiesData = () => {
     }
   }
 
+  const handleRenameTask = (activityId, taskId, text) =>
+    updateActivityTasks(activityId, (tasks) =>
+      tasks.map((task) => (task.id === taskId ? { ...task, text } : task))
+    )
+
+  const handleRenameClientProjectTask = (projectId, taskId, text) =>
+    updateClientProjectTasks(projectId, (tasks) =>
+      tasks.map((task) => (task.id === taskId ? { ...task, text } : task))
+    )
+
+  const handleRenameAnyTask = (ownerType, ownerId, taskId, text) => {
+    if (ownerType === 'project') {
+      handleRenameClientProjectTask(ownerId, taskId, text)
+    } else {
+      handleRenameTask(ownerId, taskId, text)
+    }
+  }
+
   const handleToggleAnyTask = (ownerType, ownerId, taskId) => {
     if (ownerType === 'project') {
       handleToggleClientProjectTask(ownerId, taskId)
@@ -260,6 +278,7 @@ const useActivitiesData = () => {
     recentlyCompletedIds,
     handleAddTask,
     handleToggleTask,
+    handleRenameTask,
     handleSetTaskRecurrence,
     handleSetAnyTaskRecurrence,
     handleAddActivity,
@@ -269,7 +288,9 @@ const useActivitiesData = () => {
     handleAddClientProject,
     handleToggleClientProjectStatus,
     handleToggleClientProjectTask,
+    handleRenameClientProjectTask,
     handleToggleAnyTask,
+    handleRenameAnyTask,
     handleRenameClientProject,
     handleDeleteClientProject,
   }

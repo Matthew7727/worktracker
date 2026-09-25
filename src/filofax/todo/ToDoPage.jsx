@@ -320,6 +320,7 @@ const ToDoPage = () => {
           onOpenItem={(type, id) => navigate(`/todos/${type}/${id}`)}
           onToggleTask={board.handleToggleAnyTask}
           onAddTask={board.handleAddTask}
+          onRenameTask={board.handleRenameAnyTask}
           onSetTaskRecurrence={board.handleSetAnyTaskRecurrence}
         />
       ) : (
