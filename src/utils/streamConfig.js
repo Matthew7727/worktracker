@@ -23,8 +23,60 @@ export const STREAM_PALETTE = [
   '#f783ac', // pink
 ]
 
-export const MAX_STREAMS = 5
+// There is no hard ceiling on streams. Five is the point past which the app
+// starts asking you to acknowledge that every extra stream splits the same
+// week further.
+export const RECOMMENDED_STREAMS = 5
 export const MIN_STREAMS = 2
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+
+const hexToHsl = (hex) => {
+  const clean = hex.replace('#', '')
+  const full =
+    clean.length === 3
+      ? clean
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : clean
+  const r = parseInt(full.slice(0, 2), 16) / 255
+  const g = parseInt(full.slice(2, 4), 16) / 255
+  const b = parseInt(full.slice(4, 6), 16) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  if (max === min) return [0, 0, l * 100]
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+  let h
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+  else if (max === g) h = ((b - r) / d + 2) / 6
+  else h = ((r - g) / d + 4) / 6
+  return [h * 360, s * 100, l * 100]
+}
+
+const hslToHex = (h, s, l) => {
+  const sat = s / 100
+  const lum = l / 100
+  const c = (1 - Math.abs(2 * lum - 1)) * sat
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = lum - c / 2
+  const segment = Math.floor((((h % 360) + 360) % 360) / 60)
+  const [r, g, b] = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ][segment]
+  const toHex = (v) =>
+    Math.round((v + m) * 255)
+      .toString(16)
+      .padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
 
 // The legacy trio. Ids intentionally match the historical object keys used
 // throughout old entries' frontmatter so nothing needs rewriting on disk.
@@ -71,13 +123,14 @@ export const createStream = (name, color, opts = {}) => ({
   mainFocus: !!opts.mainFocus,
 })
 
-export const createConfig = (streams, features = {}) => ({
+export const createConfig = (streams, features = {}, opts = {}) => ({
   version: 1,
   createdAt: new Date().toISOString(),
   features: {
     utilisation: !!features.utilisation,
     projectHierarchy: !!features.projectHierarchy,
   },
+  focusAcknowledgedAt: opts.focusAcknowledgedAt || null,
   streams,
 })
 
@@ -124,6 +177,7 @@ export const normalizeConfig = (config) => {
       ...config.features,
     },
     ...config,
+    focusAcknowledgedAt: config.focusAcknowledgedAt || null,
     streams,
   }
 }
@@ -186,6 +240,20 @@ export const getMainFocusStream = (config) =>
   getActiveStreams(config).find((s) => s.mainFocus) ||
   getActiveStreams(config)[0] ||
   null
+
+/**
+ * True when adding (or restoring) one more active stream would take the
+ * workspace past the recommended number. There is no hard cap — this only
+ * decides whether the UI asks for an explicit acknowledgement first.
+ */
+export const needsFocusAcknowledgement = (activeCount) =>
+  activeCount >= RECOMMENDED_STREAMS
+
+/** Records that the user knowingly went past the recommended stream count. */
+export const acknowledgeFocusSpread = (config, at = new Date()) => ({
+  ...config,
+  focusAcknowledgedAt: at instanceof Date ? at.toISOString() : at,
+})
 
 /**
  * Maps a markdown `# Heading` back to a stream via current name or aliases
@@ -270,8 +338,35 @@ export const getStreamAbbrev = (streamOrName) => {
     .toUpperCase()
 }
 
+/**
+ * Colour for the nth stream. The first eight come straight from the curated
+ * palette; beyond that the palette is cycled with a hue and lightness shift so
+ * every stream still reads as distinct. Users can recolour any stream after.
+ */
+export const paletteColorAt = (index) => {
+  const safe = Math.max(0, Math.floor(index) || 0)
+  const base = STREAM_PALETTE[safe % STREAM_PALETTE.length]
+  const cycle = Math.floor(safe / STREAM_PALETTE.length)
+  if (cycle === 0) return base
+  const [h, s, l] = hexToHsl(base)
+  return hslToHex(
+    (h + cycle * 23) % 360,
+    clamp(s - cycle * 6, 25, 95),
+    clamp(l + (cycle % 2 === 1 ? -14 : 12), 22, 82)
+  )
+}
+
 /** Suggests the next unused palette colour. */
 export const nextPaletteColor = (config) => {
   const used = new Set(getActiveStreams(config).map((s) => s.color))
-  return STREAM_PALETTE.find((c) => !used.has(c)) || STREAM_PALETTE[0]
+  const unused = STREAM_PALETTE.find((c) => !used.has(c))
+  if (unused) return unused
+  // Palette exhausted — keep generating distinct colours rather than
+  // silently reusing the first one.
+  let index = getActiveStreams(config).length
+  for (let i = 0; i < 200; i += 1) {
+    const candidate = paletteColorAt(index + i)
+    if (!used.has(candidate)) return candidate
+  }
+  return paletteColorAt(index)
 }

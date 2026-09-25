@@ -369,6 +369,8 @@ const ActivitiesBoard = () => {
     handleToggleClientProjectStatus,
     handleToggleClientProjectTask,
     handleToggleAnyTask,
+    handleRenameAnyTask,
+    handleSetAnyTaskRecurrence,
     handleRenameClientProject,
     handleDeleteClientProject,
   } = useActivitiesData()
@@ -508,6 +510,8 @@ const ActivitiesBoard = () => {
           onOpenItem={(type, id) => navigate(`/todos/${type}/${id}`)}
           onToggleTask={handleToggleAnyTask}
           onAddTask={handleAddTask}
+          onRenameTask={handleRenameAnyTask}
+          onSetTaskRecurrence={handleSetAnyTaskRecurrence}
         />
       ) : (
         <>

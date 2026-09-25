@@ -470,6 +470,9 @@ const ActivityDetailsPage = () => {
               onSetTaskDueDate={
                 itemReadOnly ? undefined : taskHandlers.onSetTaskDueDate
               }
+              onSetTaskRecurrence={
+                itemReadOnly ? undefined : taskHandlers.onSetTaskRecurrence
+              }
               onAddSubtask={
                 itemReadOnly ? undefined : taskHandlers.onAddSubtask
               }

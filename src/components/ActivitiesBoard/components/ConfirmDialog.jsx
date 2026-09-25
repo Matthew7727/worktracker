@@ -14,6 +14,8 @@ const ConfirmDialog = ({
   message,
   confirmLabel = 'Confirm',
   danger = false,
+  confirmDisabled = false,
+  children,
   onConfirm,
   onCancel,
 }) => (
@@ -26,9 +28,10 @@ const ConfirmDialog = ({
     fullWidth
   >
     <DialogTitle sx={{ fontWeight: 900 }}>{title}</DialogTitle>
-    {message && (
+    {(message || children) && (
       <DialogContent>
-        <Typography variant="body2">{message}</Typography>
+        {message && <Typography variant="body2">{message}</Typography>}
+        {children}
       </DialogContent>
     )}
     <DialogActions>
@@ -36,6 +39,7 @@ const ConfirmDialog = ({
       <Button
         onClick={onConfirm}
         variant="outlined"
+        disabled={confirmDisabled}
         sx={
           danger
             ? {

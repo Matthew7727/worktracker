@@ -12,6 +12,7 @@ import { MoreHoriz, DragIndicator, Star } from '@mui/icons-material'
 import ConfirmDialog from '../../components/ActivitiesBoard/components/ConfirmDialog'
 import TodoDueChip from '../../components/shared/TodoDueChip'
 import TodoAgeChip from '../../components/shared/TodoAgeChip'
+import TodoRecurrenceChip from '../../components/shared/TodoRecurrenceChip'
 import { sortTasksByUrgency } from '../../utils/taskUrgency'
 import { useFilofaxTokens } from '../../styles/useUiStyle'
 import { Slip, StreamMark, TickBox, PenLink } from '../paper'
@@ -323,6 +324,7 @@ const ActivitySheet = ({
             </Typography>
             {!task.completed && <TodoDueChip item={task} />}
             {!task.completed && !task.dueDate && <TodoAgeChip item={task} />}
+            {!task.completed && <TodoRecurrenceChip item={task} />}
           </Box>
         ))}
         <WriteLine onAdd={onAddTask} />

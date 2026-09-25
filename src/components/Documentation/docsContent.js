@@ -142,9 +142,15 @@ Every project and activity can hold a checklist of **tasks**, and each task can 
 
 - A **completed** flag (with a brief grace period after ticking, so an accidental tick is easy to undo).
 - An **important** flag.
+- An optional **repeat** rule (see *Recurring todos* below).
 - **Created** and **completed** timestamps, which power ageing and throughput analytics.
 
 Open tasks and their ageing feed the Dashboard's *Task Throughput* and *Current Priorities* widgets.
+
+### Recurring todos
+Any todo can **repeat**. Use the repeat button on a todo (on an activity or project page, or in the master to-do list) to choose daily, weekdays, weekly, monthly or yearly, with an interval, optional weekdays, and an optional end date. By default the next date is counted from the todo's due date; tick *count from completion* to count from the day you actually tick it instead.
+
+Recurring todos always carry a due date, and only one occurrence is ever open at a time: ticking one keeps it in your completed history and immediately creates the next occurrence with its new due date. Missed occurrences are never backfilled — an ignored todo simply shows as overdue. Un-ticking a recurring todo removes the occurrence it just created, so an accidental tick is easy to undo.
 
 ### Team members
 Assign **team members** to a project or activity from its detail page. The people you collaborate with most often are ranked on the Dashboard's *Collaborators* widget.

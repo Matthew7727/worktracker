@@ -34,6 +34,7 @@ import AddClientProjectDialog from '../../components/ActivitiesBoard/components/
 import ConfirmDialog from '../../components/ActivitiesBoard/components/ConfirmDialog'
 import TodoDueChip from '../../components/shared/TodoDueChip'
 import TodoAgeChip from '../../components/shared/TodoAgeChip'
+import TodoRecurrenceChip from '../../components/shared/TodoRecurrenceChip'
 import { InkButton, Segmented } from '../../components/shared/ui'
 import { useFilofaxTokens } from '../../styles/useUiStyle'
 import {
@@ -318,6 +319,9 @@ const ToDoPage = () => {
           getActivityStreamId={getActivityStreamId}
           onOpenItem={(type, id) => navigate(`/todos/${type}/${id}`)}
           onToggleTask={board.handleToggleAnyTask}
+          onAddTask={board.handleAddTask}
+          onRenameTask={board.handleRenameAnyTask}
+          onSetTaskRecurrence={board.handleSetAnyTaskRecurrence}
         />
       ) : (
         <>
@@ -404,6 +408,7 @@ const ToDoPage = () => {
                       </Box>
                       <TodoDueChip item={task} />
                       {!task.dueDate && <TodoAgeChip item={task} />}
+                      <TodoRecurrenceChip item={task} />
                     </Box>
                   ))}
                 </Box>

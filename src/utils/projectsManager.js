@@ -1,5 +1,10 @@
 import { readFile, writeFile } from '../services/fileSystem'
 import { getActiveStreams, getMainFocusStream } from './streamConfig'
+import {
+  createNextOccurrence,
+  isRecurring,
+  normalizeRecurrence,
+} from './recurrence'
 
 const getProjectsFilePath = (rootDir) => `${rootDir}/projects.json`
 
@@ -123,19 +128,88 @@ export const reorderActivities = (activities, orderedIds) => {
   )
 }
 
-export const createTask = (text, options = {}) => ({
-  id: generateId(),
-  text,
-  completed: false,
-  important: !!options.important,
-  createdAt: new Date().toISOString().split('T')[0],
-  dueDate: options.dueDate || null,
-  completedAt: null,
-  subtasks: (options.subtasks || []).map((subtask) =>
-    typeof subtask === 'string' ? createTask(subtask) : subtask
-  ),
-  goalIds: options.goalIds || [],
-})
+export const createTask = (text, options = {}) => {
+  const recurrence = normalizeRecurrence(options.recurrence)
+  const today = new Date().toISOString().split('T')[0]
+  return {
+    id: generateId(),
+    text,
+    completed: false,
+    important: !!options.important,
+    createdAt: today,
+    // A recurring todo always needs a due date to anchor its next occurrence.
+    dueDate: options.dueDate || (recurrence ? today : null),
+    completedAt: null,
+    subtasks: (options.subtasks || []).map((subtask) =>
+      typeof subtask === 'string' ? createTask(subtask) : subtask
+    ),
+    goalIds: options.goalIds || [],
+    ...(recurrence ? { recurrence } : {}),
+  }
+}
+
+/**
+ * Ticks or un-ticks a task in `tasks`, maintaining recurring series: ticking a
+ * recurring task appends its next occurrence and remembers it via
+ * `nextTaskId`, un-ticking removes that spawned occurrence again.
+ */
+export const toggleTaskCompletion = (tasks, taskId, today) => {
+  const date = today || new Date().toISOString().split('T')[0]
+  const target = (tasks || []).find((t) => t.id === taskId)
+  if (!target) return { tasks: tasks || [], justCompleted: false }
+
+  const nextCompleted = !target.completed
+  const spawned =
+    nextCompleted && isRecurring(target)
+      ? createNextOccurrence(target, date)
+      : null
+
+  let updated = (tasks || []).map((task) =>
+    task.id === taskId
+      ? {
+          ...task,
+          completed: nextCompleted,
+          completedAt: nextCompleted ? date : null,
+          nextTaskId: nextCompleted ? spawned?.id || null : null,
+        }
+      : task
+  )
+
+  if (spawned) {
+    updated = [...updated, spawned]
+  } else if (!nextCompleted && target.nextTaskId) {
+    // Undoing a completion: drop the occurrence it spawned, unless that
+    // occurrence has itself been completed already.
+    updated = updated.filter(
+      (task) => task.id !== target.nextTaskId || task.completed
+    )
+  }
+
+  return { tasks: updated, justCompleted: nextCompleted }
+}
+
+/**
+ * Sets (or clears) a task's recurrence. Recurring todos always keep a due
+ * date so the next occurrence has something to count from.
+ */
+export const setTaskRecurrence = (tasks, taskId, recurrence) => {
+  const rule = normalizeRecurrence(recurrence)
+  return (tasks || []).map((task) => {
+    if (task.id !== taskId) return task
+    if (!rule) {
+      const { recurrence: _removed, ...rest } = task
+      return rest
+    }
+    return {
+      ...task,
+      recurrence: {
+        ...rule,
+        seriesId: task.recurrence?.seriesId || rule.seriesId,
+      },
+      dueDate: task.dueDate || new Date().toISOString().split('T')[0],
+    }
+  })
+}
 
 /** Tasks completed on a specific date (YYYY-MM-DD). */
 export const getTasksCompletedOn = (tasks, dateStr) =>

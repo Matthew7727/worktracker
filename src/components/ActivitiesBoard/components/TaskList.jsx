@@ -16,12 +16,16 @@ import {
   Edit,
   ChevronRight,
   ExpandMore,
+  Repeat,
   Star,
   StarBorder,
   StickyNote2,
 } from '@mui/icons-material'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
+import TodoRecurrenceChip from '../../shared/TodoRecurrenceChip'
+import RecurrencePicker from '../../shared/RecurrencePicker'
+import { isRecurring } from '../../../utils/recurrence'
 import GhostAddRow from './GhostAddRow'
 import { sortTasksByUrgency } from '../../../utils/taskUrgency'
 import GoalLinkPicker from '../../Goals/GoalLinkPicker'
@@ -114,6 +118,7 @@ const TaskRow = ({
   onRename,
   onToggleImportant,
   onSetDueDate,
+  onSetRecurrence,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -122,6 +127,7 @@ const TaskRow = ({
 }) => {
   const [expanded, setExpanded] = useState(false)
   const [editingDueDate, setEditingDueDate] = useState(false)
+  const [editingRecurrence, setEditingRecurrence] = useState(false)
   const [editingText, setEditingText] = useState(false)
   const [draftText, setDraftText] = useState(task.text)
   const subtasks = task.subtasks || []
@@ -217,6 +223,7 @@ const TaskRow = ({
           </Typography>
         )}
         {!task.completed && <TodoDueChip item={task} />}
+        {!task.completed && <TodoRecurrenceChip item={task} />}
         {subtasks.length > 0 && (
           <Typography
             variant="caption"
@@ -246,6 +253,24 @@ const TaskRow = ({
               }}
             >
               <CalendarToday sx={{ fontSize: '0.85rem' }} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {!readOnly && !task.completed && onSetRecurrence && (
+          <Tooltip
+            title={isRecurring(task) ? 'Change repeat' : 'Repeat this todo'}
+            placement="top"
+          >
+            <IconButton
+              size="small"
+              aria-label={isRecurring(task) ? 'Change repeat' : 'Repeat todo'}
+              onClick={() => setEditingRecurrence((open) => !open)}
+              sx={{
+                p: 0.25,
+                color: isRecurring(task) ? 'text.primary' : 'text.disabled',
+              }}
+            >
+              <Repeat sx={{ fontSize: '0.9rem' }} />
             </IconButton>
           </Tooltip>
         )}
@@ -368,6 +393,15 @@ const TaskRow = ({
         </Box>
       )}
 
+      {editingRecurrence && !readOnly && !task.completed && onSetRecurrence && (
+        <Box sx={{ pl: 4.5, pr: 0.5, pb: 1 }}>
+          <RecurrencePicker
+            value={task.recurrence}
+            onChange={(recurrence) => onSetRecurrence(recurrence)}
+          />
+        </Box>
+      )}
+
       {expanded && (
         <Box sx={{ pl: 4.5, pr: 0.5, pb: 1 }}>
           {onSetTaskGoalIds && (
@@ -462,6 +496,7 @@ const TaskList = ({
   onRenameTask,
   onToggleTaskImportant,
   onSetTaskDueDate,
+  onSetTaskRecurrence,
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
@@ -497,6 +532,11 @@ const TaskList = ({
       onRename={(text) => onRenameTask?.(task.id, text)}
       onToggleImportant={() => onToggleTaskImportant?.(task.id)}
       onSetDueDate={(date) => onSetTaskDueDate?.(task.id, date)}
+      onSetRecurrence={
+        onSetTaskRecurrence
+          ? (recurrence) => onSetTaskRecurrence(task.id, recurrence)
+          : undefined
+      }
       onAddSubtask={(text) => onAddSubtask?.(task.id, text)}
       onToggleSubtask={(subtaskId) => onToggleSubtask?.(task.id, subtaskId)}
       onDeleteSubtask={(subtaskId) => onDeleteSubtask?.(task.id, subtaskId)}

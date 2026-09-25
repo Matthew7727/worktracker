@@ -9,16 +9,20 @@ import {
   IconButton,
   Switch,
   Tooltip,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material'
 import { Add, Delete, RocketLaunch } from '@mui/icons-material'
 import { useAppContext } from '../../context/AppContext'
 import {
   STREAM_PALETTE,
-  MAX_STREAMS,
+  RECOMMENDED_STREAMS,
   MIN_STREAMS,
   createStream,
   createConfig,
   slugify,
+  paletteColorAt,
+  needsFocusAcknowledgement,
 } from '../../utils/streamConfig'
 
 const ColorDot = ({ color, selected, onClick, size = 28 }) => (
@@ -94,17 +98,24 @@ const StreamSetup = () => {
   const [utilisation, setUtilisation] = useState(false)
   const [projectHierarchy, setProjectHierarchy] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [accepted, setAccepted] = useState(false)
 
   const filledOthers = others.filter((o) => o.name.trim())
   const totalStreams = (mainName.trim() ? 1 : 0) + filledOthers.length
-  const canCreate = mainName.trim() && totalStreams >= MIN_STREAMS
+  const overRecommended = needsFocusAcknowledgement(1 + others.length)
+  const canCreate =
+    mainName.trim() &&
+    totalStreams >= MIN_STREAMS &&
+    (totalStreams <= RECOMMENDED_STREAMS || accepted)
 
   const addOther = () => {
-    if (1 + others.length >= MAX_STREAMS) return
     const used = new Set([mainColor, ...others.map((o) => o.color)])
-    const nextColor =
-      STREAM_PALETTE.find((c) => !used.has(c)) || STREAM_PALETTE[0]
-    setOthers([...others, { name: '', color: nextColor }])
+    let nextColor = STREAM_PALETTE.find((c) => !used.has(c))
+    for (let i = 0; !nextColor && i < 200; i += 1) {
+      const candidate = paletteColorAt(1 + others.length + i)
+      if (!used.has(candidate)) nextColor = candidate
+    }
+    setOthers([...others, { name: '', color: nextColor || STREAM_PALETTE[0] }])
   }
 
   const updateOther = (index, patch) =>
@@ -130,7 +141,16 @@ const StreamSetup = () => {
         seen.add(id)
       })
       await updateStreamConfig(
-        createConfig(streams, { utilisation, projectHierarchy })
+        createConfig(
+          streams,
+          { utilisation, projectHierarchy },
+          {
+            focusAcknowledgedAt:
+              streams.length > RECOMMENDED_STREAMS
+                ? new Date().toISOString()
+                : null,
+          }
+        )
       )
       showNotification('Workspace ready — let’s go!', 'success')
     } catch (e) {
@@ -236,10 +256,34 @@ const StreamSetup = () => {
             </Stack>
           ))}
         </Stack>
+        {overRecommended && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              That is more than the recommended {RECOMMENDED_STREAMS} streams.
+              Every extra stream splits the same week further, so each one gets
+              less of your attention.
+            </Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  inputProps={{
+                    'aria-label': 'Acknowledge the extra work of more streams',
+                  }}
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ fontWeight: 800 }}>
+                  I accept this is more to keep on top of
+                </Typography>
+              }
+            />
+          </Box>
+        )}
         <Button
           startIcon={<Add />}
           onClick={addOther}
-          disabled={1 + others.length >= MAX_STREAMS}
           sx={{ mb: 5, fontWeight: 900 }}
         >
           Add another stream
@@ -302,7 +346,9 @@ const StreamSetup = () => {
               opacity: 0.6,
             }}
           >
-            Name your main focus and at least one other stream to continue.
+            {totalStreams > RECOMMENDED_STREAMS && !accepted
+              ? `More than ${RECOMMENDED_STREAMS} streams — tick the box above to confirm you are happy to take that on.`
+              : 'Name your main focus and at least one other stream to continue.'}
           </Typography>
         )}
       </Paper>

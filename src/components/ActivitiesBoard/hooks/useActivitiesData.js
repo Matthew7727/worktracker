@@ -7,6 +7,8 @@ import {
   createClientProject,
   createTask,
   getActivityStreamId,
+  setTaskRecurrence,
+  toggleTaskCompletion,
 } from '../../../utils/projectsManager'
 import { getStreamAbbrev } from '../../../utils/streamConfig'
 
@@ -103,22 +105,18 @@ const useActivitiesData = () => {
 
   const handleToggleTask = (activityId, taskId) => {
     let justCompleted = false
-    updateActivityTasks(activityId, (tasks) =>
-      tasks.map((t) => {
-        if (t.id !== taskId) return t
-        const nextCompleted = !t.completed
-        justCompleted = nextCompleted
-        return {
-          ...t,
-          completed: nextCompleted,
-          completedAt: nextCompleted
-            ? new Date().toISOString().split('T')[0]
-            : null,
-        }
-      })
-    )
+    updateActivityTasks(activityId, (tasks) => {
+      const result = toggleTaskCompletion(tasks, taskId)
+      justCompleted = result.justCompleted
+      return result.tasks
+    })
     if (justCompleted) markCompletedForGracePeriod(taskId)
   }
+
+  const handleSetTaskRecurrence = (activityId, taskId, recurrence) =>
+    updateActivityTasks(activityId, (tasks) =>
+      setTaskRecurrence(tasks, taskId, recurrence)
+    )
 
   // ── Activity handlers ──────────────────────────────────────────────────
 
@@ -200,19 +198,50 @@ const useActivitiesData = () => {
   }
 
   const handleToggleClientProjectTask = (projectId, taskId) => {
+    updateClientProjectTasks(projectId, (tasks) => {
+      const result = toggleTaskCompletion(tasks, taskId)
+      return result.tasks
+    })
+  }
+
+  const handleSetClientProjectTaskRecurrence = (
+    projectId,
+    taskId,
+    recurrence
+  ) =>
     updateClientProjectTasks(projectId, (tasks) =>
-      tasks.map((task) => {
-        if (task.id !== taskId) return task
-        const nextCompleted = !task.completed
-        return {
-          ...task,
-          completed: nextCompleted,
-          completedAt: nextCompleted
-            ? new Date().toISOString().split('T')[0]
-            : null,
-        }
-      })
+      setTaskRecurrence(tasks, taskId, recurrence)
     )
+
+  const handleSetAnyTaskRecurrence = (
+    ownerType,
+    ownerId,
+    taskId,
+    recurrence
+  ) => {
+    if (ownerType === 'project') {
+      handleSetClientProjectTaskRecurrence(ownerId, taskId, recurrence)
+    } else {
+      handleSetTaskRecurrence(ownerId, taskId, recurrence)
+    }
+  }
+
+  const handleRenameTask = (activityId, taskId, text) =>
+    updateActivityTasks(activityId, (tasks) =>
+      tasks.map((task) => (task.id === taskId ? { ...task, text } : task))
+    )
+
+  const handleRenameClientProjectTask = (projectId, taskId, text) =>
+    updateClientProjectTasks(projectId, (tasks) =>
+      tasks.map((task) => (task.id === taskId ? { ...task, text } : task))
+    )
+
+  const handleRenameAnyTask = (ownerType, ownerId, taskId, text) => {
+    if (ownerType === 'project') {
+      handleRenameClientProjectTask(ownerId, taskId, text)
+    } else {
+      handleRenameTask(ownerId, taskId, text)
+    }
   }
 
   const handleToggleAnyTask = (ownerType, ownerId, taskId) => {
@@ -249,6 +278,9 @@ const useActivitiesData = () => {
     recentlyCompletedIds,
     handleAddTask,
     handleToggleTask,
+    handleRenameTask,
+    handleSetTaskRecurrence,
+    handleSetAnyTaskRecurrence,
     handleAddActivity,
     handleRenameActivity,
     handleFinishActivity,
@@ -256,7 +288,9 @@ const useActivitiesData = () => {
     handleAddClientProject,
     handleToggleClientProjectStatus,
     handleToggleClientProjectTask,
+    handleRenameClientProjectTask,
     handleToggleAnyTask,
+    handleRenameAnyTask,
     handleRenameClientProject,
     handleDeleteClientProject,
   }
