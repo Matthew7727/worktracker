@@ -118,9 +118,9 @@ const useNotesBoard = () => {
     return saved
   }
 
-  const handleDelete = async () => {
-    if (!editingNote) return
-    await deleteNote(selectedDirectory, editingNote)
+  const handleDelete = async (noteToDelete = editingNote) => {
+    if (!noteToDelete) return
+    await deleteNote(selectedDirectory, noteToDelete)
     closeEditor()
     refresh()
   }

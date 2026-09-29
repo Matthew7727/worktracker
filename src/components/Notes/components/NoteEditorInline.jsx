@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   TextField,
@@ -145,6 +145,7 @@ const NoteEditorInline = ({
   const [viewMode, setViewMode] = useState(note?.content ? 'rich' : 'markdown')
   const [isDirty, setIsDirty] = useState(false)
   const [saveStatus, setSaveStatus] = useState('idle')
+  const [hasSavedNote, setHasSavedNote] = useState(Boolean(note))
   const contentRef = useRef(null)
   const richEditorRef = useRef(null)
   const saveTimerRef = useRef(null)
@@ -152,7 +153,6 @@ const NoteEditorInline = ({
   const savedNoteRef = useRef(note)
   const onSaveRef = useRef(onSave)
   const fieldsRef = useRef(null)
-  onSaveRef.current = onSave
   // Autocomplete's `groupBy` requires same-group options to be contiguous.
   const todoOptions = useMemo(
     () => [
@@ -219,40 +219,43 @@ const NoteEditorInline = ({
         : null
   const isEmpty = !title.trim() && !content.trim()
 
-  const getFields = () => ({
-    title: title.trim(),
-    content,
-    activityId:
-      linkedItem?.linkType === 'activity'
-        ? linkedItem.id
-        : linkedItem?.linkType === 'task' &&
-            linkedItem.ownerType === 'activity'
-          ? linkedItem.ownerId
-          : null,
-    activityTitle:
-      linkedItem?.linkType === 'activity'
-        ? linkedItem.title
-        : linkedItem?.linkType === 'task' &&
-            linkedItem.ownerType === 'activity'
-          ? linkedItem.ownerTitle
-          : null,
-    projectId:
-      linkedItem?.linkType === 'project'
-        ? linkedItem.id
-        : linkedItem?.linkType === 'task' &&
-            linkedItem.ownerType === 'project'
-          ? linkedItem.ownerId
-          : null,
-    projectTitle:
-      linkedItem?.linkType === 'project'
-        ? linkedItem.title
-        : linkedItem?.linkType === 'task' &&
-            linkedItem.ownerType === 'project'
-          ? linkedItem.ownerTitle
-          : null,
-    taskId: linkedItem?.linkType === 'task' ? linkedItem.id : null,
-    taskText: linkedItem?.linkType === 'task' ? linkedItem.text : null,
-  })
+  const fields = useMemo(
+    () => ({
+      title: title.trim(),
+      content,
+      activityId:
+        linkedItem?.linkType === 'activity'
+          ? linkedItem.id
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'activity'
+            ? linkedItem.ownerId
+            : null,
+      activityTitle:
+        linkedItem?.linkType === 'activity'
+          ? linkedItem.title
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'activity'
+            ? linkedItem.ownerTitle
+            : null,
+      projectId:
+        linkedItem?.linkType === 'project'
+          ? linkedItem.id
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'project'
+            ? linkedItem.ownerId
+            : null,
+      projectTitle:
+        linkedItem?.linkType === 'project'
+          ? linkedItem.title
+          : linkedItem?.linkType === 'task' &&
+              linkedItem.ownerType === 'project'
+            ? linkedItem.ownerTitle
+            : null,
+      taskId: linkedItem?.linkType === 'task' ? linkedItem.id : null,
+      taskText: linkedItem?.linkType === 'task' ? linkedItem.text : null,
+    }),
+    [content, linkedItem, title]
+  )
   const fieldsSignature = (fields) =>
     JSON.stringify([
       fields.title,
@@ -261,24 +264,41 @@ const NoteEditorInline = ({
       fields.projectId,
       fields.taskId,
     ])
-  fieldsRef.current = getFields()
+  const signature = useMemo(() => fieldsSignature(fields), [fields])
   const signatureRef = useRef('')
-  signatureRef.current = fieldsSignature(fieldsRef.current)
 
-  const persistDraft = (autoSave = true) => {
-    const fields = fieldsRef.current
-    if (!fields.title && !fields.content) return Promise.resolve(null)
-    const signature = fieldsSignature(fields)
+  useEffect(() => {
+    onSaveRef.current = onSave
+  }, [onSave])
+
+  useEffect(() => {
+    fieldsRef.current = fields
+    signatureRef.current = signature
+  }, [fields, signature])
+
+  const persistDraft = useCallback((autoSave = true) => {
+    const currentFields = fieldsRef.current
+    if (
+      !currentFields.title &&
+      !currentFields.content &&
+      !savedNoteRef.current
+    ) {
+      return Promise.resolve(null)
+    }
+    const currentSignature = signatureRef.current
     const operation = saveQueueRef.current
       .catch(() => {})
       .then(async () => {
         setSaveStatus('saving')
-        const saved = await onSaveRef.current(fields, {
+        const saved = await onSaveRef.current(currentFields, {
           autoSave,
           note: savedNoteRef.current,
         })
-        if (saved) savedNoteRef.current = saved
-        if (autoSave && signatureRef.current === signature) {
+        if (saved) {
+          savedNoteRef.current = saved
+          setHasSavedNote(true)
+        }
+        if (signatureRef.current === currentSignature) {
           setIsDirty(false)
           setSaveStatus('saved')
         }
@@ -290,33 +310,23 @@ const NoteEditorInline = ({
       })
     saveQueueRef.current = operation.catch(() => {})
     return operation
-  }
+  }, [])
 
   useEffect(() => {
-    if (!isDirty || isEmpty) return undefined
+    if (!isDirty || (isEmpty && !savedNoteRef.current)) return undefined
     saveTimerRef.current = window.setTimeout(() => {
       persistDraft().catch(() => {})
     }, 800)
     return () => window.clearTimeout(saveTimerRef.current)
-  }, [content, isDirty, isEmpty, linkedItem, title])
+  }, [content, isDirty, isEmpty, linkedItem, persistDraft, title])
 
-  useEffect(
-    () => () => window.clearTimeout(saveTimerRef.current),
-    []
-  )
+  useEffect(() => () => window.clearTimeout(saveTimerRef.current), [])
 
   const handleSubmit = async () => {
     window.clearTimeout(saveTimerRef.current)
-    if (isEmpty) return
+    if (isEmpty && !savedNoteRef.current) return
     try {
-      await saveQueueRef.current.catch(() => {})
-      const saved = await onSaveRef.current(fieldsRef.current, {
-        autoSave: false,
-        note: savedNoteRef.current,
-      })
-      if (saved) savedNoteRef.current = saved
-      setIsDirty(false)
-      setSaveStatus('saved')
+      await persistDraft(false)
     } catch {
       setSaveStatus('error')
     }
@@ -325,9 +335,22 @@ const NoteEditorInline = ({
   const handleClose = async () => {
     window.clearTimeout(saveTimerRef.current)
     try {
-      await saveQueueRef.current.catch(() => {})
-      if (isDirty && !isEmpty) await persistDraft()
+      if (isDirty && (!isEmpty || savedNoteRef.current)) {
+        await persistDraft()
+      } else {
+        await saveQueueRef.current.catch(() => {})
+      }
       onClose?.()
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  const handleDelete = async () => {
+    window.clearTimeout(saveTimerRef.current)
+    try {
+      await saveQueueRef.current.catch(() => {})
+      await onDelete?.(savedNoteRef.current)
     } catch {
       setSaveStatus('error')
     }
@@ -543,7 +566,9 @@ const NoteEditorInline = ({
         <Box
           role="status"
           aria-live="polite"
-          sx={{ color: saveStatus === 'error' ? 'error.main' : 'text.secondary' }}
+          sx={{
+            color: saveStatus === 'error' ? 'error.main' : 'text.secondary',
+          }}
         >
           {saveStatus === 'saving'
             ? 'Saving…'
@@ -559,7 +584,8 @@ const NoteEditorInline = ({
           <InkButton
             tone="ghost"
             size="sm"
-            onClick={onDelete}
+            type="button"
+            onClick={() => handleDelete().catch(() => {})}
             sx={{ color: 'error.main', mr: 'auto' }}
           >
             Delete
@@ -574,7 +600,7 @@ const NoteEditorInline = ({
         >
           Close
         </InkButton>
-        <InkButton type="submit" size="sm" disabled={isEmpty}>
+        <InkButton type="submit" size="sm" disabled={isEmpty && !hasSavedNote}>
           Save note
         </InkButton>
       </Box>

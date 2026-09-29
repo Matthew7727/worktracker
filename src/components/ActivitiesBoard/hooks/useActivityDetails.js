@@ -283,10 +283,7 @@ const useActivityDetails = () => {
 
   const editingNote = noteEditorTarget === 'new' ? null : noteEditorTarget
 
-  const handleSaveNote = async (
-    fields,
-    { autoSave = false, note } = {}
-  ) => {
+  const handleSaveNote = async (fields, { autoSave = false, note } = {}) => {
     const base = note || editingNote || createNote()
     const updated = {
       ...base,
@@ -307,9 +304,9 @@ const useActivityDetails = () => {
     return saved
   }
 
-  const handleDeleteNote = async () => {
-    if (!editingNote) return
-    await deleteNote(selectedDirectory, editingNote)
+  const handleDeleteNote = async (noteToDelete = editingNote) => {
+    if (!noteToDelete) return
+    await deleteNote(selectedDirectory, noteToDelete)
     closeNoteEditor()
     refreshNotes()
   }
