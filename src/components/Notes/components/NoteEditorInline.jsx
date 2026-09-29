@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   TextField,
@@ -143,8 +143,16 @@ const NoteEditorInline = ({
   const [title, setTitle] = useState(note?.title || '')
   const [content, setContent] = useState(note?.content || '')
   const [viewMode, setViewMode] = useState(note?.content ? 'rich' : 'markdown')
+  const [isDirty, setIsDirty] = useState(false)
+  const [saveStatus, setSaveStatus] = useState('idle')
   const contentRef = useRef(null)
   const richEditorRef = useRef(null)
+  const saveTimerRef = useRef(null)
+  const saveQueueRef = useRef(Promise.resolve())
+  const savedNoteRef = useRef(note)
+  const onSaveRef = useRef(onSave)
+  const fieldsRef = useRef(null)
+  onSaveRef.current = onSave
   // Autocomplete's `groupBy` requires same-group options to be contiguous.
   const todoOptions = useMemo(
     () => [
@@ -211,59 +219,141 @@ const NoteEditorInline = ({
         : null
   const isEmpty = !title.trim() && !content.trim()
 
+  const getFields = () => ({
+    title: title.trim(),
+    content,
+    activityId:
+      linkedItem?.linkType === 'activity'
+        ? linkedItem.id
+        : linkedItem?.linkType === 'task' &&
+            linkedItem.ownerType === 'activity'
+          ? linkedItem.ownerId
+          : null,
+    activityTitle:
+      linkedItem?.linkType === 'activity'
+        ? linkedItem.title
+        : linkedItem?.linkType === 'task' &&
+            linkedItem.ownerType === 'activity'
+          ? linkedItem.ownerTitle
+          : null,
+    projectId:
+      linkedItem?.linkType === 'project'
+        ? linkedItem.id
+        : linkedItem?.linkType === 'task' &&
+            linkedItem.ownerType === 'project'
+          ? linkedItem.ownerId
+          : null,
+    projectTitle:
+      linkedItem?.linkType === 'project'
+        ? linkedItem.title
+        : linkedItem?.linkType === 'task' &&
+            linkedItem.ownerType === 'project'
+          ? linkedItem.ownerTitle
+          : null,
+    taskId: linkedItem?.linkType === 'task' ? linkedItem.id : null,
+    taskText: linkedItem?.linkType === 'task' ? linkedItem.text : null,
+  })
+  const fieldsSignature = (fields) =>
+    JSON.stringify([
+      fields.title,
+      fields.content,
+      fields.activityId,
+      fields.projectId,
+      fields.taskId,
+    ])
+  fieldsRef.current = getFields()
+  const signatureRef = useRef('')
+  signatureRef.current = fieldsSignature(fieldsRef.current)
+
+  const persistDraft = (autoSave = true) => {
+    const fields = fieldsRef.current
+    if (!fields.title && !fields.content) return Promise.resolve(null)
+    const signature = fieldsSignature(fields)
+    const operation = saveQueueRef.current
+      .catch(() => {})
+      .then(async () => {
+        setSaveStatus('saving')
+        const saved = await onSaveRef.current(fields, {
+          autoSave,
+          note: savedNoteRef.current,
+        })
+        if (saved) savedNoteRef.current = saved
+        if (autoSave && signatureRef.current === signature) {
+          setIsDirty(false)
+          setSaveStatus('saved')
+        }
+        return saved
+      })
+      .catch((error) => {
+        setSaveStatus('error')
+        throw error
+      })
+    saveQueueRef.current = operation.catch(() => {})
+    return operation
+  }
+
+  useEffect(() => {
+    if (!isDirty || isEmpty) return undefined
+    saveTimerRef.current = window.setTimeout(() => {
+      persistDraft().catch(() => {})
+    }, 800)
+    return () => window.clearTimeout(saveTimerRef.current)
+  }, [content, isDirty, isEmpty, linkedItem, title])
+
+  useEffect(
+    () => () => window.clearTimeout(saveTimerRef.current),
+    []
+  )
+
+  const handleSubmit = async () => {
+    window.clearTimeout(saveTimerRef.current)
+    if (isEmpty) return
+    try {
+      await saveQueueRef.current.catch(() => {})
+      const saved = await onSaveRef.current(fieldsRef.current, {
+        autoSave: false,
+        note: savedNoteRef.current,
+      })
+      if (saved) savedNoteRef.current = saved
+      setIsDirty(false)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  const handleClose = async () => {
+    window.clearTimeout(saveTimerRef.current)
+    try {
+      await saveQueueRef.current.catch(() => {})
+      if (isDirty && !isEmpty) await persistDraft()
+      onClose?.()
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  const updateContent = (value) => {
+    setContent(value)
+    setIsDirty(true)
+    setSaveStatus('unsaved')
+  }
+
   const applyFormat = (type) => {
     if (viewMode === 'rich') {
       richEditorRef.current?.focus()
       document.execCommand(RICH_COMMANDS[type], false)
-      setContent(richHtmlToMarkdown(richEditorRef.current))
+      updateContent(richHtmlToMarkdown(richEditorRef.current))
       return
     }
     const input = contentRef.current
     const start = input?.selectionStart ?? content.length
     const end = input?.selectionEnd ?? content.length
     const { newText, newCursor } = injectMarkdown(content, start, end, type)
-    setContent(newText)
+    updateContent(newText)
     requestAnimationFrame(() => {
       input?.focus()
       input?.setSelectionRange(newCursor, newCursor)
-    })
-  }
-
-  const handleSubmit = () => {
-    if (isEmpty) return
-    onSave({
-      title: title.trim(),
-      content,
-      activityId:
-        linkedItem?.linkType === 'activity'
-          ? linkedItem.id
-          : linkedItem?.linkType === 'task' &&
-              linkedItem.ownerType === 'activity'
-            ? linkedItem.ownerId
-            : null,
-      activityTitle:
-        linkedItem?.linkType === 'activity'
-          ? linkedItem.title
-          : linkedItem?.linkType === 'task' &&
-              linkedItem.ownerType === 'activity'
-            ? linkedItem.ownerTitle
-            : null,
-      projectId:
-        linkedItem?.linkType === 'project'
-          ? linkedItem.id
-          : linkedItem?.linkType === 'task' &&
-              linkedItem.ownerType === 'project'
-            ? linkedItem.ownerId
-            : null,
-      projectTitle:
-        linkedItem?.linkType === 'project'
-          ? linkedItem.title
-          : linkedItem?.linkType === 'task' &&
-              linkedItem.ownerType === 'project'
-            ? linkedItem.ownerTitle
-            : null,
-      taskId: linkedItem?.linkType === 'task' ? linkedItem.id : null,
-      taskText: linkedItem?.linkType === 'task' ? linkedItem.text : null,
     })
   }
 
@@ -272,11 +362,14 @@ const NoteEditorInline = ({
       component="form"
       onSubmit={(e) => {
         e.preventDefault()
-        handleSubmit()
+        handleSubmit().catch(() => {})
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose?.()
-        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit()
+        if (e.key === 'Escape') handleClose().catch(() => {})
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault()
+          handleSubmit().catch(() => {})
+        }
       }}
       sx={{
         mb: 3,
@@ -305,7 +398,11 @@ const NoteEditorInline = ({
           fullWidth
           placeholder="Title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value)
+            setIsDirty(true)
+            setSaveStatus('unsaved')
+          }}
           sx={{
             fontWeight: isFx ? 400 : 900,
             fontSize: '1.2rem',
@@ -373,7 +470,7 @@ const NoteEditorInline = ({
           minRows={6}
           placeholder="Write the note in Markdown"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => updateContent(e.target.value)}
           sx={{
             ...writingSurface,
             alignItems: 'flex-start',
@@ -401,7 +498,11 @@ const NoteEditorInline = ({
           <Autocomplete
             options={linkOptions}
             value={linkedItem}
-            onChange={(_, val) => setLinkedItem(val)}
+            onChange={(_, val) => {
+              setLinkedItem(val)
+              setIsDirty(true)
+              setSaveStatus('unsaved')
+            }}
             getOptionLabel={(a) => a.text || a.title || ''}
             groupBy={(item) =>
               item.linkType === 'task'
@@ -439,6 +540,21 @@ const NoteEditorInline = ({
           bgcolor: 'background.subtle',
         }}
       >
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{ color: saveStatus === 'error' ? 'error.main' : 'text.secondary' }}
+        >
+          {saveStatus === 'saving'
+            ? 'Saving…'
+            : saveStatus === 'saved'
+              ? 'Saved'
+              : saveStatus === 'error'
+                ? 'Save failed — try again'
+                : saveStatus === 'unsaved'
+                  ? 'Unsaved changes'
+                  : ''}
+        </Box>
         {note && onDelete && (
           <InkButton
             tone="ghost"
@@ -452,10 +568,11 @@ const NoteEditorInline = ({
         <InkButton
           tone="ghost"
           size="sm"
-          onClick={onClose}
+          type="button"
+          onClick={() => handleClose().catch(() => {})}
           sx={{ ml: note && onDelete ? 0 : 'auto' }}
         >
-          Cancel
+          Close
         </InkButton>
         <InkButton type="submit" size="sm" disabled={isEmpty}>
           Save note

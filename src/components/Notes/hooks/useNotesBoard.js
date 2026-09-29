@@ -85,9 +85,10 @@ const useNotesBoard = () => {
   const closeEditor = () => setEditorTarget(null)
   const editingNote = editorTarget === 'new' ? null : editorTarget
 
-  const handleSave = async (fields) => {
+  const handleSave = async (fields, { autoSave = false, note } = {}) => {
     const newNotePosition = defaultPosition(notes.length)
     const base =
+      note ||
       editingNote ||
       createNote({
         boardX: newNotePosition.x,
@@ -98,9 +99,23 @@ const useNotesBoard = () => {
       ...fields,
       updatedAt: new Date().toISOString(),
     }
-    await saveNote(selectedDirectory, updated, editingNote?.filePath)
+    const saved = await saveNote(
+      selectedDirectory,
+      updated,
+      note?.filePath || editingNote?.filePath
+    )
+    if (autoSave) {
+      setNotes((current) => {
+        const exists = current.some((item) => item.id === saved.id)
+        return exists
+          ? current.map((item) => (item.id === saved.id ? saved : item))
+          : [...current, saved]
+      })
+      return saved
+    }
     closeEditor()
     refresh()
+    return saved
   }
 
   const handleDelete = async () => {

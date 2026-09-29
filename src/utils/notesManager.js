@@ -107,9 +107,15 @@ export const loadNotes = async (rootDir) => {
  */
 export const saveNote = async (rootDir, note, previousFilePath) => {
   const filePath = getNoteFilePath(rootDir, note)
-  await writeFile(filePath, noteToFileContent(note))
+  const result = await writeFile(filePath, noteToFileContent(note))
+  if (!result?.success) {
+    throw new Error(result?.error || 'Could not save note')
+  }
   if (previousFilePath && previousFilePath !== filePath) {
-    await deleteFile(previousFilePath)
+    const deleteResult = await deleteFile(previousFilePath)
+    if (!deleteResult?.success) {
+      throw new Error(deleteResult?.error || 'Could not move note')
+    }
   }
   return { ...note, filePath }
 }
