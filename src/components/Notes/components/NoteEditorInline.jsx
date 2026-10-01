@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   TextField,
@@ -143,8 +143,16 @@ const NoteEditorInline = ({
   const [title, setTitle] = useState(note?.title || '')
   const [content, setContent] = useState(note?.content || '')
   const [viewMode, setViewMode] = useState(note?.content ? 'rich' : 'markdown')
+  const [isDirty, setIsDirty] = useState(false)
+  const [saveStatus, setSaveStatus] = useState('idle')
+  const [hasSavedNote, setHasSavedNote] = useState(Boolean(note))
   const contentRef = useRef(null)
   const richEditorRef = useRef(null)
+  const saveTimerRef = useRef(null)
+  const saveQueueRef = useRef(Promise.resolve())
+  const savedNoteRef = useRef(note)
+  const onSaveRef = useRef(onSave)
+  const fieldsRef = useRef(null)
   // Autocomplete's `groupBy` requires same-group options to be contiguous.
   const todoOptions = useMemo(
     () => [
@@ -211,27 +219,8 @@ const NoteEditorInline = ({
         : null
   const isEmpty = !title.trim() && !content.trim()
 
-  const applyFormat = (type) => {
-    if (viewMode === 'rich') {
-      richEditorRef.current?.focus()
-      document.execCommand(RICH_COMMANDS[type], false)
-      setContent(richHtmlToMarkdown(richEditorRef.current))
-      return
-    }
-    const input = contentRef.current
-    const start = input?.selectionStart ?? content.length
-    const end = input?.selectionEnd ?? content.length
-    const { newText, newCursor } = injectMarkdown(content, start, end, type)
-    setContent(newText)
-    requestAnimationFrame(() => {
-      input?.focus()
-      input?.setSelectionRange(newCursor, newCursor)
-    })
-  }
-
-  const handleSubmit = () => {
-    if (isEmpty) return
-    onSave({
+  const fields = useMemo(
+    () => ({
       title: title.trim(),
       content,
       activityId:
@@ -264,6 +253,130 @@ const NoteEditorInline = ({
             : null,
       taskId: linkedItem?.linkType === 'task' ? linkedItem.id : null,
       taskText: linkedItem?.linkType === 'task' ? linkedItem.text : null,
+    }),
+    [content, linkedItem, title]
+  )
+  const fieldsSignature = (fields) =>
+    JSON.stringify([
+      fields.title,
+      fields.content,
+      fields.activityId,
+      fields.projectId,
+      fields.taskId,
+    ])
+  const signature = useMemo(() => fieldsSignature(fields), [fields])
+  const signatureRef = useRef('')
+
+  useEffect(() => {
+    onSaveRef.current = onSave
+  }, [onSave])
+
+  useEffect(() => {
+    fieldsRef.current = fields
+    signatureRef.current = signature
+  }, [fields, signature])
+
+  const persistDraft = useCallback((autoSave = true) => {
+    const currentFields = fieldsRef.current
+    if (
+      !currentFields.title &&
+      !currentFields.content &&
+      !savedNoteRef.current
+    ) {
+      return Promise.resolve(null)
+    }
+    const currentSignature = signatureRef.current
+    const operation = saveQueueRef.current
+      .catch(() => {})
+      .then(async () => {
+        setSaveStatus('saving')
+        const saved = await onSaveRef.current(currentFields, {
+          autoSave,
+          note: savedNoteRef.current,
+        })
+        if (saved) {
+          savedNoteRef.current = saved
+          setHasSavedNote(true)
+        }
+        if (signatureRef.current === currentSignature) {
+          setIsDirty(false)
+          setSaveStatus('saved')
+        }
+        return saved
+      })
+      .catch((error) => {
+        setSaveStatus('error')
+        throw error
+      })
+    saveQueueRef.current = operation.catch(() => {})
+    return operation
+  }, [])
+
+  useEffect(() => {
+    if (!isDirty || (isEmpty && !savedNoteRef.current)) return undefined
+    saveTimerRef.current = window.setTimeout(() => {
+      persistDraft().catch(() => {})
+    }, 800)
+    return () => window.clearTimeout(saveTimerRef.current)
+  }, [content, isDirty, isEmpty, linkedItem, persistDraft, title])
+
+  useEffect(() => () => window.clearTimeout(saveTimerRef.current), [])
+
+  const handleSubmit = async () => {
+    window.clearTimeout(saveTimerRef.current)
+    if (isEmpty && !savedNoteRef.current) return
+    try {
+      await persistDraft(false)
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  const handleClose = async () => {
+    window.clearTimeout(saveTimerRef.current)
+    try {
+      if (isDirty && (!isEmpty || savedNoteRef.current)) {
+        await persistDraft()
+      } else {
+        await saveQueueRef.current.catch(() => {})
+      }
+      onClose?.()
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  const handleDelete = async () => {
+    window.clearTimeout(saveTimerRef.current)
+    try {
+      await saveQueueRef.current.catch(() => {})
+      await onDelete?.(savedNoteRef.current)
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
+  const updateContent = (value) => {
+    setContent(value)
+    setIsDirty(true)
+    setSaveStatus('unsaved')
+  }
+
+  const applyFormat = (type) => {
+    if (viewMode === 'rich') {
+      richEditorRef.current?.focus()
+      document.execCommand(RICH_COMMANDS[type], false)
+      updateContent(richHtmlToMarkdown(richEditorRef.current))
+      return
+    }
+    const input = contentRef.current
+    const start = input?.selectionStart ?? content.length
+    const end = input?.selectionEnd ?? content.length
+    const { newText, newCursor } = injectMarkdown(content, start, end, type)
+    updateContent(newText)
+    requestAnimationFrame(() => {
+      input?.focus()
+      input?.setSelectionRange(newCursor, newCursor)
     })
   }
 
@@ -272,11 +385,14 @@ const NoteEditorInline = ({
       component="form"
       onSubmit={(e) => {
         e.preventDefault()
-        handleSubmit()
+        handleSubmit().catch(() => {})
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose?.()
-        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit()
+        if (e.key === 'Escape') handleClose().catch(() => {})
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault()
+          handleSubmit().catch(() => {})
+        }
       }}
       sx={{
         mb: 3,
@@ -305,7 +421,11 @@ const NoteEditorInline = ({
           fullWidth
           placeholder="Title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value)
+            setIsDirty(true)
+            setSaveStatus('unsaved')
+          }}
           sx={{
             fontWeight: isFx ? 400 : 900,
             fontSize: '1.2rem',
@@ -373,7 +493,7 @@ const NoteEditorInline = ({
           minRows={6}
           placeholder="Write the note in Markdown"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => updateContent(e.target.value)}
           sx={{
             ...writingSurface,
             alignItems: 'flex-start',
@@ -401,7 +521,11 @@ const NoteEditorInline = ({
           <Autocomplete
             options={linkOptions}
             value={linkedItem}
-            onChange={(_, val) => setLinkedItem(val)}
+            onChange={(_, val) => {
+              setLinkedItem(val)
+              setIsDirty(true)
+              setSaveStatus('unsaved')
+            }}
             getOptionLabel={(a) => a.text || a.title || ''}
             groupBy={(item) =>
               item.linkType === 'task'
@@ -439,11 +563,29 @@ const NoteEditorInline = ({
           bgcolor: 'background.subtle',
         }}
       >
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{
+            color: saveStatus === 'error' ? 'error.main' : 'text.secondary',
+          }}
+        >
+          {saveStatus === 'saving'
+            ? 'Saving…'
+            : saveStatus === 'saved'
+              ? 'Saved'
+              : saveStatus === 'error'
+                ? 'Save failed — try again'
+                : saveStatus === 'unsaved'
+                  ? 'Unsaved changes'
+                  : ''}
+        </Box>
         {note && onDelete && (
           <InkButton
             tone="ghost"
             size="sm"
-            onClick={onDelete}
+            type="button"
+            onClick={() => handleDelete().catch(() => {})}
             sx={{ color: 'error.main', mr: 'auto' }}
           >
             Delete
@@ -452,12 +594,13 @@ const NoteEditorInline = ({
         <InkButton
           tone="ghost"
           size="sm"
-          onClick={onClose}
+          type="button"
+          onClick={() => handleClose().catch(() => {})}
           sx={{ ml: note && onDelete ? 0 : 'auto' }}
         >
-          Cancel
+          Close
         </InkButton>
-        <InkButton type="submit" size="sm" disabled={isEmpty}>
+        <InkButton type="submit" size="sm" disabled={isEmpty && !hasSavedNote}>
           Save note
         </InkButton>
       </Box>
