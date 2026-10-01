@@ -23,61 +23,74 @@ const WelcomeScreen = () => {
     <Box
       sx={{
         height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        overflowY: 'auto',
         bgcolor: 'background.default',
-        p: 4,
       }}
     >
-      <Paper
+      <Box
         sx={{
-          p: 8,
-          maxWidth: '600px',
-          borderRadius: 0,
-          border: '4px solid',
-          borderColor: 'text.primary',
-          textAlign: 'center',
+          minHeight: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 4,
         }}
       >
-        <Typography variant="h1" sx={{ mb: 2 }}>
-          Welcome to Work Tracker
-        </Typography>
-        <Typography variant="h5" sx={{ mb: 6, opacity: 0.7, fontWeight: 700 }}>
-          Select a directory to establish your work intelligence archive.
-        </Typography>
-
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<FolderOpen />}
-          onClick={handleSelectDirectory}
+        <Paper
           sx={{
-            px: 6,
-            py: 2,
-            fontSize: '1.25rem',
-            boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: (theme) => `0 10px 0 ${theme.palette.text.primary}`,
-            },
+            p: 8,
+            maxWidth: '600px',
+            borderRadius: 0,
+            border: '4px solid',
+            borderColor: 'text.primary',
+            textAlign: 'center',
           }}
         >
-          SELECT DIRECTORY
-        </Button>
-
-        {error && (
-          <Typography sx={{ color: 'error.main', mt: 4, fontWeight: 900 }}>
-            {error}
+          <Typography variant="h1" sx={{ mb: 2 }}>
+            Welcome to Work Tracker
           </Typography>
-        )}
-
-        <Box sx={{ mt: 8, pt: 4, borderTop: '2px dashed rgba(0,0,0,0.1)' }}>
-          <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.4 }}>
-            v0.1.0 • PREMIUM BOLD EDITION
+          <Typography
+            variant="h5"
+            sx={{ mb: 6, opacity: 0.7, fontWeight: 700 }}
+          >
+            Select a directory to establish your work intelligence archive.
           </Typography>
-        </Box>
-      </Paper>
+
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<FolderOpen />}
+            onClick={handleSelectDirectory}
+            sx={{
+              px: 6,
+              py: 2,
+              fontSize: '1.25rem',
+              boxShadow: (theme) => `0 8px 0 ${theme.palette.text.primary}`,
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: (theme) => `0 10px 0 ${theme.palette.text.primary}`,
+              },
+            }}
+          >
+            SELECT DIRECTORY
+          </Button>
+
+          {error && (
+            <Typography sx={{ color: 'error.main', mt: 4, fontWeight: 900 }}>
+              {error}
+            </Typography>
+          )}
+
+          <Box sx={{ mt: 8, pt: 4, borderTop: '2px dashed rgba(0,0,0,0.1)' }}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 800, opacity: 0.4 }}
+            >
+              v0.1.0 • PREMIUM BOLD EDITION
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
     </Box>
   )
 }
