@@ -283,8 +283,8 @@ const useActivityDetails = () => {
 
   const editingNote = noteEditorTarget === 'new' ? null : noteEditorTarget
 
-  const handleSaveNote = async (fields) => {
-    const base = editingNote || createNote()
+  const handleSaveNote = async (fields, { autoSave = false, note } = {}) => {
+    const base = note || editingNote || createNote()
     const updated = {
       ...base,
       ...fields,
@@ -294,14 +294,19 @@ const useActivityDetails = () => {
       projectTitle: isProject ? item?.title || null : null,
       updatedAt: new Date().toISOString(),
     }
-    await saveNote(selectedDirectory, updated, editingNote?.filePath)
-    closeNoteEditor()
+    const saved = await saveNote(
+      selectedDirectory,
+      updated,
+      note?.filePath || editingNote?.filePath
+    )
+    if (!autoSave) closeNoteEditor()
     refreshNotes()
+    return saved
   }
 
-  const handleDeleteNote = async () => {
-    if (!editingNote) return
-    await deleteNote(selectedDirectory, editingNote)
+  const handleDeleteNote = async (noteToDelete = editingNote) => {
+    if (!noteToDelete) return
+    await deleteNote(selectedDirectory, noteToDelete)
     closeNoteEditor()
     refreshNotes()
   }
