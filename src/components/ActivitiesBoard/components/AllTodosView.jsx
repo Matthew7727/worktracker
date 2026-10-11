@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import {
   Box,
+  Button,
+  ButtonBase,
   Checkbox,
   Collapse,
   IconButton,
   MenuItem,
   Paper,
+  Popover,
   Table,
   TableBody,
   TableCell,
@@ -27,6 +30,7 @@ import {
 import StreamTag from './StreamTag'
 import TodoAgeChip from '../../shared/TodoAgeChip'
 import TodoDueChip from '../../shared/TodoDueChip'
+import DueDatePicker from '../../shared/DueDatePicker'
 import TodoRecurrenceChip from '../../shared/TodoRecurrenceChip'
 import RecurrencePicker from '../../shared/RecurrencePicker'
 import { EmptyState, MONO } from '../../shared/ui'
@@ -74,6 +78,7 @@ const AllTodosView = ({
   onToggleTask,
   onAddTask,
   onRenameTask,
+  onSetTaskDueDate,
   onSetTaskRecurrence,
 }) => {
   const isFx = useIsFilofax()
@@ -87,6 +92,7 @@ const AllTodosView = ({
   const [recurrenceTodo, setRecurrenceTodo] = useState(null)
   const [editingTodo, setEditingTodo] = useState(null)
   const [draftText, setDraftText] = useState('')
+  const [dueDateEditor, setDueDateEditor] = useState(null)
 
   const activeActivities = useMemo(
     () => (activities || []).filter((activity) => activity.status === 'active'),
@@ -162,6 +168,16 @@ const AllTodosView = ({
       onRenameTask?.(todo.ownerType, todo.ownerId, todo.id, text)
     }
     setEditingTodo(null)
+  }
+
+  const setDueDate = (dueDate) => {
+    if (dueDateEditor.todo) {
+      const todo = dueDateEditor.todo
+      onSetTaskDueDate?.(todo.ownerType, todo.ownerId, todo.id, dueDate)
+    } else {
+      setNewDueDate(dueDate || '')
+    }
+    setDueDateEditor(null)
   }
 
   const renderTable = (todos, completed = false) => {
@@ -266,14 +282,21 @@ const AllTodosView = ({
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <TextField
+                    <Button
                       size="small"
-                      type="date"
-                      value={newDueDate}
-                      onChange={(event) => setNewDueDate(event.target.value)}
-                      inputProps={{ 'aria-label': 'Due date for new todo' }}
-                      sx={{ flex: 1 }}
-                    />
+                      variant="outlined"
+                      onClick={(event) =>
+                        setDueDateEditor({ anchorEl: event.currentTarget })
+                      }
+                      aria-label="Due date for new todo"
+                      aria-haspopup="dialog"
+                      aria-expanded={Boolean(
+                        dueDateEditor && !dueDateEditor.todo
+                      )}
+                      sx={{ flex: 1, whiteSpace: 'nowrap' }}
+                    >
+                      {newDueDate || 'Due date'}
+                    </Button>
                     <IconButton
                       size="small"
                       onClick={() => setShowRecurrencePicker((open) => !open)}
@@ -467,16 +490,44 @@ const AllTodosView = ({
                       <Box
                         sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                       >
-                        {todo.dueDate ? (
-                          <TodoDueChip item={todo} />
-                        ) : (
-                          <Typography
-                            variant="body2"
-                            sx={{ color: 'text.disabled' }}
-                          >
-                            No due date
-                          </Typography>
-                        )}
+                        <ButtonBase
+                          disabled={
+                            completed || todo.ownerReadOnly || !onSetTaskDueDate
+                          }
+                          onClick={(event) =>
+                            setDueDateEditor({
+                              anchorEl: event.currentTarget,
+                              todo,
+                            })
+                          }
+                          aria-label={`Set due date for ${todo.text}`}
+                          aria-haspopup="dialog"
+                          aria-expanded={
+                            dueDateEditor?.todo
+                              ? todoKey(dueDateEditor.todo) === todoKey(todo)
+                              : false
+                          }
+                          sx={{
+                            flexShrink: 0,
+                            '&:hover': { bgcolor: 'action.hover' },
+                            '&.Mui-focusVisible': {
+                              outline: '2px solid',
+                              outlineColor: 'primary.main',
+                              outlineOffset: 2,
+                            },
+                          }}
+                        >
+                          {todo.dueDate ? (
+                            <TodoDueChip item={todo} />
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{ color: 'text.disabled' }}
+                            >
+                              No due date
+                            </Typography>
+                          )}
+                        </ButtonBase>
                         {!todo.dueDate && <TodoAgeChip item={todo} />}
                         <TodoRecurrenceChip item={todo} />
                         {!completed &&
@@ -532,6 +583,26 @@ const AllTodosView = ({
 
   return (
     <Box>
+      <Popover
+        open={Boolean(dueDateEditor)}
+        anchorEl={dueDateEditor?.anchorEl}
+        onClose={() => setDueDateEditor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+      >
+        <Box
+          role="dialog"
+          aria-label="Choose due date"
+          sx={{ p: 2, maxWidth: 440 }}
+        >
+          <DueDatePicker
+            value={
+              dueDateEditor?.todo ? dueDateEditor.todo.dueDate : newDueDate
+            }
+            onChange={setDueDate}
+          />
+        </Box>
+      </Popover>
       {openTodos.length > 0 || activeActivities.length > 0 ? (
         renderTable(openTodos)
       ) : (
