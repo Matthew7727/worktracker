@@ -321,6 +321,7 @@ const ToDoPage = () => {
           onToggleTask={board.handleToggleAnyTask}
           onAddTask={board.handleAddTask}
           onRenameTask={board.handleRenameAnyTask}
+          onSetTaskDueDate={board.handleSetAnyTaskDueDate}
           onSetTaskRecurrence={board.handleSetAnyTaskRecurrence}
         />
       ) : (

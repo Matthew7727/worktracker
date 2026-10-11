@@ -252,6 +252,14 @@ const useActivitiesData = () => {
     }
   }
 
+  const handleSetAnyTaskDueDate = (ownerType, ownerId, taskId, dueDate) => {
+    const updateTasks =
+      ownerType === 'project' ? updateClientProjectTasks : updateActivityTasks
+    updateTasks(ownerId, (tasks) =>
+      tasks.map((task) => (task.id === taskId ? { ...task, dueDate } : task))
+    )
+  }
+
   const handleRenameClientProject = (projectId, newTitle) => {
     save({
       ...data,
@@ -291,6 +299,7 @@ const useActivitiesData = () => {
     handleRenameClientProjectTask,
     handleToggleAnyTask,
     handleRenameAnyTask,
+    handleSetAnyTaskDueDate,
     handleRenameClientProject,
     handleDeleteClientProject,
   }

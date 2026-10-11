@@ -370,6 +370,7 @@ const ActivitiesBoard = () => {
     handleToggleClientProjectTask,
     handleToggleAnyTask,
     handleRenameAnyTask,
+    handleSetAnyTaskDueDate,
     handleSetAnyTaskRecurrence,
     handleRenameClientProject,
     handleDeleteClientProject,
@@ -511,6 +512,7 @@ const ActivitiesBoard = () => {
           onToggleTask={handleToggleAnyTask}
           onAddTask={handleAddTask}
           onRenameTask={handleRenameAnyTask}
+          onSetTaskDueDate={handleSetAnyTaskDueDate}
           onSetTaskRecurrence={handleSetAnyTaskRecurrence}
         />
       ) : (
